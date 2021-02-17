@@ -30,12 +30,13 @@ import java.util.List;
 
 public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.Holder> {
     private List<messageListModel> list;
-    private Context context;
+    public Context context;
     private View view;
     private int count=0;
+    private static final int MESSAGE_LEFT=0;
+    private static final int MESSAGE_RIGHT=1;
     private FirebaseUser user;
     private String profileUrI;
-    private List<String> images=new ArrayList<>();;
 
     public messageListAdapter(List<messageListModel> list, Context context,String profileUrI) {
         this.list = list;
@@ -46,52 +47,24 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     @NonNull
     @Override
     public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-
-        final messageListModel messageList=list.get(count);
-        user= FirebaseAuth.getInstance().getCurrentUser();
-
-        if(messageList.getReceiver().equals(user.getUid())){
-            view = LayoutInflater.from(context).inflate(R.layout.chat_item_left,parent,false);
+        if(viewType ==MESSAGE_LEFT){
+            View view =LayoutInflater.from(context).inflate(R.layout.chat_item_left,parent,false);
+            return new Holder(view);
+        }else{
+            View view =LayoutInflater.from(context).inflate(R.layout.chat_item_right,parent,false);
+            return new Holder(view);
         }
-        else {
-            view = LayoutInflater.from(context).inflate(R.layout.chat_item_right,parent,false);
-        }
-        count++;
-        return new Holder(view);
+
     }
 
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
 
-        final messageListModel messageList = list.get(position);
-        images.add(messageList.getImageUrI());
-        if(messageList.getText()!=null){
-            holder.message.setText(messageList.getText());
-            Log.d("text",messageList.getText());
-        }
-        holder.time.setText(messageList.getTime());
-        if (messageList.getMessageStatus()=="read"){
-            holder.messageStatus.setImageResource(R.drawable.circle_read);
+        holder.bind(list.get(position));
 
-        }
-        else{
-            holder.messageStatus.setImageResource(R.drawable.circle_unread);
-        }
+
         try{
             Glide.with(context).load(profileUrI).into(holder.profilePic);
-            if (messageList.getImageUrI()!=null  ){
-                if(images.contains(messageList.getImageUrI()))
-                //Picasso.with(context).load(messageList.getImageUrI()).into(holder.imageView);
-                Glide.with(context).load(messageList.getImageUrI()).into(holder.imageView);
-                holder.imageView.setVisibility(view.VISIBLE);
-                holder.message.setVisibility(view.GONE);
-                holder.itemView.setOnClickListener(view->  context.startActivity(new Intent(context, image_act.class)
-                        .putExtra("imageUrI",messageList.getImageUrI())
-                        )
-                );
-                Log.d("text",messageList.getImageUrI());
-
-            }
 
         }catch(Exception e){
             holder.profilePic.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
@@ -104,8 +77,28 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     public int getItemCount() {
         return list.size();
     }
+    public List<Integer> getNumbersInRange(int start, int end) {
+        List<Integer> result = new ArrayList<>();
+        for (int i = start; i < end; i++) {
+            result.add(i);
+        }
+        return result;
+    }
 
-    public static class Holder extends RecyclerView.ViewHolder {
+    @Override
+    public int getItemViewType(int position){
+        user= FirebaseAuth.getInstance().getCurrentUser();
+        final messageListModel messageList=list.get(position);
+
+        if(messageList.getReceiver().equals(user.getUid())){
+
+            return MESSAGE_LEFT;
+        }
+        else {
+            return MESSAGE_RIGHT;
+        }
+    }
+    public class Holder extends RecyclerView.ViewHolder {
         private TextView message,time;
         private CircularImageView profilePic,messageStatus,imageView;
 
@@ -116,6 +109,36 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
             message = itemView.findViewById(R.id.show_message);
             messageStatus=itemView.findViewById(R.id.message_status);
             time=itemView.findViewById(R.id.time);
+
+
+        }
+        void bind(final messageListModel messageList){
+            switch(messageList.getType()){
+                case "TEXT":
+                    message.setText(messageList.getText());
+                    imageView.setVisibility(itemView.GONE);
+                    message.setVisibility(itemView.VISIBLE);
+                    time.setText(messageList.getTime());
+                    break;
+                case "IMAGE":
+                    imageView.setVisibility(itemView.VISIBLE);
+                    message.setVisibility(itemView.GONE);
+                    time.setText(messageList.getTime());
+                    Glide.with(context).load(messageList.getImageUrI()).into(imageView);
+                    itemView.setOnClickListener(view->  context.startActivity(new Intent(context, image_act.class)
+                                    .putExtra("imageUrI",messageList.getImageUrI())
+                            )
+                    );
+                    break;
+
+            }
+            if (messageList.getMessageStatus()=="read"){
+                messageStatus.setImageResource(R.drawable.circle_read);
+
+            }
+            else{
+                messageStatus.setImageResource(R.drawable.circle_unread);
+            }
         }
     }
 }

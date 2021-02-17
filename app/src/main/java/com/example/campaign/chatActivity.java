@@ -8,9 +8,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
@@ -18,7 +16,6 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
 
-import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -29,9 +26,6 @@ import com.bumptech.glide.Glide;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.adapter.messageListAdapter;
 
-import com.google.android.gms.tasks.Continuation;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -41,10 +35,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
-import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -107,7 +99,9 @@ public class chatActivity extends AppCompatActivity {
             m.setReceiver(otherUserId);
             m.setDate(formattedDate);
             m.setTime(formattedTime);
+            m.setType("TEXT");
             sMessage.setValue(m);
+
             newMessage.setText("");
 
 
@@ -135,20 +129,19 @@ public class chatActivity extends AppCompatActivity {
                         text = message.getText();
                         time=message.getTime();
                         date=message.getDate();
+                        String type=message.getType();
                         messageStatus=message.getMessageStatus();
                         String downloadUri =message.getImageUrI();
-                        if (downloadUri!=null){
-                        }
 
                         String receiver = message.getReceiver();
-                        list1.add(new messageListModel(text, receiver,date,time,messageStatus,downloadUri));
+                        list1.add(new messageListModel(text, receiver,date,time,messageStatus,downloadUri, type));
 
 
                         if (list1.size() >= 1) {
                             recyclerView.scrollToPosition(list1.size()-1);
                         }
 
-                        if (receiver==user.getUid()){
+                        if (receiver.equals(user.getUid())){
                             messageRef.child(snapshot.getKey()).child("messageStatus").setValue("read");
                         }else{
                             messageRef.child(snapshot.getKey()).child("messageStatus").setValue("unread");
@@ -204,6 +197,7 @@ public class chatActivity extends AppCompatActivity {
                     message.setImageUrI(downloadUri.toString());
                     message.setTime(getTime());
                     message.setDate(getDate());
+                    message.setType("IMAGE");
                     message.setReceiver(otherUserId);
                     try{
                         myRef.child("chats").child(userId).child(otherUserId).push().setValue(message);

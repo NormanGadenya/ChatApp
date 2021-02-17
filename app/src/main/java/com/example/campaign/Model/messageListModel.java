@@ -2,14 +2,14 @@ package com.example.campaign.Model;
 
 public class messageListModel {
     private String text;
-    private String receiver,date,time,messageStatus, imageUrI;
+    private String receiver,date,time,messageStatus, imageUrI,type;
 
 
 
     public messageListModel(){
 
     }
-    public messageListModel(String text, String sender, String date, String time,String messageStatus,String imageUrI){
+    public messageListModel(String text, String sender, String date, String time, String messageStatus, String imageUrI, String type){
 
         this.text = text;
         this.receiver = sender;
@@ -17,6 +17,7 @@ public class messageListModel {
         this.time= time;
         this.messageStatus = messageStatus;
         this.imageUrI=imageUrI;
+        this.type = type;
     }
 
     public String getReceiver() {
@@ -65,5 +66,13 @@ public class messageListModel {
 
     public void setImageUrI(String imageUrI) {
         this.imageUrI = imageUrI;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }
