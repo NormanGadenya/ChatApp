@@ -2,15 +2,22 @@ package com.example.campaign;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.Manifest;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.example.campaign.Model.Users;
 import com.example.campaign.Model.chatsListModel;
@@ -34,6 +41,7 @@ public class UsersActivity extends AppCompatActivity {
     public  Map<String, String> namePhoneMap = new HashMap<String, String>();
     public FirebaseDatabase database;
     private ImageView back;
+    private int CONTACTS_REQUEST=110;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,10 +51,16 @@ public class UsersActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(UsersActivity.this));
         database = FirebaseDatabase.getInstance();
         contacts=new ArrayList<>();
-        getUsers();
-        back= findViewById(R.id.back);
 
-        contacts=getPhoneNumbers();
+        back= findViewById(R.id.back);
+        if (ContextCompat.checkSelfPermission(UsersActivity.this,
+                Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+            contacts=getPhoneNumbers();
+            getUsers();
+        } else {
+            requestContactsPermission();
+        }
+
         back.setOnClickListener(view ->{
             Intent chatListAct=new Intent(this,chatListActivity.class);
             startActivity(chatListAct);
@@ -67,16 +81,19 @@ public class UsersActivity extends AppCompatActivity {
                     String phoneNumber=user.getPhoneNumber();
                     phoneNumbersList.add(phoneNumber);
                     int i= Collections.frequency(phoneNumbersList,phoneNumber);
-                    if (i <=1 && contacts.contains(phoneNumber)){
-                        Users user_1=new Users();
-                        user_1.setName(user.getName());
-                        user_1.setPhoneNumber(user.getPhoneNumber());
-                        user_1.setProfileUrl(user.getProfileUrI());
-                        user_1.setUserId(id);
-                        list.add(user_1);
+                    if (contacts!=null) {
+                        if (i <=1 && contacts.contains(phoneNumber)){
+                            Users user_1=new Users();
+                            user_1.setName(user.getName());
+                            user_1.setPhoneNumber(user.getPhoneNumber());
+                            user_1.setProfileUrl(user.getProfileUrI());
+                            user_1.setUserId(id);
+                            list.add(user_1);
+                        }
+                        recyclerView.setAdapter(new userListAdapter(list,UsersActivity.this));
+
                     }
                 }
-                recyclerView.setAdapter(new userListAdapter(list,UsersActivity.this));
             }
 
             @Override
@@ -112,19 +129,14 @@ public class UsersActivity extends AppCompatActivity {
             namePhoneMap.put(phoneNumber, name);
 
         }
-
-        // Get The Contents of Hash Map in Log
         for (Map.Entry<String, String> entry : namePhoneMap.entrySet()) {
             String key = entry.getKey();
-            Log.d("tag", "Phone :" + key);
             String value = entry.getValue();
-//            Log.d("tag", "Name :" + value);
             if (key.contains("+")){
                 phoneNumbers.add(key);
             }else{
                 if(isAlphanumeric2(key)){
                     Long i=Long.parseLong(key);
-                    Log.d("tagdscs", String.valueOf(i));
                     String j="+256"+i;
                     phoneNumbers.add(j);
                 }
@@ -132,5 +144,43 @@ public class UsersActivity extends AppCompatActivity {
         }
         phones.close();
         return phoneNumbers;
+    }
+
+    private void requestContactsPermission() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.READ_CONTACTS)) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Permission needed")
+                    .setMessage("This permission is needed because we require access to your contacts")
+                    .setPositiveButton("ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            ActivityCompat.requestPermissions(UsersActivity.this,
+                                    new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST);
+                        }
+                    })
+                    .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    })
+                    .create().show();
+        } else {
+            ActivityCompat.requestPermissions(this,
+                    new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == CONTACTS_REQUEST)  {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                contacts=getPhoneNumbers();
+                getUsers();
+            } else {
+                Toast.makeText(this, "Permission DENIED", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }
