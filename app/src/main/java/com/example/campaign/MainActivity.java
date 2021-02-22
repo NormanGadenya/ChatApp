@@ -98,7 +98,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     private void sendToChats(){
-        Intent mainIntent = new Intent(MainActivity.this , chatListActivity.class);
+//        Intent mainIntent = new Intent(MainActivity.this , chatListActivity.class);
+        Intent mainIntent = new Intent(MainActivity.this , MainActivity2.class);
         startActivity(mainIntent);
         finish();
     }

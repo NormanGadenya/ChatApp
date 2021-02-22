@@ -23,14 +23,6 @@
             android:name=".image_act"
             android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity
-            android:name=".UsersActivity"
-            android:label="Contacts"
-            android:parentActivityName=".chatListActivity"
-            android:theme="@style/Theme.Campaign.NoActionBar" />
-        <activity
-            android:name=".chatListActivity"
-            android:theme="@style/Theme.Campaign.NoActionBar" />
-        <activity
             android:name=".chatActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity

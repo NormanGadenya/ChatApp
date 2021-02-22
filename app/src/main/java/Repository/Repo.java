@@ -1,15 +1,16 @@
-package com.example.campaign;
+package Repository;
 
-import android.content.Context;
-import android.content.Intent;
 import android.os.Build;
-import android.os.Bundle;
+import android.util.Log;
 
-import com.example.campaign.Model.chatsListModel;
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.lifecycle.MutableLiveData;
+
+import com.example.campaign.Model.Users;
 import com.example.campaign.Model.chatList;
+import com.example.campaign.Model.chatsListModel;
 import com.example.campaign.Model.messageListModel;
-import com.example.campaign.adapter.chatListAdapter;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -18,14 +19,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import android.util.Log;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -33,37 +26,53 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class chatListActivity extends AppCompatActivity {
-    private List<chatList> list;
-    private RecyclerView recyclerView;
-    private String lastMessage,date,time;
-    private static List<String>  chatUserNames,chatUserIds=new ArrayList<>();
+
+
+public class Repo {
+    static Repo instance;
+    private ArrayList<chatList> chats_List_Model=new ArrayList<>();
+    private ArrayList<Users> users_List_Model=new ArrayList<>();
+
     private FirebaseDatabase database;
+    private List<String> chatUserIds,chatUserNames;
+    private String lastMessage,date,time;
+    private chatList chatListObj;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    private MutableLiveData<ArrayList<chatList>> chatList=new MutableLiveData<>();
+    private MutableLiveData<ArrayList<Users>> usersList=new MutableLiveData<>();
 
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_chatlist);
-        recyclerView = findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new LinearLayoutManager(chatListActivity.this));
-        FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(view -> {
-            Intent intent=new Intent(chatListActivity.this,UsersActivity.class);
-            startActivity(intent);
-        });
-        database = FirebaseDatabase.getInstance();
-        list=new ArrayList<>();
 
-        getChatList();
-        if(chatUserIds.size() > 0){
-            for(int i=0;i>chatUserIds.size();i++){
-                list.add(new chatList(chatUserIds.get(i),chatUserNames.get(i),"","",""));
-            }
-            recyclerView.setAdapter(new chatListAdapter(list, getApplicationContext()));
+    public static Repo getInstance() {
+        if(instance == null){
+            instance= new Repo();
         }
+
+        return instance;
     }
-    private void getChatList(){
+    public MutableLiveData<ArrayList<chatList>> getChatList(){
+        if (chats_List_Model!=null) {
+            loadChatList();
+            chats_List_Model.clear();
+        }
+        chatList.setValue(chats_List_Model);
+        return chatList;
+    }
+
+    public MutableLiveData<ArrayList<Users>> getUsersList(List<String> contacts){
+        if (users_List_Model!=null) {
+            loadUsers(contacts);
+            users_List_Model.clear();
+
+        }
+        usersList.setValue(users_List_Model);
+
+        return usersList;
+    }
+
+
+
+    private void loadChatList(){
+        database = FirebaseDatabase.getInstance();
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         chatUserIds=new ArrayList<>();
         chatUserNames=new ArrayList<>();
@@ -128,9 +137,10 @@ public class chatListActivity extends AppCompatActivity {
                                         DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
                                         String formattedDate = myDateObj.format(dateObj);
                                         if(formattedDate.equals(date)){
-                                            list.add(new chatList(userId,userName,lastMessage,time,profileUrl));
+                                            chatListObj =new chatList(userId,userName,lastMessage,time,profileUrl);
                                         }else{
-                                            list.add(new chatList(userId,userName,lastMessage,date,profileUrl));
+                                            chatListObj =new chatList(userId,userName,lastMessage,date,profileUrl);
+
                                         }
 
                                     }catch(Exception e){
@@ -138,8 +148,9 @@ public class chatListActivity extends AppCompatActivity {
                                     }
 
                                 }
-                                recyclerView.setAdapter(new chatListAdapter(list,chatListActivity.this));
-
+                                System.out.println("before");
+                                chats_List_Model.add(chatListObj);
+                                chatList.postValue(chats_List_Model);
 
                             }
 
@@ -158,6 +169,42 @@ public class chatListActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void loadUsers(List<String> contacts){
+        DatabaseReference userDetails=database.getReference().child("UserDetails");
+        userDetails.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List <String> phoneNumbersList=new ArrayList<>();
+
+                for (DataSnapshot dataSnapshot:snapshot.getChildren()){
+                    Users userListObj=new Users();
+                    String id=dataSnapshot.getKey();
+                    Users user=dataSnapshot.getValue(Users.class);
+                    String phoneNumber=user.getPhoneNumber();
+                    phoneNumbersList.add(phoneNumber);
+                    int i= Collections.frequency(phoneNumbersList,phoneNumber);
+                    if (contacts!=null) {
+                        if (i <=1 && contacts.contains(phoneNumber)){
+                            userListObj.setName(user.getName());
+                            userListObj.setPhoneNumber(user.getPhoneNumber());
+                            userListObj.setProfileUrl(user.getProfileUrl());
+                            userListObj.setUserId(id);
+                            users_List_Model.add(userListObj);
+                            usersList.postValue(users_List_Model);
+
+                        }
+                    }
+                }
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
     }
 
 }

@@ -2,7 +2,7 @@
     <!-- Base application theme. -->
     <style name="Theme.Campaign" parent="Theme.MaterialComponents.Light.DarkActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/purple_700</item>
+        <item name="colorPrimary">@color/deepBlue</item>
         <item name="colorPrimaryVariant">@color/deepBlue</item>
         <item name="colorOnPrimary">@color/black</item>
         <!-- Secondary brand color. -->

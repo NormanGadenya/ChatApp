@@ -107,7 +107,7 @@ public class chatActivity extends AppCompatActivity {
 
         });
         back.setOnClickListener(view ->{
-           Intent chatListAct=new Intent(this,chatListActivity.class).putExtra("lastMessage",text);
+           Intent chatListAct=new Intent(this,MainActivity2.class).putExtra("lastMessage",text);
            startActivity(chatListAct);
         });
         attachButton= findViewById(R.id.attachButton);
