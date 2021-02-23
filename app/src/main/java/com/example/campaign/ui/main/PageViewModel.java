@@ -23,12 +23,14 @@ public class PageViewModel extends ViewModel {
         }
         chatsList= Repo.getInstance().getChatList();
     }
+
     public void initContacts(List<String> contacts){
         if (usersList!=null){
             return;
         }
         usersList= Repo.getInstance().getUsersList(contacts);
     }
+
     public LiveData<ArrayList<chatList>> getChatData(){
         return chatsList;
 
