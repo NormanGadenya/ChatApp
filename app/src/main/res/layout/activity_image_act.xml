@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/deepBlue"
     android:orientation="vertical"
-    tools:context=".image_act">
+    tools:context=".viewImageActivity">
 
 
     <ImageView

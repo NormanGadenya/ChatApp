@@ -1,15 +1,15 @@
 package com.example.campaign.Model;
 
-public class Users {
+public class usersModel {
     private String name,userId;
     private String about;
     private String phoneNumber;
     private String profileUrl;
 
-    public Users(){
+    public usersModel(){
 
     }
-    public Users(String name,String about,String phoneNumber,String profileUrl,String userId){
+    public usersModel(String name, String about, String phoneNumber, String profileUrl, String userId){
         this.name = name;
         this.about= about;
         this.phoneNumber=phoneNumber;

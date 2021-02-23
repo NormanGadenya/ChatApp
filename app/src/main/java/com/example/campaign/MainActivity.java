@@ -1,123 +1,93 @@
 package com.example.campaign;
 
+import android.Manifest;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.pm.PackageManager;
+import android.os.Bundle;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.tabs.TabLayout;
+
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.viewpager.widget.ViewPager;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Intent;
-import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.FirebaseException;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.PhoneAuthCredential;
-import com.google.firebase.auth.PhoneAuthOptions;
-import com.google.firebase.auth.PhoneAuthProvider;
-
-
-
-
-import java.util.concurrent.TimeUnit;
+import com.example.campaign.ui.main.SectionsPagerAdapter;
 
 public class MainActivity extends AppCompatActivity {
-    private FirebaseAuth Auth;
-    private EditText phoneNumberEdit;
-    private Button sendOTPBtn;
-    private PhoneAuthProvider.OnVerificationStateChangedCallbacks mCallBacks;
+    public int CONTACTS_REQUEST;
+    private String permGranted="false";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        sendOTPBtn=findViewById(R.id.button);
-        phoneNumberEdit=findViewById(R.id.editTextPhone);
-        Auth = FirebaseAuth.getInstance();
-        sendOTPBtn.setOnClickListener(new View.OnClickListener() {
+        SectionsPagerAdapter sectionsPagerAdapter = new SectionsPagerAdapter(this, getSupportFragmentManager());
+        ViewPager viewPager = findViewById(R.id.view_pager);
+        viewPager.setAdapter(sectionsPagerAdapter);
+        TabLayout tabs = findViewById(R.id.tabs);
+        tabs.setupWithViewPager(viewPager);
+        requestContactsPermission();
+
+        Bundle bundle = new Bundle();
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+            permGranted="true";
+        } else {
+            requestContactsPermission();
+        }
+        bundle.putString("perGranted",permGranted);
+        FloatingActionButton fab = findViewById(R.id.fab);
+
+        fab.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                String phoneNumber = phoneNumberEdit.getText().toString();
-
-                if (!phoneNumber.isEmpty()){
-                    PhoneAuthOptions options = PhoneAuthOptions.newBuilder(Auth)
-                            .setPhoneNumber(phoneNumber)
-                            .setTimeout(60L , TimeUnit.SECONDS)
-                            .setActivity(MainActivity.this)
-                            .setCallbacks(mCallBacks)
-                            .build();
-                    PhoneAuthProvider.verifyPhoneNumber(options);
-
-                }else{
-                    Toast.makeText(MainActivity.this,"please enter valid phone Number",Toast.LENGTH_LONG).show();
-                }
+            public void onClick(View view) {
+                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
             }
         });
-
-        mCallBacks = new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-            @Override
-            public void onVerificationCompleted(@NonNull PhoneAuthCredential phoneAuthCredential) {
-                signIn(phoneAuthCredential);
-            }
-
-            @Override
-            public void onVerificationFailed(@NonNull FirebaseException e) {
-                Toast.makeText(MainActivity.this,e.getMessage(),Toast.LENGTH_LONG).show();
-            }
-
-//            @Override
-//            public void onCodeSent(@NonNull String s, @NonNull PhoneAuthProvider.ForceResendingToken forceResendingToken) {
-//                super.onCodeSent(s, forceResendingToken);
-//
-//                //sometime the code is not detected automatically
-//                //so user has to manually enter the code
-//
-//                new Handler().postDelayed(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        Intent otpIntent = new Intent(MainActivity.this , otpActivity.class);
-//                        otpIntent.putExtra("auth" , s);
-//                        startActivity(otpIntent);
-//                    }
-//                }, 10000);
-//
-//            }
-        };
     }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        FirebaseUser user = Auth.getCurrentUser();
-        if (user !=null){
-            sendToChats();
+    private void requestContactsPermission() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.READ_CONTACTS)) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Permission needed")
+                    .setMessage("This permission is needed because we require access to your contacts")
+                    .setPositiveButton("ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            ActivityCompat.requestPermissions(MainActivity.this,
+                                    new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST);
+                        }
+                    })
+                    .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    })
+                    .create().show();
+        } else {
+            ActivityCompat.requestPermissions(this,
+                    new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST);
         }
     }
-    private void sendToChats(){
-//        Intent mainIntent = new Intent(MainActivity.this , chatListActivity.class);
-        Intent mainIntent = new Intent(MainActivity.this , MainActivity2.class);
-        startActivity(mainIntent);
-        finish();
-    }
-    private void signIn(PhoneAuthCredential credential){
-        Auth.signInWithCredential(credential).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-            @Override
-            public void onComplete(@NonNull Task<AuthResult> task) {
-                if (task.isSuccessful()){
-                    Intent registration = new Intent(MainActivity.this , Registration_activity.class);
-                    startActivity(registration);
-                    finish();
-                }else{
-                    Intent otpIntent = new Intent(MainActivity.this , otpActivity.class);
-                    startActivity(otpIntent);
-                    Toast.makeText(MainActivity.this,task.getException().getMessage(),Toast.LENGTH_LONG).show();
-
-                }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == CONTACTS_REQUEST)  {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                permGranted="true";
+            } else {
+                Toast.makeText(this, "Permission DENIED", Toast.LENGTH_SHORT).show();
             }
-        });
+        }
     }
 }

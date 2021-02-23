@@ -11,19 +11,18 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.campaign.Model.Users;
+import com.example.campaign.Model.usersModel;
 import com.example.campaign.R;
 import com.example.campaign.chatActivity;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class userListAdapter extends RecyclerView.Adapter<userListAdapter.Holder> {
-    private List<Users> list;
+    private List<usersModel> list;
     private Context context;
 
-    public userListAdapter(List<Users> list,Context context){
+    public userListAdapter(List<usersModel> list, Context context){
         this.context = context;
         this.list=list;
     }
@@ -37,7 +36,7 @@ public class userListAdapter extends RecyclerView.Adapter<userListAdapter.Holder
 
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
-        final Users userList=list.get(position);
+        final usersModel userList=list.get(position);
         holder.userName.setText(userList.getName());
         holder.phoneNumber.setText(userList.getPhoneNumber());
         System.out.println(userList.getProfileUrl());

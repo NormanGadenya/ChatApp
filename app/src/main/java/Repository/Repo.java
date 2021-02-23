@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.lifecycle.MutableLiveData;
 
-import com.example.campaign.Model.Users;
+import com.example.campaign.Model.usersModel;
 import com.example.campaign.Model.chatList;
 import com.example.campaign.Model.chatsListModel;
 import com.example.campaign.Model.messageListModel;
@@ -31,7 +31,7 @@ import java.util.Objects;
 public class Repo {
     static Repo instance;
     private ArrayList<chatList> chats_List_Model=new ArrayList<>();
-    private ArrayList<Users> users_List_Model=new ArrayList<>();
+    private ArrayList<usersModel> users_List_Model=new ArrayList<>();
 
     private FirebaseDatabase database;
     private List<String> chatUserIds,chatUserNames;
@@ -39,7 +39,7 @@ public class Repo {
     private chatList chatListObj;
 
     private MutableLiveData<ArrayList<chatList>> chatList=new MutableLiveData<>();
-    private MutableLiveData<ArrayList<Users>> usersList=new MutableLiveData<>();
+    private MutableLiveData<ArrayList<usersModel>> usersList=new MutableLiveData<>();
 
 
     public static Repo getInstance() {
@@ -58,7 +58,7 @@ public class Repo {
         return chatList;
     }
 
-    public MutableLiveData<ArrayList<Users>> getUsersList(List<String> contacts){
+    public MutableLiveData<ArrayList<usersModel>> getUsersList(List<String> contacts){
         if (users_List_Model!=null) {
             loadUsers(contacts);
             users_List_Model.clear();
@@ -179,9 +179,9 @@ public class Repo {
                 List <String> phoneNumbersList=new ArrayList<>();
 
                 for (DataSnapshot dataSnapshot:snapshot.getChildren()){
-                    Users userListObj=new Users();
+                    usersModel userListObj=new usersModel();
                     String id=dataSnapshot.getKey();
-                    Users user=dataSnapshot.getValue(Users.class);
+                    usersModel user=dataSnapshot.getValue(usersModel.class);
                     String phoneNumber=user.getPhoneNumber();
                     phoneNumbersList.add(phoneNumber);
                     int i= Collections.frequency(phoneNumbersList,phoneNumber);

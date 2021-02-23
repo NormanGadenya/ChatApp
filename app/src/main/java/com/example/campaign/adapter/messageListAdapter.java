@@ -2,7 +2,6 @@ package com.example.campaign.adapter;
 
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,12 +15,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.R;
-import com.example.campaign.chatActivity;
-import com.example.campaign.image_act;
+import com.example.campaign.viewImageActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.mikhaellopez.circularimageview.CircularImageView;
-import com.squareup.picasso.Picasso;
 
 
 import java.util.ArrayList;
@@ -125,7 +122,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                     message.setVisibility(itemView.GONE);
                     time.setText(messageList.getTime());
                     Glide.with(context).load(messageList.getImageUrI()).into(imageView);
-                    itemView.setOnClickListener(view->  context.startActivity(new Intent(context, image_act.class)
+                    itemView.setOnClickListener(view->  context.startActivity(new Intent(context, viewImageActivity.class)
                                     .putExtra("imageUrI",messageList.getImageUrI()
                                     )
 

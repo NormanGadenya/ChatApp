@@ -16,31 +16,28 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Campaign">
         <activity
-            android:name=".MainActivity3"
-            android:parentActivityName=".MainActivity2"
+            android:name=".chatActivity"
+            android:parentActivityName=".MainActivity"
             >
 
         </activity>
         <activity
-            android:name=".MainActivity2"
+            android:name=".MainActivity"
             android:label="@string/title_activity_main2"
             android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity
-            android:name=".image_act"
+            android:name=".viewImageActivity"
             android:theme="@style/Theme.Campaign"
-            android:parentActivityName=".MainActivity3"
+            android:parentActivityName=".chatActivity"
             />
         <activity
-            android:name=".chatActivity"
-            android:theme="@style/Theme.Campaign.NoActionBar" />
-        <activity
-            android:name=".Registration_activity"
+            android:name=".registrationActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity
             android:name=".otpActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity
-            android:name=".MainActivity"
+            android:name=".signUpActivity"
             android:theme="@style/Theme.Campaign.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

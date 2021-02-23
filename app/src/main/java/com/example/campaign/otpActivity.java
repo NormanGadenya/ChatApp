@@ -27,37 +27,33 @@ public class otpActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_otp);
+        OTP = getIntent().getStringExtra("auth");
+        InitializeControllers();
+
+        mVerifyCodeBtn.setOnClickListener(v -> {
+            String verification_code = otpEdit.getText().toString();
+            if(!verification_code.isEmpty()){
+                PhoneAuthCredential credential = PhoneAuthProvider.getCredential(OTP , verification_code);
+                signIn(credential);
+            }else{
+                Toast.makeText(otpActivity.this, "Please Enter OTP", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void InitializeControllers() {
         mVerifyCodeBtn=findViewById(R.id.Otp_vbutton);
         otpEdit=findViewById(R.id.editOtpNumber);
-        OTP = getIntent().getStringExtra("auth");
-
-
-        mVerifyCodeBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String verification_code = otpEdit.getText().toString();
-                if(!verification_code.isEmpty()){
-                    PhoneAuthCredential credential = PhoneAuthProvider.getCredential(OTP , verification_code);
-                    signIn(credential);
-                }else{
-                    Toast.makeText(otpActivity.this, "Please Enter OTP", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
     }
+
     private void signIn(PhoneAuthCredential credential){
-        firebaseAuth.signInWithCredential(credential).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-            @Override
-            public void onComplete(@NonNull Task<AuthResult> task) {
-                if (task.isSuccessful()){
-                    startActivity(new Intent(otpActivity.this , Registration_activity.class));
-                }else{
-                    Toast.makeText(otpActivity.this, "Verification Failed", Toast.LENGTH_SHORT).show();
-                }
+        firebaseAuth.signInWithCredential(credential).addOnCompleteListener(task -> {
+            if (task.isSuccessful()){
+                startActivity(new Intent(otpActivity.this , registrationActivity.class));
+            }else{
+                Toast.makeText(otpActivity.this, "Verification Failed", Toast.LENGTH_SHORT).show();
             }
         });
     }
-
-
 
 }

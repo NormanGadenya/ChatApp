@@ -3,11 +3,14 @@ package com.example.campaign;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -15,17 +18,16 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
-
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.ImageButton;
-import android.widget.ImageView;
+
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.adapter.messageListAdapter;
-
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -43,11 +45,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class chatActivity extends AppCompatActivity {
+
     private String otherUserId, message, name, profileUrI,text,date,time,messageStatus;
     private FirebaseDatabase database;
     private List<messageListModel> list1 = new ArrayList<>();
     private RecyclerView recyclerView ;
-    private ImageButton button,attachButton;
+    private ImageButton sendButton,attachButton;
     private TextView newMessage,userName;
     private CircularImageView profilePic;
     private FirebaseUser user ;
@@ -55,39 +58,32 @@ public class chatActivity extends AppCompatActivity {
     private Uri selected;
 
 
-
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_chat_act);
+        setContentView(R.layout.activity_chat);
         user= FirebaseAuth.getInstance().getCurrentUser();
-        userName=findViewById(R.id.userName);
-        otherUserId=getIntent().getStringExtra("userID");
-        name=getIntent().getStringExtra("userName");
-        profileUrI =getIntent().getStringExtra("userProfile");
-        userName.setText(name);
-        ImageView back;
-        back= findViewById(R.id.back);
+        InitialiseControllers();
+
         database = FirebaseDatabase.getInstance();
         mStorageReference= FirebaseStorage.getInstance().getReference();
 
-        profilePic=findViewById(R.id.image_profile);
+        userName.setText(name);
         try{
             Glide.with(getApplicationContext()).load(profileUrI).into(profilePic);
 
         }catch(Exception e){
             profilePic.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
         }
-        recyclerView=findViewById(R.id.recyclerView1);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        button=findViewById(R.id.sendButton);
-        newMessage=findViewById(R.id.message_container);
+
+
 
         getMessages();
         final MediaPlayer mediaPlayer= MediaPlayer.create(this,R.raw.messagesound);
 
-        button.setOnClickListener(view -> {
+        sendButton.setOnClickListener(view -> {
             DatabaseReference sMessage=database.getReference().child("chats").child(user.getUid()).child(otherUserId).push();
             message=newMessage.getText().toString();
 
@@ -101,22 +97,38 @@ public class chatActivity extends AppCompatActivity {
             m.setTime(formattedTime);
             m.setType("TEXT");
             sMessage.setValue(m);
-
             newMessage.setText("");
 
 
         });
-        back.setOnClickListener(view ->{
-           Intent chatListAct=new Intent(this,MainActivity2.class).putExtra("lastMessage",text);
-           startActivity(chatListAct);
-        });
-        attachButton= findViewById(R.id.attachButton);
+//
+
         attachButton.setOnClickListener(view ->{
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             startActivityForResult(intent,2);
         });
 
     }
+
+    private void InitialiseControllers() {
+        ActionBar actionBar=getSupportActionBar();
+        actionBar.setTitle("");
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setDisplayShowCustomEnabled(true);
+        LayoutInflater LayoutInflater=(LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        @SuppressLint("InflateParams") View actionBarView=LayoutInflater.inflate(R.layout.chat_custom_bar,null);
+        actionBar.setCustomView(actionBarView);
+        sendButton=findViewById(R.id.sendButton);
+        attachButton= findViewById(R.id.attachButton);
+        profilePic=findViewById(R.id.image_profile);
+        newMessage=findViewById(R.id.message_container);
+        otherUserId=getIntent().getStringExtra("userID");
+        name=getIntent().getStringExtra("userName");
+        profileUrI =getIntent().getStringExtra("userProfile");
+        userName=findViewById(R.id.userName);
+        recyclerView=findViewById(R.id.recyclerView1);
+    }
+
     private void getMessages(){
         DatabaseReference messageRef=database.getReference().child("chats").child(user.getUid()).child(otherUserId);
         messageRef.addValueEventListener(new ValueEventListener(){
@@ -151,7 +163,7 @@ public class chatActivity extends AppCompatActivity {
                         Log.d("error1",e.getMessage());
                     }
                 }
-                recyclerView.setAdapter(new messageListAdapter(list1,chatActivity.this, profileUrI));
+                recyclerView.setAdapter(new messageListAdapter(list1, chatActivity.this, profileUrI));
 
             }
 
@@ -225,8 +237,5 @@ public class chatActivity extends AppCompatActivity {
         DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         return myDateObj.format(dateObj);
     }
-
-
-
 
 }
