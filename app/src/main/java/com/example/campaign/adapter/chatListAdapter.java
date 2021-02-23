@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.campaign.MainActivity3;
 import com.example.campaign.Model.chatList;
 import com.example.campaign.R;
 import com.example.campaign.chatActivity;
@@ -51,7 +52,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
         }
 
 
-        holder.itemView.setOnClickListener(v -> context.startActivity(new Intent(context, chatActivity.class)
+        holder.itemView.setOnClickListener(v -> context.startActivity(new Intent(context, MainActivity3.class)
                 .putExtra("userID",chatlist.getUserID())
                 .putExtra("userName",chatlist.getUserName())
                 .putExtra("userProfile",chatlist.getUrlProfile())));
