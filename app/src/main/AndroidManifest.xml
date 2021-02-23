@@ -27,7 +27,9 @@
             android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity
             android:name=".image_act"
-            android:theme="@style/Theme.Campaign.NoActionBar" />
+            android:theme="@style/Theme.Campaign"
+            android:parentActivityName=".MainActivity3"
+            />
         <activity
             android:name=".chatActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />

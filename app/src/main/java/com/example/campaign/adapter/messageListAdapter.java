@@ -100,8 +100,8 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     }
     public class Holder extends RecyclerView.ViewHolder {
         private TextView message,time;
-        private CircularImageView profilePic,messageStatus,imageView;
-
+        private CircularImageView profilePic,messageStatus;
+        private ImageView imageView;
         public Holder(@NonNull View itemView) {
             super(itemView);
             imageView=itemView.findViewById(R.id.imageView);
@@ -126,7 +126,9 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                     time.setText(messageList.getTime());
                     Glide.with(context).load(messageList.getImageUrI()).into(imageView);
                     itemView.setOnClickListener(view->  context.startActivity(new Intent(context, image_act.class)
-                                    .putExtra("imageUrI",messageList.getImageUrI())
+                                    .putExtra("imageUrI",messageList.getImageUrI()
+                                    )
+
                             )
                     );
                     break;

@@ -25,14 +25,10 @@
                     android:padding="8dp"
                     android:layout_height="wrap_content">
 
-                    <com.mikhaellopez.circularimageview.CircularImageView
+                    <ImageView
                         android:id="@+id/imageView"
-
                         android:layout_width="200dp"
                         android:layout_height="200dp"
-
-
-
                         android:visibility="gone"
                         app:layout_constraintEnd_toStartOf="@+id/time"
                         app:layout_constraintTop_toTopOf="parent"

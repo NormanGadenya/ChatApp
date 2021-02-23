@@ -1,9 +1,13 @@
 package com.example.campaign;
 
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -15,14 +19,19 @@ public class image_act extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_act);
-        String imageUrl=getIntent().getStringExtra("imageUrI");
 
+        ActionBar actionBar=getSupportActionBar();
+        actionBar.setTitle("");
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setDisplayShowCustomEnabled(true);
+//        LayoutInflater LayoutInflater=(LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+//        @SuppressLint("InflateParams") View actionBarView=LayoutInflater.inflate(R.layout.chat_custom_bar,null);
+//        actionBar.setCustomView(actionBarView);
+
+        String imageUrl=getIntent().getStringExtra("imageUrI");
         ImageView imageView=findViewById(R.id.imageView2);
         Glide.with(getApplicationContext()).load(imageUrl).into(imageView);
-        ImageView back= findViewById(R.id.back);
-        back.setOnClickListener(view ->{
-            Intent chatListAct=new Intent(this,chatActivity.class);
-            startActivity(chatListAct);
-        });
+
+
     }
 }

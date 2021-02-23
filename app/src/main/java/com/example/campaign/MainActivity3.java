@@ -66,7 +66,6 @@ public class MainActivity3 extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main3);
-
         user= FirebaseAuth.getInstance().getCurrentUser();
         ActionBar actionBar=getSupportActionBar();
         actionBar.setTitle("");
@@ -75,7 +74,7 @@ public class MainActivity3 extends AppCompatActivity {
         LayoutInflater LayoutInflater=(LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         @SuppressLint("InflateParams") View actionBarView=LayoutInflater.inflate(R.layout.chat_custom_bar,null);
         actionBar.setCustomView(actionBarView);
-        
+
 
         otherUserId=getIntent().getStringExtra("userID");
         name=getIntent().getStringExtra("userName");
@@ -120,10 +119,7 @@ public class MainActivity3 extends AppCompatActivity {
 
 
         });
-//        back.setOnClickListener(view ->{
-//            Intent chatListAct=new Intent(this,MainActivity2.class).putExtra("lastMessage",text);
-//            startActivity(chatListAct);
-//        });
+//
         attachButton= findViewById(R.id.attachButton);
         attachButton.setOnClickListener(view ->{
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
