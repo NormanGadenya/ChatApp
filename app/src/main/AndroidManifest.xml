@@ -16,28 +16,28 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Campaign">
         <activity
-            android:name=".chatActivity"
-            android:parentActivityName=".MainActivity"
+            android:name=".Activities.chatActivity"
+            android:parentActivityName=".Activities.MainActivity"
             >
 
         </activity>
         <activity
-            android:name=".MainActivity"
+            android:name=".Activities.MainActivity"
             android:label="@string/title_activity_main2"
             android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity
-            android:name=".viewImageActivity"
+            android:name=".Activities.viewImageActivity"
             android:theme="@style/Theme.Campaign"
-            android:parentActivityName=".chatActivity"
+            android:parentActivityName=".Activities.chatActivity"
             />
         <activity
-            android:name=".registrationActivity"
+            android:name=".Activities.registrationActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity
-            android:name=".otpActivity"
+            android:name=".Activities.otpActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity
-            android:name=".signUpActivity"
+            android:name=".Activities.signUpActivity"
             android:theme="@style/Theme.Campaign.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -16,7 +16,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.campaign.Model.chatList;
+import com.example.campaign.Model.chatListModel;
 import com.example.campaign.R;
 import com.example.campaign.adapter.chatListAdapter;
 import com.example.campaign.adapter.userListAdapter;
@@ -34,7 +34,7 @@ import java.util.Map;
 public class PlaceholderFragment extends Fragment {
 
     private static final String ARG_SECTION_NUMBER = "section_number";
-    private List<chatList> list;
+    private List<chatListModel> list;
     private PageViewModel pageViewModel;
     private Context context;
     private chatListAdapter chatListAdapter;

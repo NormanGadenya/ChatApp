@@ -11,8 +11,8 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.campaign.chatActivity;
-import com.example.campaign.Model.chatList;
+import com.example.campaign.Activities.chatActivity;
+import com.example.campaign.Model.chatListModel;
 import com.example.campaign.R;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
@@ -20,10 +20,10 @@ import java.util.List;
 
 
 public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder> {
-    private List<chatList> list;
+    private List<chatListModel> list;
     private Context context;
 
-    public chatListAdapter(List<chatList> list, Context context) {
+    public chatListAdapter(List<chatListModel> list, Context context) {
         this.list = list;
         this.context = context;
     }
@@ -38,23 +38,23 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
 
-        final chatList chatlist = list.get(position);
+        final chatListModel chatlist = list.get(position);
 
         holder.tvName.setText(chatlist.getUserName());
         holder.tvDesc.setText(chatlist.getDescription());
         holder.tvDate.setText(chatlist.getDate());
 
-        if (chatlist.getUrlProfile()==null){
+        if (chatlist.getProfileUrI()==null){
             holder.profile.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
         } else {
-            Glide.with(context).load(chatlist.getUrlProfile()).into(holder.profile);
+            Glide.with(context).load(chatlist.getProfileUrI()).into(holder.profile);
         }
 
 
         holder.itemView.setOnClickListener(v -> context.startActivity(new Intent(context, chatActivity.class)
-                .putExtra("userID",chatlist.getUserID())
+                .putExtra("userID",chatlist.getUserId())
                 .putExtra("userName",chatlist.getUserName())
-                .putExtra("userProfile",chatlist.getUrlProfile())));
+                .putExtra("userProfile",chatlist.getProfileUrI())));
 
     }
 

@@ -11,18 +11,18 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.campaign.Model.usersModel;
+import com.example.campaign.Model.userModel;
 import com.example.campaign.R;
-import com.example.campaign.chatActivity;
+import com.example.campaign.Activities.chatActivity;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
 import java.util.List;
 
 public class userListAdapter extends RecyclerView.Adapter<userListAdapter.Holder> {
-    private List<usersModel> list;
+    private List<userModel> list;
     private Context context;
 
-    public userListAdapter(List<usersModel> list, Context context){
+    public userListAdapter(List<userModel> list, Context context){
         this.context = context;
         this.list=list;
     }
@@ -36,16 +36,16 @@ public class userListAdapter extends RecyclerView.Adapter<userListAdapter.Holder
 
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
-        final usersModel userList=list.get(position);
-        holder.userName.setText(userList.getName());
+        final userModel userList=list.get(position);
+        holder.userName.setText(userList.getUserName());
         holder.phoneNumber.setText(userList.getPhoneNumber());
-        System.out.println(userList.getProfileUrl());
+        System.out.println(userList.getProfileUrI());
 
         try{
-            if (userList.getProfileUrl().equals("")){
+            if (userList.getProfileUrI().equals("")){
                 holder.profile.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);  // set  default image when profile user is null
             } else {
-                Glide.with(context).load(userList.getProfileUrl()).into(holder.profile);
+                Glide.with(context).load(userList.getProfileUrI()).into(holder.profile);
             }
         }catch(Exception e){
 
@@ -57,8 +57,8 @@ public class userListAdapter extends RecyclerView.Adapter<userListAdapter.Holder
             public void onClick(View v) {
                 context.startActivity(new Intent(context, chatActivity.class)
                         .putExtra("userID",userList.getUserId())
-                        .putExtra("userName",userList.getName())
-                        .putExtra("userProfile",userList.getProfileUrl())
+                        .putExtra("userName",userList.getUserName())
+                        .putExtra("userProfile",userList.getProfileUrI())
 
                 );
             }

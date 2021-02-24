@@ -1,4 +1,4 @@
-package com.example.campaign;
+package com.example.campaign.Activities;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
+import com.example.campaign.R;
 
 public class viewImageActivity extends AppCompatActivity {
 

@@ -1,4 +1,4 @@
-package com.example.campaign;
+package com.example.campaign.Activities;
 
 import android.Manifest;
 import android.app.AlertDialog;
@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
+import com.example.campaign.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;

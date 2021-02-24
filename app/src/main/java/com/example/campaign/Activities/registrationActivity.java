@@ -1,4 +1,4 @@
-package com.example.campaign;
+package com.example.campaign.Activities;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,8 +23,9 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 
-import com.example.campaign.Model.usersModel;
+import com.example.campaign.Model.userModel;
 
+import com.example.campaign.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -137,13 +138,13 @@ public class registrationActivity extends AppCompatActivity {
                 if (task.isSuccessful()) {
                     Uri downloadUri = task.getResult();
                     DatabaseReference myRef = database.getReference();
-                    usersModel usersModel =new usersModel();
-                    usersModel.setName(name);
-                    usersModel.setPhoneNumber(phoneNumber);
-                    usersModel.setProfileUrl(downloadUri.toString());
-                    usersModel.setAbout(aboutPerson);
+                    userModel userModel =new userModel();
+                    userModel.setUserName(name);
+                    userModel.setPhoneNumber(phoneNumber);
+                    userModel.setProfileUrI(downloadUri.toString());
+                    userModel.setAbout(aboutPerson);
                     try{
-                        myRef.child("UserDetails").child(userId).push().setValue(usersModel);
+                        myRef.child("UserDetails").child(userId).setValue(userModel);
 
                     }catch(Exception e){
                         System.out.println(e.getLocalizedMessage());

@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.R;
-import com.example.campaign.viewImageActivity;
+import com.example.campaign.Activities.viewImageActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.mikhaellopez.circularimageview.CircularImageView;

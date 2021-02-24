@@ -1,4 +1,4 @@
-package com.example.campaign;
+package com.example.campaign.Activities;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,6 +27,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.campaign.Model.messageListModel;
+import com.example.campaign.R;
 import com.example.campaign.adapter.messageListAdapter;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -84,7 +85,8 @@ public class chatActivity extends AppCompatActivity {
         final MediaPlayer mediaPlayer= MediaPlayer.create(this,R.raw.messagesound);
 
         sendButton.setOnClickListener(view -> {
-            DatabaseReference sMessage=database.getReference().child("chats").child(user.getUid()).child(otherUserId).push();
+            DatabaseReference sMessage_1=database.getReference().child("chats").child(otherUserId).child(user.getUid()).push();
+            DatabaseReference sMessage_2=database.getReference().child("chats").child(user.getUid()).child(otherUserId).push();
             message=newMessage.getText().toString();
 
             String formattedDate = getDate();
@@ -96,7 +98,8 @@ public class chatActivity extends AppCompatActivity {
             m.setDate(formattedDate);
             m.setTime(formattedTime);
             m.setType("TEXT");
-            sMessage.setValue(m);
+            sMessage_1.setValue(m);
+            sMessage_2.setValue(m);
             newMessage.setText("");
 
 

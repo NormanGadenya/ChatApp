@@ -7,9 +7,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.lifecycle.MutableLiveData;
 
-import com.example.campaign.Model.usersModel;
-import com.example.campaign.Model.chatList;
-import com.example.campaign.Model.chatsListModel;
+import com.example.campaign.Model.userModel;
+import com.example.campaign.Model.chatListModel;
+
 import com.example.campaign.Model.messageListModel;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -30,16 +30,16 @@ import java.util.Objects;
 
 public class Repo {
     static Repo instance;
-    private ArrayList<chatList> chats_List_Model=new ArrayList<>();
-    private ArrayList<usersModel> users_List_Model=new ArrayList<>();
+    private ArrayList<chatListModel> chats_List_Model=new ArrayList<>();
+    private ArrayList<userModel> users_List_Model=new ArrayList<>();
 
     private FirebaseDatabase database;
     private List<String> chatUserIds,chatUserNames;
     private String lastMessage,date,time;
-    private chatList chatListObj;
+    private chatListModel chatListModelObj;
 
-    private MutableLiveData<ArrayList<chatList>> chatList=new MutableLiveData<>();
-    private MutableLiveData<ArrayList<usersModel>> usersList=new MutableLiveData<>();
+    private MutableLiveData<ArrayList<chatListModel>> chatList=new MutableLiveData<>();
+    private MutableLiveData<ArrayList<userModel>> usersList=new MutableLiveData<>();
 
 
     public static Repo getInstance() {
@@ -49,7 +49,7 @@ public class Repo {
 
         return instance;
     }
-    public MutableLiveData<ArrayList<chatList>> getChatList(){
+    public MutableLiveData<ArrayList<chatListModel>> getChatList(){
         if (chats_List_Model!=null) {
             loadChatList();
             chats_List_Model.clear();
@@ -58,7 +58,7 @@ public class Repo {
         return chatList;
     }
 
-    public MutableLiveData<ArrayList<usersModel>> getUsersList(List<String> contacts){
+    public MutableLiveData<ArrayList<userModel>> getUsersList(List<String> contacts){
         if (users_List_Model!=null) {
             loadUsers(contacts);
             users_List_Model.clear();
@@ -126,9 +126,10 @@ public class Repo {
                             @RequiresApi(api = Build.VERSION_CODES.O)
                             @Override
                             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                chatsListModel user=dataSnapshot.getValue(chatsListModel.class);
-                                String userName=user.getName();
+                                chatListModel user=dataSnapshot.getValue(chatListModel.class);
+                                String userName=user.getUserName();
                                 String profileUrl=user.getProfileUrI();
+                                Log.d("profilePic",profileUrl +userName);
                                 chatUserNames.add(userName);
                                 int i= Collections.frequency(chatUserNames,userName);
                                 if(i<=1){
@@ -137,9 +138,9 @@ public class Repo {
                                         DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
                                         String formattedDate = myDateObj.format(dateObj);
                                         if(formattedDate.equals(date)){
-                                            chatListObj =new chatList(userId,userName,lastMessage,time,profileUrl);
+                                            chatListModelObj =new chatListModel(userId,userName,lastMessage,time,profileUrl);
                                         }else{
-                                            chatListObj =new chatList(userId,userName,lastMessage,date,profileUrl);
+                                            chatListModelObj =new chatListModel(userId,userName,lastMessage,date,profileUrl);
 
                                         }
 
@@ -148,8 +149,8 @@ public class Repo {
                                     }
 
                                 }
-                                System.out.println("before");
-                                chats_List_Model.add(chatListObj);
+
+                                chats_List_Model.add(chatListModelObj);
                                 chatList.postValue(chats_List_Model);
 
                             }
@@ -179,17 +180,17 @@ public class Repo {
                 List <String> phoneNumbersList=new ArrayList<>();
 
                 for (DataSnapshot dataSnapshot:snapshot.getChildren()){
-                    usersModel userListObj=new usersModel();
+                    userModel userListObj=new userModel();
                     String id=dataSnapshot.getKey();
-                    usersModel user=dataSnapshot.getValue(usersModel.class);
+                    userModel user=dataSnapshot.getValue(userModel.class);
                     String phoneNumber=user.getPhoneNumber();
                     phoneNumbersList.add(phoneNumber);
                     int i= Collections.frequency(phoneNumbersList,phoneNumber);
                     if (contacts!=null) {
                         if (i <=1 && contacts.contains(phoneNumber)){
-                            userListObj.setName(user.getName());
+                            userListObj.setUserName(user.getUserName());
                             userListObj.setPhoneNumber(user.getPhoneNumber());
-                            userListObj.setProfileUrl(user.getProfileUrl());
+                            userListObj.setProfileUrI(user.getProfileUrI());
                             userListObj.setUserId(id);
                             users_List_Model.add(userListObj);
                             usersList.postValue(users_List_Model);

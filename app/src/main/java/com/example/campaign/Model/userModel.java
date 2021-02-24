@@ -1,28 +1,28 @@
 package com.example.campaign.Model;
 
-public class usersModel {
-    private String name,userId;
+public class userModel {
+    private String userName,userId;
     private String about;
     private String phoneNumber;
-    private String profileUrl;
+    private String profileUrI;
 
-    public usersModel(){
+    public userModel(){
 
     }
-    public usersModel(String name, String about, String phoneNumber, String profileUrl, String userId){
-        this.name = name;
+    public userModel(String userName, String about, String phoneNumber, String profileUrI, String userId){
+        this.userName = userName;
         this.about= about;
         this.phoneNumber=phoneNumber;
-        this.profileUrl=profileUrl;
+        this.profileUrI=profileUrI;
         this.userId=userId;
     }
 
-    public String getName() {
-        return name;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setUserName(String name) {
+        this.userName = name;
     }
 
     public String getAbout() {
@@ -41,12 +41,12 @@ public class usersModel {
         this.phoneNumber = phoneNumber;
     }
 
-    public void setProfileUrl(String profileUrl) {
-        this.profileUrl = profileUrl;
+    public void setProfileUrI(String profileUrI) {
+        this.profileUrI = profileUrI;
     }
 
-    public String getProfileUrl() {
-        return profileUrl;
+    public String getProfileUrI() {
+        return profileUrI;
     }
 
     public String getUserId() {
