@@ -2,18 +2,25 @@ package com.example.campaign.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.R;
 import com.example.campaign.Activities.viewImageActivity;
@@ -101,6 +108,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         private TextView message,time;
         private CircularImageView profilePic,messageStatus;
         private ZoomInImageView imageView;
+        private ProgressBar progressBar;
         public Holder(@NonNull View itemView) {
             super(itemView);
             imageView=itemView.findViewById(R.id.imageView);
@@ -108,7 +116,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
             message = itemView.findViewById(R.id.show_message);
             messageStatus=itemView.findViewById(R.id.message_status);
             time=itemView.findViewById(R.id.time);
-
+            progressBar=itemView.findViewById(R.id.progressBar);
 
         }
         void bind(final messageListModel messageList){
@@ -118,12 +126,26 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                     imageView.setVisibility(itemView.GONE);
                     message.setVisibility(itemView.VISIBLE);
                     time.setText(messageList.getTime());
+                    progressBar.setVisibility(itemView.GONE);
                     break;
                 case "IMAGE":
+                    progressBar.setVisibility(itemView.VISIBLE);
                     imageView.setVisibility(itemView.VISIBLE);
                     message.setVisibility(itemView.GONE);
                     time.setText(messageList.getTime());
-                    Glide.with(context).load(messageList.getImageUrI()).into(imageView);
+                    Glide.with(context).load(messageList.getImageUrI()).listener(new RequestListener<Drawable>() {
+                        @Override
+                        public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                            progressBar.setVisibility(View.GONE);
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                            progressBar.setVisibility(View.GONE);
+                            return false;
+                        }
+                    }).into(imageView);
                     imageView.setOnClickListener(view->  context.startActivity(new Intent(context, viewImageActivity.class)
                                     .putExtra("imageUrI",messageList.getImageUrI())
                                     .putExtra("profileUrI",messageList.getProfileUrI())

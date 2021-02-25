@@ -7,11 +7,11 @@
     android:orientation="vertical"
     tools:context=".Activities.viewImageActivity">
 
-    <com.jgabrielfreitas.core.BlurImageView
+    <ImageView
         android:id="@+id/backgroundView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:src="@drawable/wal"
+        android:src="@drawable/black"
         android:scaleType="centerCrop"
 
          />

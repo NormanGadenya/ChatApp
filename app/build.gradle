@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId "com.example.campaign"
-        minSdkVersion 19
+        minSdkVersion 23
         targetSdkVersion 30
         versionCode 1
         versionName "1.0"
@@ -61,6 +61,9 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'com.zolad:zoominimageview:1.0.0'
     implementation 'com.github.jgabrielfreitas:BlurImageView:1.0.1'
+    implementation 'jp.wasabeef:glide-transformations:4.3.0'
+
+
 
 
 }
