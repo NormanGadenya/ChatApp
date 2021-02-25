@@ -13,6 +13,7 @@
     <color name="deepBlue">#0B1830</color>
     <color name="deepLightBlue">#CD0B1830</color>
     <color name="red">#D62B1E</color>
-    <color name="dark_purple">#350C1A</color>
+    <color name="dark_purple">#271543</color>
     <color name="dark_grey">#1B1618</color>
+    <color name="BLUE_NCS">#2E86AB</color>
 </resources>

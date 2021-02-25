@@ -12,6 +12,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
@@ -47,7 +48,7 @@ import java.util.List;
 
 public class chatActivity extends AppCompatActivity {
 
-    private String otherUserId, message, name, profileUrI,text,date,time,messageStatus;
+    private String otherUserId, message, profileUrI,text,date,time,messageStatus,otherUserName;
     private FirebaseDatabase database;
     private List<messageListModel> list1 = new ArrayList<>();
     private RecyclerView recyclerView ;
@@ -57,6 +58,7 @@ public class chatActivity extends AppCompatActivity {
     private FirebaseUser user ;
     private StorageReference mStorageReference;
     private Uri selected;
+    public static final String sharedPreferences="sharedPrefs";
 
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -66,11 +68,14 @@ public class chatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_chat);
         user= FirebaseAuth.getInstance().getCurrentUser();
         InitialiseControllers();
-
         database = FirebaseDatabase.getInstance();
         mStorageReference= FirebaseStorage.getInstance().getReference();
+        if(otherUserId==null){
+            loadSharedPreferenceData();
+            System.out.println("otherUserId"+otherUserId);
+        }
 
-        userName.setText(name);
+        userName.setText(otherUserName);
         try{
             Glide.with(getApplicationContext()).load(profileUrI).into(profilePic);
 
@@ -80,8 +85,12 @@ public class chatActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
 
+        try{
+            getMessages();
+        }catch (Exception e){
+            Log.d("Error" ,e.getLocalizedMessage());
+        }
 
-        getMessages();
         final MediaPlayer mediaPlayer= MediaPlayer.create(this,R.raw.messagesound);
 
         sendButton.setOnClickListener(view -> {
@@ -113,6 +122,23 @@ public class chatActivity extends AppCompatActivity {
 
     }
 
+    private void loadSharedPreferenceData() {
+        SharedPreferences sharedPreferences=getSharedPreferences("sharedPreferences",MODE_PRIVATE);
+        otherUserName=sharedPreferences.getString("otherUserName",null);
+        otherUserId=sharedPreferences.getString("otherUserId",null);
+        profileUrI=sharedPreferences.getString("profileUrI",null);
+    }
+
+    private void saveSharedPreferenceData() {
+        SharedPreferences sharedPreferences =getSharedPreferences("sharedPreferences",MODE_PRIVATE);
+        SharedPreferences.Editor editor=sharedPreferences.edit();
+        editor.putString("otherUserName",otherUserName);
+        editor.putString("otherUserId",otherUserId);
+        editor.putString("profileUrI",profileUrI);
+        editor.apply();
+    }
+
+
     private void InitialiseControllers() {
         ActionBar actionBar=getSupportActionBar();
         actionBar.setTitle("");
@@ -125,14 +151,20 @@ public class chatActivity extends AppCompatActivity {
         attachButton= findViewById(R.id.attachButton);
         profilePic=findViewById(R.id.image_profile);
         newMessage=findViewById(R.id.message_container);
-        otherUserId=getIntent().getStringExtra("userID");
-        name=getIntent().getStringExtra("userName");
-        profileUrI =getIntent().getStringExtra("userProfile");
+        otherUserId=getIntent().getStringExtra("userId");
+        otherUserName=getIntent().getStringExtra("userName");
+        profileUrI =getIntent().getStringExtra("profileUrI");
+        if(otherUserId!=null){
+            saveSharedPreferenceData();
+        }
+
         userName=findViewById(R.id.userName);
         recyclerView=findViewById(R.id.recyclerView1);
     }
 
     private void getMessages(){
+
+
         DatabaseReference messageRef=database.getReference().child("chats").child(user.getUid()).child(otherUserId);
         messageRef.addValueEventListener(new ValueEventListener(){
             @Override
@@ -149,7 +181,7 @@ public class chatActivity extends AppCompatActivity {
                         String downloadUri =message.getImageUrI();
 
                         String receiver = message.getReceiver();
-                        list1.add(new messageListModel(text, receiver,date,time,messageStatus,downloadUri, type));
+                        list1.add(new messageListModel(text, receiver,date,time,messageStatus,downloadUri, type,otherUserName,profileUrI));
 
 
                         if (list1.size() >= 1) {
@@ -189,6 +221,7 @@ public class chatActivity extends AppCompatActivity {
             }
 
         }
+
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -240,5 +273,7 @@ public class chatActivity extends AppCompatActivity {
         DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         return myDateObj.format(dateObj);
     }
+
+
 
 }

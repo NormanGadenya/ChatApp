@@ -25,11 +25,11 @@ import java.util.concurrent.TimeUnit;
 public class signUpActivity extends AppCompatActivity {
     private FirebaseAuth Auth;
     private EditText phoneNumberEdit;
-    private Button sendOTPBtn;
     private PhoneAuthProvider.OnVerificationStateChangedCallbacks mCallBacks;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Button sendOTPBtn;
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signup);
         sendOTPBtn=findViewById(R.id.button);
@@ -62,24 +62,7 @@ public class signUpActivity extends AppCompatActivity {
             public void onVerificationFailed(@NonNull FirebaseException e) {
                 Toast.makeText(signUpActivity.this,e.getMessage(),Toast.LENGTH_LONG).show();
             }
-
-//            @Override
-//            public void onCodeSent(@NonNull String s, @NonNull PhoneAuthProvider.ForceResendingToken forceResendingToken) {
-//                super.onCodeSent(s, forceResendingToken);
-//
-//                //sometime the code is not detected automatically
-//                //so user has to manually enter the code
-//
-//                new Handler().postDelayed(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        Intent otpIntent = new Intent(signUpActivity.this , otpActivity.class);
-//                        otpIntent.putExtra("auth" , s);
-//                        startActivity(otpIntent);
-//                    }
-//                }, 10000);
-//
-//            }
+            
         };
     }
 

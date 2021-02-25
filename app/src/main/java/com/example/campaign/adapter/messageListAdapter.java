@@ -2,6 +2,7 @@ package com.example.campaign.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +20,7 @@ import com.example.campaign.Activities.viewImageActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.mikhaellopez.circularimageview.CircularImageView;
+import com.zolad.zoominimageview.ZoomInImageView;
 
 
 import java.util.ArrayList;
@@ -98,7 +100,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     public class Holder extends RecyclerView.ViewHolder {
         private TextView message,time;
         private CircularImageView profilePic,messageStatus;
-        private ImageView imageView;
+        private ZoomInImageView imageView;
         public Holder(@NonNull View itemView) {
             super(itemView);
             imageView=itemView.findViewById(R.id.imageView);
@@ -122,12 +124,16 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                     message.setVisibility(itemView.GONE);
                     time.setText(messageList.getTime());
                     Glide.with(context).load(messageList.getImageUrI()).into(imageView);
-                    itemView.setOnClickListener(view->  context.startActivity(new Intent(context, viewImageActivity.class)
-                                    .putExtra("imageUrI",messageList.getImageUrI()
-                                    )
+                    imageView.setOnClickListener(view->  context.startActivity(new Intent(context, viewImageActivity.class)
+                                    .putExtra("imageUrI",messageList.getImageUrI())
+                                    .putExtra("profileUrI",messageList.getProfileUrI())
+                                    .putExtra("userId",messageList.getReceiver())
+                                    .putExtra("userName",messageList.getUserName())
 
                             )
+
                     );
+
                     break;
 
             }

@@ -4,21 +4,28 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/deepBlue"
     android:orientation="vertical"
     tools:context=".Activities.viewImageActivity">
 
+    <com.jgabrielfreitas.core.BlurImageView
+        android:id="@+id/backgroundView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/wal"
+        android:scaleType="centerCrop"
 
-    <ImageView
+         />
+
+    <com.zolad.zoominimageview.ZoomInImageView
         android:id="@+id/imageView2"
-        android:maxHeight="300dp"
-        android:maxWidth="300dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:maxWidth="300dp"
+        android:maxHeight="300dp"
+        app:layout_constraintBottom_toBottomOf="@+id/backgroundView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/backgroundView"
+        app:layout_constraintTop_toTopOf="@+id/backgroundView"
         tools:srcCompat="@tools:sample/backgrounds/scenic" />
 
 

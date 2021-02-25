@@ -1,21 +1,32 @@
 package com.example.campaign.ui.main;
 
+import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.campaign.Activities.MainActivity;
+import com.example.campaign.Activities.registrationActivity;
 import com.example.campaign.Model.chatListModel;
 import com.example.campaign.R;
 import com.example.campaign.adapter.chatListAdapter;
@@ -39,11 +50,11 @@ public class PlaceholderFragment extends Fragment {
     private Context context;
     private chatListAdapter chatListAdapter;
     private userListAdapter userListAdapter;
+    private  RecyclerView recyclerView;
 
-    public List<String> contacts;
     public  Map<String, String> namePhoneMap = new HashMap<String, String>();
     public FirebaseDatabase database;
-    private ImageView back;
+
     private int CONTACTS_REQUEST=110;
     private int index = 1;
 
@@ -71,12 +82,9 @@ public class PlaceholderFragment extends Fragment {
     public View onCreateView(
             @NonNull LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        String permGranted = this.getArguments().getString("perGranted");
         context=getContext();
-
-
         View root = inflater.inflate(R.layout.fragment_main, container, false);
-        final RecyclerView recyclerView= root.findViewById(R.id.recyclerView);
+        recyclerView= root.findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
         if (index==1){
             pageViewModel.initChats();
@@ -88,14 +96,21 @@ public class PlaceholderFragment extends Fragment {
                 recyclerView.setAdapter(chatListAdapter);
             }
         }else{
+            if (ContextCompat.checkSelfPermission(getContext(),
+                    Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+                    pageViewModel.initContacts(getPhoneNumbers());
+                    userListAdapter=new userListAdapter(pageViewModel.getUsersData().getValue(),context);
+                    pageViewModel.getUsersData().observe(getViewLifecycleOwner(), usersList -> userListAdapter.notifyDataSetChanged());
 
-            pageViewModel.initContacts(getPhoneNumbers());
-            userListAdapter=new userListAdapter(pageViewModel.getUsersData().getValue(),context);
-            pageViewModel.getUsersData().observe(getViewLifecycleOwner(), usersList -> userListAdapter.notifyDataSetChanged());
+                    if (userListAdapter!=null){
+                        recyclerView.setAdapter(userListAdapter);
+                    }
 
-            if (userListAdapter!=null){
-                recyclerView.setAdapter(userListAdapter);
+
+            } else {
+                requestContactsPermission();
             }
+
 
 
         }
@@ -145,6 +160,47 @@ public class PlaceholderFragment extends Fragment {
         return phoneNumbers;
     }
 
+    private void requestContactsPermission() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
+                Manifest.permission.READ_CONTACTS)) {
+            new AlertDialog.Builder(getContext())
+                    .setTitle("Permission needed")
+                    .setMessage("This permission is needed because we require access to your contacts")
+                    .setPositiveButton("ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            ActivityCompat.requestPermissions(getActivity(),
+                                    new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST);
+                        }
+                    })
+                    .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    })
+                    .create().show();
+        } else {
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST);
+        }
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == CONTACTS_REQUEST)  {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                pageViewModel.initContacts(getPhoneNumbers());
+                userListAdapter=new userListAdapter(pageViewModel.getUsersData().getValue(),context);
+                pageViewModel.getUsersData().observe(getViewLifecycleOwner(), usersList -> userListAdapter.notifyDataSetChanged());
+                if (userListAdapter!=null){
+                    recyclerView.setAdapter(userListAdapter);
+                }
+
+            } else {
+                Toast.makeText(getContext(), "Permission DENIED", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 
 
 

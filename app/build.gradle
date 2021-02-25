@@ -29,6 +29,13 @@ android {
     }
 }
 
+allprojects {
+    repositories {
+        jcenter()
+        maven { url "https://jitpack.io" }
+    }
+}
+
 dependencies {
     implementation 'com.eightbitlab:supportrenderscriptblur:1.0.2'
     implementation 'com.squareup.picasso:picasso:2.5.2'
@@ -52,4 +59,8 @@ dependencies {
     implementation 'com.mikhaellopez:circularimageview:3.2.0'
     implementation 'com.github.bumptech.glide:glide:3.7.0'
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
+    implementation 'com.zolad:zoominimageview:1.0.0'
+    implementation 'com.github.jgabrielfreitas:BlurImageView:1.0.1'
+
+
 }

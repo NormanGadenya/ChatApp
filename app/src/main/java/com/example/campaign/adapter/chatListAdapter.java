@@ -52,9 +52,9 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
 
 
         holder.itemView.setOnClickListener(v -> context.startActivity(new Intent(context, chatActivity.class)
-                .putExtra("userID",chatlist.getUserId())
+                .putExtra("userId",chatlist.getUserId())
                 .putExtra("userName",chatlist.getUserName())
-                .putExtra("userProfile",chatlist.getProfileUrI())));
+                .putExtra("profileUrI",chatlist.getProfileUrI())));
 
     }
 

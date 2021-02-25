@@ -1,15 +1,15 @@
 package com.example.campaign.Model;
 
 public class messageListModel {
-    private String text;
-    private String receiver,date,time,messageStatus, imageUrI,type;
+    private String text,profileUrI;
+    private String receiver,date,time,messageStatus, imageUrI,type,userName;
 
 
 
     public messageListModel(){
 
     }
-    public messageListModel(String text, String sender, String date, String time, String messageStatus, String imageUrI, String type){
+    public messageListModel(String text, String sender, String date, String time, String messageStatus, String imageUrI, String type,String userName,String profileUrI){
 
         this.text = text;
         this.receiver = sender;
@@ -18,6 +18,8 @@ public class messageListModel {
         this.messageStatus = messageStatus;
         this.imageUrI=imageUrI;
         this.type = type;
+        this.userName=userName;
+        this.profileUrI=profileUrI;
     }
 
     public String getReceiver() {
@@ -74,5 +76,21 @@ public class messageListModel {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getProfileUrI() {
+        return profileUrI;
+    }
+
+    public void setProfileUrI(String profileUrI) {
+        this.profileUrI = profileUrI;
     }
 }

@@ -25,11 +25,11 @@
                     android:padding="8dp"
                     android:layout_height="wrap_content">
 
-                    <ImageView
+                    <com.zolad.zoominimageview.ZoomInImageView
                         android:id="@+id/imageView"
                         android:layout_width="200dp"
                         android:layout_height="200dp"
-                        android:visibility="gone"
+                        android:visibility="visible"
                         app:layout_constraintEnd_toStartOf="@+id/time"
                         app:layout_constraintTop_toTopOf="parent"
                         app:srcCompat="@drawable/ic_male_avatar_svgrepo_com" />
@@ -42,9 +42,11 @@
                         android:maxWidth="200dp"
                         android:padding="5dp"
                         android:text="yes"
-                        android:textColor="@color/white"
+                        android:textColor="?colorOnSecondary"
+                        android:visibility="visible"
                         app:layout_constraintEnd_toStartOf="@+id/time"
-                        app:layout_constraintTop_toBottomOf="@+id/imageView" />
+                        app:layout_constraintTop_toBottomOf="@+id/imageView"
+                        tools:visibility="visible" />
 
                     <TextView
                         android:id="@+id/time"
@@ -54,7 +56,7 @@
                         android:layout_marginBottom="2dp"
                         android:padding="5dp"
                         android:text="00:00"
-                        android:textColor="@color/teal_200"
+                        android:textColor="@android:color/primary_text_light"
                         android:textSize="10sp"
                         app:layout_constraintBottom_toTopOf="@+id/message_status"
                         app:layout_constraintEnd_toEndOf="parent" />
@@ -68,7 +70,7 @@
                         android:layout_marginEnd="2dp"
                         android:layout_marginBottom="2dp"
                         android:elevation="10dp"
-                        android:visibility="visible"
+                        android:visibility="gone"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="@+id/time"
                         app:srcCompat="@drawable/circle_read" />
