@@ -58,7 +58,7 @@ public class userListAdapter extends RecyclerView.Adapter<userListAdapter.Holder
                 context.startActivity(new Intent(context, chatActivity.class)
                         .putExtra("userId",userList.getUserId())
                         .putExtra("userName",userList.getUserName())
-                        .putExtra("userProfile",userList.getProfileUrI())
+                        .putExtra("profileUrI",userList.getProfileUrI())
 
                 );
             }

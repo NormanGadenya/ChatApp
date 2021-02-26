@@ -11,15 +11,19 @@ import android.app.Activity;
 import android.app.AlertDialog;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 
@@ -29,6 +33,8 @@ import com.example.campaign.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.PhoneAuthOptions;
+import com.google.firebase.auth.PhoneAuthProvider;
 import com.google.firebase.auth.UserInfo;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -37,12 +43,12 @@ import com.google.firebase.storage.StorageReference;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
 import java.io.ByteArrayOutputStream;
+import java.util.concurrent.TimeUnit;
 
 
 public class registrationActivity extends AppCompatActivity {
     private Button submit_button;
     private EditText Name;
-    private EditText About;
     private FirebaseDatabase database;
     private FirebaseAuth firebaseAuth;
     private FloatingActionButton selProfilePic,gallery_button,camera_button,remove_button;
@@ -50,10 +56,12 @@ public class registrationActivity extends AppCompatActivity {
     private String phoneNumber;
     private View wrapper;
     private Uri selected;
+    private ProgressBar progressBar;
     private CircularImageView profilePic;
     private static final int CAMERA_REQUEST = 1888;
     private static final int GALLERY_REQUEST = 100;
     private StorageReference mStorageReference;
+    private boolean btnSelected=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,12 +73,15 @@ public class registrationActivity extends AppCompatActivity {
 
         InitializeControllers();
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        selProfilePic.setOnClickListener(v -> wrapper.setVisibility(View.VISIBLE));
+        selProfilePic.setOnClickListener(v -> {
+            wrapper.setVisibility(View.VISIBLE);
+            Name.setEnabled(false);
+            btnSelected=true;
+        });
         submit_button.setOnClickListener(v -> {
             String name = Name.getText().toString();
-            String aboutPerson=About.getText().toString();
-
-            if(name.isEmpty() || aboutPerson.isEmpty()){
+            progressBar.setVisibility(View.VISIBLE);
+            if(name.isEmpty()){
                 Toast.makeText(registrationActivity.this, "Please fill in the fields", Toast.LENGTH_SHORT).show();
             }else{
                 if (user!=null) {
@@ -78,16 +89,40 @@ public class registrationActivity extends AppCompatActivity {
                     for (UserInfo profileData : user.getProviderData()){
                         userId=profileData.getUid();
                         phoneNumber=profileData.getPhoneNumber();
-                        uploadFile(name,aboutPerson,phoneNumber,userId);
+                        uploadFile(name,phoneNumber,userId);
                     }
                 }
             }
         });
+        Name.setOnKeyListener(new View.OnKeyListener() {
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                // If the event is a key-down event on the "enter" button
+                if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
+                        (keyCode == KeyEvent.KEYCODE_ENTER)) {
+
+                    if (user!=null) {
+                        progressBar.setVisibility(View.VISIBLE);
+                        for (UserInfo profileData : user.getProviderData()){
+                            String name=Name.getText().toString();
+                            userId=profileData.getUid();
+                            phoneNumber=profileData.getPhoneNumber();
+                            uploadFile(name,phoneNumber,userId);
+
+                        }
+                    }
+
+                    return true;
+                }
+                return false;
+            }
+        });
+
         gallery_button.setOnClickListener(v -> {
             if (ContextCompat.checkSelfPermission(registrationActivity.this,
                     Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
                     Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                     startActivityForResult(intent,GALLERY_REQUEST);
+                    Name.setEnabled(false);
             } else {
                 requestStoragePermission();
             }
@@ -97,6 +132,7 @@ public class registrationActivity extends AppCompatActivity {
                     Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
                 Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 startActivityForResult(cameraIntent,  CAMERA_REQUEST);
+                Name.setEnabled(false);
             } else {
                 requestCameraPermission();
             }
@@ -104,27 +140,28 @@ public class registrationActivity extends AppCompatActivity {
         });
         remove_button.setOnClickListener(v -> {
             selected=null;
-            profilePic.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
+            profilePic.setImageResource(R.drawable.person);
             wrapper.setVisibility(View.GONE);
         });
     }
 
     private void InitializeControllers() {
         Name=findViewById(R.id.editTextPersonName);
-        About= findViewById(R.id.editTextAboutPerson);
-        submit_button=findViewById(R.id.Registration_button);
+        submit_button=findViewById(R.id.RegistrationButton);
         selProfilePic=findViewById(R.id.selProfilePic);
         gallery_button=findViewById(R.id.gallery_button);
         remove_button=findViewById(R.id.remove_button);
         camera_button=findViewById(R.id.camera_button);
         wrapper=findViewById(R.id.wrapper_sel_profile);
         profilePic=findViewById(R.id.image_profile);
+        progressBar=findViewById(R.id.progressBar1);
     }
 
 
-    private void uploadFile(String name,String aboutPerson,String phoneNumber,String userId) {
+    private void uploadFile(String name,String phoneNumber,String userId) {
         
         if (selected != null) {
+            Name.setEnabled(true);
             StorageReference fileReference = mStorageReference.child(System.currentTimeMillis()
                     + ".jpg");
 
@@ -142,13 +179,15 @@ public class registrationActivity extends AppCompatActivity {
                     userModel.setUserName(name);
                     userModel.setPhoneNumber(phoneNumber);
                     userModel.setProfileUrI(downloadUri.toString());
-                    userModel.setAbout(aboutPerson);
+
+
                     try{
                         myRef.child("UserDetails").child(userId).setValue(userModel);
 
                     }catch(Exception e){
                         System.out.println(e.getLocalizedMessage());
                     }
+                    progressBar.setVisibility(View.GONE);
                     Intent chatList=new Intent(registrationActivity.this, signUpActivity.class);
                     startActivity(chatList);
 
@@ -156,6 +195,17 @@ public class registrationActivity extends AppCompatActivity {
             });
         } else {
             Toast.makeText(this, "No file selected", Toast.LENGTH_SHORT).show();
+            userModel userModel =new userModel();
+            userModel.setUserName(name);
+            userModel.setPhoneNumber(phoneNumber);
+            try{
+                DatabaseReference myRef = database.getReference();
+                myRef.child("UserDetails").child(userId).setValue(userModel);
+
+            }catch(Exception e){
+                System.out.println(e.getLocalizedMessage());
+            }
+
         }
     }
     private Uri getImageUri( Bitmap photo) {
@@ -198,6 +248,15 @@ public class registrationActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (wrapper.isShown() && !btnSelected){
+            wrapper.setVisibility(View.GONE);
+            return true;
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+    @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == GALLERY_REQUEST)  {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -226,9 +285,12 @@ public class registrationActivity extends AppCompatActivity {
                 Bitmap bitmap=MediaStore.Images.Media.getBitmap(getContentResolver(),selected);
                 profilePic.setImageBitmap(bitmap);
                 wrapper.setVisibility(View.GONE);
+                Name.setEnabled(true);
 
             }catch(Exception e){
                 Log.d("error",e.getMessage());
+                Name.setEnabled(true);
+
             }
         }
         else if(requestCode ==CAMERA_REQUEST && resultCode== Activity.RESULT_OK && data!=null){
@@ -237,12 +299,18 @@ public class registrationActivity extends AppCompatActivity {
                 selected=getImageUri(bitmap);
                 profilePic.setImageBitmap(bitmap);
                 wrapper.setVisibility(View.GONE);
+                Name.setEnabled(true);
 
             }catch(Exception e){
                 Log.d("error",e.getMessage());
+                Name.setEnabled(true);
             }
 
         }
+        else{
+            Name.setEnabled(true);
+        }
 
     }
+
 }

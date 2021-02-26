@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="?colorPrimary"
+
     tools:context=".Activities.registrationActivity">
 
 <LinearLayout
@@ -13,7 +14,7 @@
     android:elevation="2dp"
     android:orientation="vertical"
     android:weightSum="4"
-    android:background="@color/deepBlue"
+    android:background="?colorPrimary"
 
     >
 
@@ -25,7 +26,7 @@
             android:layout_marginRight="30dp"
             android:layout_centerVertical="true"
             android:orientation="vertical"
-            android:layout_weight="1"
+            android:layout_weight=".5"
             >
 
             <TextView
@@ -51,82 +52,86 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="3"
+        android:layout_weight="3.5"
         android:background="@drawable/card_background"
         android:elevation="50dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"
             android:layout_marginLeft="50dp"
+            android:layout_centerVertical="true"
             android:layout_marginRight="50dp"
             android:orientation="vertical">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="100dp">
+                android:layout_height="wrap_content">
 
                 <com.mikhaellopez.circularimageview.CircularImageView
                     android:id="@+id/image_profile"
                     android:layout_width="100dp"
                     android:layout_height="100dp"
-                    android:layout_marginStart="104dp"
+
+                    app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/ic_male_avatar_svgrepo_com" />
+                    app:srcCompat="@drawable/person" />
 
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
                     android:id="@+id/selProfilePic"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_margin="@dimen/fab_margin"
-                    android:layout_marginTop="44dp"
+
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.705"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="@+id/image_profile"
+                    app:layout_constraintEnd_toEndOf="@+id/image_profile"
                     app:srcCompat="@drawable/camera" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
-                android:layout_margin="8dp">
+
+                >
 
                 <com.google.android.material.textfield.TextInputEditText
-
+                    android:singleLine="true"
                     android:id="@+id/editTextPersonName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@color/white"
+                    android:inputType="text"
                     android:hint="@string/name" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputLayout
+
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
-                android:layout_margin="8dp">
+                android:layout_height="wrap_content">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editTextAboutPerson"
-                    android:layout_width="match_parent"
+                <Button
+
+                    android:id="@+id/RegistrationButton"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@color/white"
-                    android:hint="@string/about_person" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:text="@string/next"
+                    app:layout_constraintEnd_toStartOf="@+id/progressBar1"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
-            <Button
-                android:id="@+id/Registration_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="110dp"
-                android:layout_marginRight="110dp"
-                android:text="@string/next" />
+                <ProgressBar
+                    android:id="@+id/progressBar1"
+                    style="?android:attr/progressBarStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toEndOf="@+id/RegistrationButton"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
 
         </LinearLayout>
@@ -140,6 +145,7 @@
         android:layout_height="match_parent"
         android:layout_gravity="bottom"
         android:elevation="5dp"
+
         >
 
         <LinearLayout
@@ -148,22 +154,18 @@
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:visibility="gone"
+            android:gravity="bottom"
 
             android:weightSum="2">
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1.5">
 
-
-            </RelativeLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
+
                 android:layout_weight="0.5"
-                android:background="@drawable/card_background2"
+                android:background="@drawable/card_background3"
                 android:orientation="vertical"
                 android:weightSum="2"
 
@@ -178,7 +180,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="sans-serif-condensed-medium"
-                        android:layout_marginTop="16dp"
                         android:text="Profile Picture"
                         android:textColor="@color/white"
                         android:textSize="20dp"

@@ -1,15 +1,20 @@
 package com.example.campaign.adapter;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,16 +38,20 @@ import com.zolad.zoominimageview.ZoomInImageView;
 import java.util.ArrayList;
 import java.util.List;
 
+import static android.content.Context.VIBRATOR_SERVICE;
+
 
 public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.Holder> {
     private List<messageListModel> list;
     public Context context;
     private View view;
-    private int count=0;
+    int lastPosition=-1;
+
     private static final int MESSAGE_LEFT=0;
     private static final int MESSAGE_RIGHT=1;
     private FirebaseUser user;
     private String profileUrI;
+    private Vibrator vibrator;
 
     public messageListAdapter(List<messageListModel> list, Context context,String profileUrI) {
         this.list = list;
@@ -68,27 +77,11 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
         holder.bind(list.get(position));
 
-
-        try{
-            Glide.with(context).load(profileUrI).into(holder.profilePic);
-
-        }catch(Exception e){
-            holder.profilePic.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
-
-        }
-
     }
 
     @Override
     public int getItemCount() {
         return list.size();
-    }
-    public List<Integer> getNumbersInRange(int start, int end) {
-        List<Integer> result = new ArrayList<>();
-        for (int i = start; i < end; i++) {
-            result.add(i);
-        }
-        return result;
     }
 
     @Override
@@ -111,6 +104,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         private ProgressBar progressBar;
         public Holder(@NonNull View itemView) {
             super(itemView);
+
             imageView=itemView.findViewById(R.id.imageView);
             profilePic=itemView.findViewById(R.id.image_profile);
             message = itemView.findViewById(R.id.show_message);
@@ -127,9 +121,19 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                     message.setVisibility(itemView.VISIBLE);
                     time.setText(messageList.getTime());
                     progressBar.setVisibility(itemView.GONE);
+                    message.setOnLongClickListener(new View.OnLongClickListener() {
+                        @SuppressLint("MissingPermission")
+                        @Override
+                        public boolean onLongClick(View v) {
+                            Toast.makeText(context,"itemClicked",Toast.LENGTH_LONG).show();
+                            vibrator=(Vibrator)context.getSystemService(VIBRATOR_SERVICE);
+                            vibrator.vibrate(50);
+                            return false;
+                        }
+                    });
                     break;
                 case "IMAGE":
-                    progressBar.setVisibility(itemView.VISIBLE);
+                    //progressBar.setVisibility(itemView.VISIBLE);
                     imageView.setVisibility(itemView.VISIBLE);
                     message.setVisibility(itemView.GONE);
                     time.setText(messageList.getTime());

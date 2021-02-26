@@ -2,16 +2,14 @@ package com.example.campaign.Model;
 
 public class userModel {
     private String userName,userId;
-    private String about;
     private String phoneNumber;
     private String profileUrI;
 
     public userModel(){
 
     }
-    public userModel(String userName, String about, String phoneNumber, String profileUrI, String userId){
+    public userModel(String userName, String phoneNumber, String profileUrI, String userId){
         this.userName = userName;
-        this.about= about;
         this.phoneNumber=phoneNumber;
         this.profileUrI=profileUrI;
         this.userId=userId;
@@ -25,13 +23,7 @@ public class userModel {
         this.userName = name;
     }
 
-    public String getAbout() {
-        return about;
-    }
 
-    public void setAbout(String about) {
-        this.about = about;
-    }
 
     public String getPhoneNumber() {
         return phoneNumber;

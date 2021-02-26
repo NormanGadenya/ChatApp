@@ -32,7 +32,7 @@ public class Repo {
     static Repo instance;
     private ArrayList<chatListModel> chats_List_Model=new ArrayList<>();
     private ArrayList<userModel> users_List_Model=new ArrayList<>();
-
+    private FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
     private FirebaseDatabase database;
     private List<String> chatUserIds,chatUserNames;
     private String lastMessage,date,time;
@@ -73,17 +73,20 @@ public class Repo {
 
     private void loadChatList(){
         database = FirebaseDatabase.getInstance();
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
         chatUserIds=new ArrayList<>();
         chatUserNames=new ArrayList<>();
         chatUserIds.clear();
-        DatabaseReference chatUserIdRef=database.getReference().child("chats").child(user.getUid());
+
+        DatabaseReference chatUserIdRef=database.getReference().child("chats").child(firebaseUser.getUid());
         DatabaseReference chatUserNameRef=database.getReference().child("UserDetails");
         chatUserIdRef.addValueEventListener(new ValueEventListener(){
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                chats_List_Model.clear();
                 for (DataSnapshot snapshot:dataSnapshot.getChildren()){
                     String userId= Objects.requireNonNull(snapshot.getKey());
+
                     chatUserIdRef.child(snapshot.getKey()).addValueEventListener(new ValueEventListener(){
                         @Override
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -126,6 +129,7 @@ public class Repo {
                             @RequiresApi(api = Build.VERSION_CODES.O)
                             @Override
                             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
                                 chatListModel user=dataSnapshot.getValue(chatListModel.class);
                                 String userName=user.getUserName();
                                 String profileUrl=user.getProfileUrI();
@@ -174,19 +178,22 @@ public class Repo {
 
     private void loadUsers(List<String> contacts){
         DatabaseReference userDetails=database.getReference().child("UserDetails");
+
         userDetails.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 List <String> phoneNumbersList=new ArrayList<>();
-
+                users_List_Model.clear();
                 for (DataSnapshot dataSnapshot:snapshot.getChildren()){
+
                     userModel userListObj=new userModel();
                     String id=dataSnapshot.getKey();
                     userModel user=dataSnapshot.getValue(userModel.class);
                     String phoneNumber=user.getPhoneNumber();
                     phoneNumbersList.add(phoneNumber);
+
                     int i= Collections.frequency(phoneNumbersList,phoneNumber);
-                    if (contacts!=null) {
+                    if (contacts!=null && !firebaseUser.getPhoneNumber().equals(phoneNumber)) {
                         if (i <=1 && contacts.contains(phoneNumber)){
                             userListObj.setUserName(user.getUserName());
                             userListObj.setPhoneNumber(user.getPhoneNumber());

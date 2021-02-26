@@ -13,6 +13,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
@@ -20,13 +21,20 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.widget.ImageButton;
+import android.view.MenuInflater;
 
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.R;
 import com.example.campaign.adapter.messageListAdapter;
@@ -58,7 +66,9 @@ public class chatActivity extends AppCompatActivity {
     private FirebaseUser user ;
     private StorageReference mStorageReference;
     private Uri selected;
-    public static final String sharedPreferences="sharedPrefs";
+    private MenuInflater menuInflater;
+    private ProgressBar progressBar;
+
 
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -77,11 +87,33 @@ public class chatActivity extends AppCompatActivity {
 
         userName.setText(otherUserName);
         try{
-            Glide.with(getApplicationContext()).load(profileUrI).into(profilePic);
+            Glide.with(getApplicationContext()).load(profileUrI).listener(new RequestListener<Drawable>() {
+                @Override
+                public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                    progressBar.setVisibility(View.GONE);
+                    return false;
+
+                }
+
+                @Override
+                public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                    progressBar.setVisibility(View.GONE);
+                    return false;
+                }
+            }).into(profilePic);
+            profilePic.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent =new Intent(getApplicationContext(),viewImageActivity.class);
+                    intent.putExtra("imageUrI",profileUrI);
+                    startActivity(intent);
+                }
+            });
 
         }catch(Exception e){
             profilePic.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
         }
+
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
 
@@ -151,6 +183,7 @@ public class chatActivity extends AppCompatActivity {
         attachButton= findViewById(R.id.attachButton);
         profilePic=findViewById(R.id.image_profile);
         newMessage=findViewById(R.id.message_container);
+        progressBar=findViewById(R.id.progressBar2);
         otherUserId=getIntent().getStringExtra("userId");
         otherUserName=getIntent().getStringExtra("userName");
         profileUrI =getIntent().getStringExtra("profileUrI");
@@ -226,7 +259,7 @@ public class chatActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void uploadFile(String userId, String otherUserId) {
-
+        ProgressBar progressBar=findViewById(R.id.progressBar);
         if (selected != null) {
             StorageReference fileReference = mStorageReference.child(System.currentTimeMillis()
                     + ".jpg");
@@ -247,11 +280,15 @@ public class chatActivity extends AppCompatActivity {
                     message.setDate(getDate());
                     message.setType("IMAGE");
                     message.setReceiver(otherUserId);
+
                     try{
                         myRef.child("chats").child(userId).child(otherUserId).push().setValue(message);
+                        myRef.child("chats").child(otherUserId).child(userId).push().setValue(message);
+
 
                     }catch(Exception e){
                         Log.d("error",e.getLocalizedMessage());
+                        progressBar.setVisibility(View.GONE);
                     }
                 }
             });
@@ -274,6 +311,10 @@ public class chatActivity extends AppCompatActivity {
         return myDateObj.format(dateObj);
     }
 
-
-
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        menuInflater =getMenuInflater();
+        menuInflater.inflate(R.menu.menu,menu);
+        return true;
+    }
 }

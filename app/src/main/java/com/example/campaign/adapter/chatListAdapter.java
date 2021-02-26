@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -51,10 +53,15 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
         }
 
 
-        holder.itemView.setOnClickListener(v -> context.startActivity(new Intent(context, chatActivity.class)
+        holder.itemView.setOnClickListener(v -> {context.startActivity(new Intent(context, chatActivity.class)
                 .putExtra("userId",chatlist.getUserId())
                 .putExtra("userName",chatlist.getUserName())
-                .putExtra("profileUrI",chatlist.getProfileUrI())));
+                .putExtra("profileUrI",chatlist.getProfileUrI())
+
+        );
+
+
+        });
 
     }
 
@@ -76,4 +83,6 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
             profile = itemView.findViewById(R.id.image_profile);
         }
     }
+
+
 }
