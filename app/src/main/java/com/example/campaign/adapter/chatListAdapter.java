@@ -2,6 +2,7 @@ package com.example.campaign.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -18,6 +20,8 @@ import com.example.campaign.Model.chatListModel;
 import com.example.campaign.R;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 
@@ -37,6 +41,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
         return new Holder(view);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
 
@@ -44,7 +49,12 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
 
         holder.tvName.setText(chatlist.getUserName());
         holder.tvDesc.setText(chatlist.getDescription());
-        holder.tvDate.setText(chatlist.getDate());
+        if (getDate().equals(chatlist.getDate())){
+            holder.tvDate.setText(chatlist.getTime());
+        }else{
+            holder.tvDate.setText(chatlist.getDate());
+        }
+
 
         if (chatlist.getProfileUrI()==null){
             holder.profile.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
@@ -83,6 +93,15 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
             profile = itemView.findViewById(R.id.image_profile);
         }
     }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private String getDate(){
+        LocalDateTime myDateObj = LocalDateTime.now();
+        DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        return myDateObj.format(dateObj);
+    }
+
 
 
 }

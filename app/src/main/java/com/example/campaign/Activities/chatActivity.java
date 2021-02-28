@@ -22,6 +22,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
 import android.view.MenuInflater;
@@ -316,5 +317,23 @@ public class chatActivity extends AppCompatActivity {
         menuInflater =getMenuInflater();
         menuInflater.inflate(R.menu.menu,menu);
         return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+
+                onBackPressed();
+                break;
+        }
+        return true;
+    }
+
+    @Override
+    public void onBackPressed() {
+        Intent mainIntent = new Intent(chatActivity.this , chatListActivity.class);
+        startActivity(mainIntent);
+        finish();
     }
 }

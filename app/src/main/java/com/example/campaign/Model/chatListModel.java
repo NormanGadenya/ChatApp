@@ -4,17 +4,18 @@ public class chatListModel {
     private String userId;
     private String userName;
     private String description;
-    private String date;
+    private String date,time;
     private String phoneNumber, profileUrI;
 
     public chatListModel() {
     }
 
-    public chatListModel(String userId, String userName, String description, String date, String profileUrI) {
+    public chatListModel(String userId, String userName, String description, String date, String time, String profileUrI) {
         this.userId = userId;
         this.userName = userName;
         this.description = description;
         this.date = date;
+        this.time = time;
         this.profileUrI=profileUrI;
 
 
@@ -67,5 +68,13 @@ public class chatListModel {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
     }
 }

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-
+    android:background="?colorPrimaryVariant"
     tools:context=".Activities.chatActivity">
 
 
@@ -14,16 +14,17 @@
         android:layout_width="match_parent"
         android:layoutAnimation="@anim/layout_anim"
         android:layout_height="0dp"
+
         app:layout_constraintBottom_toTopOf="@+id/constraint_layout2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:background="#41000000"
         android:id="@+id/constraint_layout2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#80FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
         android:padding="5dp"
         app:layout_constraintEnd_toEndOf="parent">

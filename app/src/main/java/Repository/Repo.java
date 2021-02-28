@@ -1,6 +1,7 @@
 package Repository;
 
 import android.os.Build;
+import android.os.Handler;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -30,13 +31,16 @@ import java.util.Objects;
 
 public class Repo {
     static Repo instance;
+
     private ArrayList<chatListModel> chats_List_Model=new ArrayList<>();
     private ArrayList<userModel> users_List_Model=new ArrayList<>();
     private FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
     private FirebaseDatabase database;
-    private List<String> chatUserIds,chatUserNames;
+
+    private List<String> chatUserIds;
     private String lastMessage,date,time;
     private chatListModel chatListModelObj;
+    private Handler handler=new Handler();
 
     private MutableLiveData<ArrayList<chatListModel>> chatList=new MutableLiveData<>();
     private MutableLiveData<ArrayList<userModel>> usersList=new MutableLiveData<>();
@@ -53,6 +57,7 @@ public class Repo {
         if (chats_List_Model!=null) {
             loadChatList();
             chats_List_Model.clear();
+
         }
         chatList.setValue(chats_List_Model);
         return chatList;
@@ -72,100 +77,36 @@ public class Repo {
 
 
     private void loadChatList(){
-        database = FirebaseDatabase.getInstance();
 
+        database = FirebaseDatabase.getInstance();
         chatUserIds=new ArrayList<>();
-        chatUserNames=new ArrayList<>();
         chatUserIds.clear();
 
+
+
         DatabaseReference chatUserIdRef=database.getReference().child("chats").child(firebaseUser.getUid());
-        DatabaseReference chatUserNameRef=database.getReference().child("UserDetails");
+
         chatUserIdRef.addValueEventListener(new ValueEventListener(){
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                chats_List_Model.clear();
+                chatUserIds.clear();
+
                 for (DataSnapshot snapshot:dataSnapshot.getChildren()){
+                    chats_List_Model.clear();
                     String userId= Objects.requireNonNull(snapshot.getKey());
+                    chatUserIds.add(userId);
 
-                    chatUserIdRef.child(snapshot.getKey()).addValueEventListener(new ValueEventListener(){
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            for(DataSnapshot dataSnapshot: snapshot.getChildren()){
-                                try{
-                                    messageListModel m=dataSnapshot.getValue(messageListModel.class);
-                                    String text=m.getText();
-                                    String imageUrI=m.getImageUrI();
-                                    if(text!=null){
-                                        if (text.length()>30){
-                                            String i=text.substring(0,30);
-                                            lastMessage=i+"...";
-                                        } else{
-                                            lastMessage=text;
-                                        }
-                                    }
-                                    if(imageUrI!=null){
-                                        lastMessage="photo";
-                                    }
-                                    date=m.getDate();
-                                    time=m.getTime();
-                                }catch(Exception e){
-                                    Log.d("error",e.getMessage());
-                                }
-                            }
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-
-                        }
-                    });
-
-
-                    if(chatUserIds.contains(userId)){
-                    }
-                    else{
-                        chatUserIds.add(userId);
-                        chatUserNameRef.child(userId).addValueEventListener(new ValueEventListener(){
-                            @RequiresApi(api = Build.VERSION_CODES.O)
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
-                                chatListModel user=dataSnapshot.getValue(chatListModel.class);
-                                String userName=user.getUserName();
-                                String profileUrl=user.getProfileUrI();
-                                Log.d("profilePic",profileUrl +userName);
-                                chatUserNames.add(userName);
-                                int i= Collections.frequency(chatUserNames,userName);
-                                if(i<=1){
-                                    try{
-                                        LocalDateTime myDateObj = LocalDateTime.now();
-                                        DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-                                        String formattedDate = myDateObj.format(dateObj);
-                                        if(formattedDate.equals(date)){
-                                            chatListModelObj =new chatListModel(userId,userName,lastMessage,time,profileUrl);
-                                        }else{
-                                            chatListModelObj =new chatListModel(userId,userName,lastMessage,date,profileUrl);
-
-                                        }
-
-                                    }catch(Exception e){
-                                        Log.d("error",e.getLocalizedMessage());
-                                    }
-
-                                }
-
-                                chats_List_Model.add(chatListModelObj);
-                                chatList.postValue(chats_List_Model);
-
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {
-
-                            }
-                        });
-                    }
                 }
+                fetchUserDetails();
+
+//                for (String userId: chatUserIds){
+//                    getLastMessage(userId);
+//                    fetchUserDetails(userId);
+//                    chatList.postValue(chats_List_Model);
+//
+//                    System.out.println("clecscddddss");
+//                }
+
             }
 
             @Override
@@ -173,6 +114,91 @@ public class Repo {
 
             }
         });
+
+    }
+
+    private void  fetchUserDetails() {
+        DatabaseReference userDetails = database.getReference().child("UserDetails");
+
+
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                chats_List_Model.clear();
+                for (String userId:chatUserIds){
+
+                    userDetails.child(userId).addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            chatListModel user = snapshot.getValue(chatListModel.class);
+                            String userName = user.getUserName();
+                            String profileUrl = user.getProfileUrI();
+                            getLastMessage(userId,userName,profileUrl);
+
+
+
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+                }
+            }
+        });
+
+
+    }
+
+    private void getLastMessage(String userId,String userName,String profileUrI) {
+        DatabaseReference messageRef=database.getReference().child("chats").child(firebaseUser.getUid());
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                messageRef.child(userId).addValueEventListener(new ValueEventListener(){
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+                        for(DataSnapshot dataSnapshot: snapshot.getChildren()){
+
+                            try{
+                                messageListModel m=dataSnapshot.getValue(messageListModel.class);
+                                String text=m.getText();
+                                String imageUrI=m.getImageUrI();
+                                if(text!=null){
+                                    if (text.length()>30){
+                                        String i=text.substring(0,30);
+                                        lastMessage=i+"...";
+                                    } else{
+                                        lastMessage=text;
+                                    }
+                                }
+                                if(imageUrI!=null){
+                                    lastMessage="photo";
+                                }
+                                date=m.getDate();
+                                time=m.getTime();
+
+
+
+
+                            }catch(Exception e){
+                                Log.d("error",e.getMessage());
+                            }
+                        }
+
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
+            }
+        });
+
+
 
     }
 
@@ -216,3 +242,5 @@ public class Repo {
     }
 
 }
+
+
