@@ -2,7 +2,7 @@ package com.example.campaign.Model;
 
 public class messageListModel {
     private String text,profileUrI;
-    private String receiver,date,time,messageStatus, imageUrI,type,userName;
+    private String receiver,date,time,messageStatus, imageUrI,type,userName,messageId;
 
 
 
@@ -92,5 +92,13 @@ public class messageListModel {
 
     public void setProfileUrI(String profileUrI) {
         this.profileUrI = profileUrI;
+    }
+
+    public String getMessageId() {
+        return messageId;
+    }
+
+    public void setMessageId(String messageId) {
+        this.messageId = messageId;
     }
 }

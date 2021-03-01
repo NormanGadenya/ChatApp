@@ -19,17 +19,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Campaign">
 
-        <activity android:name=".Activities.chatListActivity" />
+        <activity android:name=".Activities.MainActivity" />
         <activity android:name=".Activities.userListActivity"
-            android:parentActivityName=".Activities.chatListActivity"
+            android:parentActivityName=".Activities.MainActivity"
             ></activity>
         <activity
             android:name=".Activities.chatActivity"
-            android:parentActivityName=".Activities.chatListActivity" />
-        <activity
-            android:name=".Activities.MainActivity"
-            android:label="@string/title_activity_main2"
-            android:theme="@style/Theme.Campaign.NoActionBar" />
+            android:parentActivityName=".Activities.MainActivity" />
         <activity
             android:name=".Activities.viewImageActivity"
             android:parentActivityName=".Activities.chatActivity"

@@ -29,8 +29,14 @@ import com.bumptech.glide.request.target.Target;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.R;
 import com.example.campaign.Activities.viewImageActivity;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 import com.mikhaellopez.circularimageview.CircularImageView;
 import com.zolad.zoominimageview.ZoomInImageView;
 
@@ -43,14 +49,18 @@ import static android.content.Context.VIBRATOR_SERVICE;
 
 public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.Holder> {
     private List<messageListModel> list;
+
+    private FirebaseDatabase database = FirebaseDatabase.getInstance();
+    private FirebaseStorage storage= FirebaseStorage.getInstance();
     public Context context;
     private View view;
-    int lastPosition=-1;
+
 
     private static final int MESSAGE_LEFT=0;
     private static final int MESSAGE_RIGHT=1;
     private FirebaseUser user;
     private String profileUrI;
+
     private Vibrator vibrator;
 
     public messageListAdapter(List<messageListModel> list, Context context,String profileUrI) {
@@ -97,11 +107,13 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
             return MESSAGE_RIGHT;
         }
     }
+
     public class Holder extends RecyclerView.ViewHolder {
         private TextView message,time;
         private CircularImageView profilePic,messageStatus;
         private ZoomInImageView imageView;
         private ProgressBar progressBar;
+
         public Holder(@NonNull View itemView) {
             super(itemView);
 
@@ -125,9 +137,12 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         @SuppressLint("MissingPermission")
                         @Override
                         public boolean onLongClick(View v) {
-                            Toast.makeText(context,"itemClicked",Toast.LENGTH_LONG).show();
+                            Toast.makeText(context,"itemDeleted",Toast.LENGTH_LONG).show();
+                            DatabaseReference messageRef=database.getReference().child("chats").child(user.getUid()).child(messageList.getReceiver());
+                            messageRef.child(messageList.getMessageId()).removeValue();
                             vibrator=(Vibrator)context.getSystemService(VIBRATOR_SERVICE);
                             vibrator.vibrate(50);
+
                             return false;
                         }
                     });
@@ -136,6 +151,32 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                     //progressBar.setVisibility(itemView.VISIBLE);
                     imageView.setVisibility(itemView.VISIBLE);
                     message.setVisibility(itemView.GONE);
+                    imageView.setOnLongClickListener(new View.OnLongClickListener() {
+                        @SuppressLint("MissingPermission")
+                        @Override
+                        public boolean onLongClick(View v) {
+                            vibrator=(Vibrator)context.getSystemService(VIBRATOR_SERVICE);
+                            vibrator.vibrate(50);
+                            Toast.makeText(context,"itemDeleted",Toast.LENGTH_LONG).show();
+                            StorageReference imageRef=storage.getReferenceFromUrl(messageList.getImageUrI());
+                            imageRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void aVoid) {
+                                    DatabaseReference messageRef=database.getReference().child("chats").child(user.getUid()).child(messageList.getReceiver());
+                                    messageRef.child(messageList.getMessageId()).removeValue();
+                                }
+                            }).addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    Toast.makeText(context,"Something went wrong",Toast.LENGTH_LONG).show();
+                                }
+                            });
+
+
+
+                            return true;
+                        }
+                    });
                     time.setText(messageList.getTime());
                     Glide.with(context).load(messageList.getImageUrI()).listener(new RequestListener<Drawable>() {
                         @Override
@@ -150,6 +191,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                             return false;
                         }
                     }).into(imageView);
+
                     imageView.setOnClickListener(view->  context.startActivity(new Intent(context, viewImageActivity.class)
                                     .putExtra("imageUrI",messageList.getImageUrI())
                                     .putExtra("profileUrI",messageList.getProfileUrI())

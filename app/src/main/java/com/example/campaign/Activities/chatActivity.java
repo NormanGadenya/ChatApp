@@ -168,6 +168,7 @@ public class chatActivity extends AppCompatActivity {
         editor.putString("otherUserName",otherUserName);
         editor.putString("otherUserId",otherUserId);
         editor.putString("profileUrI",profileUrI);
+
         editor.apply();
     }
 
@@ -207,15 +208,11 @@ public class chatActivity extends AppCompatActivity {
                 for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
                     try{
                         messageListModel message = snapshot.getValue(messageListModel.class);
-                        text = message.getText();
-                        time=message.getTime();
-                        date=message.getDate();
-                        String type=message.getType();
-                        messageStatus=message.getMessageStatus();
-                        String downloadUri =message.getImageUrI();
+                        message.setMessageId(snapshot.getKey());
 
+                        messageStatus=message.getMessageStatus();
                         String receiver = message.getReceiver();
-                        list1.add(new messageListModel(text, receiver,date,time,messageStatus,downloadUri, type,otherUserName,profileUrI));
+                        list1.add(message);
 
 
                         if (list1.size() >= 1) {
@@ -332,8 +329,9 @@ public class chatActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        Intent mainIntent = new Intent(chatActivity.this , chatListActivity.class);
+        Intent mainIntent = new Intent(chatActivity.this , MainActivity.class);
         startActivity(mainIntent);
         finish();
     }
+
 }
