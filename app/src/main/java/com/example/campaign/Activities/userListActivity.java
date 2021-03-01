@@ -9,6 +9,7 @@ import androidx.core.view.MenuItemCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -54,7 +55,6 @@ public class userListActivity extends AppCompatActivity {
     private List<userModel> list;
     private com.example.campaign.adapter.userListAdapter userListAdapter;
     private Handler handler;
-    private String lastMessage,time,date,userName,profileUrI;
     private String TAG ="userAct";
     private ProgressBar progressBar;
     private Context context;
@@ -71,9 +71,9 @@ public class userListActivity extends AppCompatActivity {
         InitializeControllers();
         progressBar.setVisibility(View.VISIBLE);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
         database = FirebaseDatabase.getInstance();
         userListAdapter=new userListAdapter(list,userListActivity.this);
+
         recyclerView.setAdapter(userListAdapter);
         if (ContextCompat.checkSelfPermission(context,
                 Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
@@ -84,7 +84,6 @@ public class userListActivity extends AppCompatActivity {
                     loadUsers(contactsList);
                 }
             });
-            //contactsList=getPhoneNumbers();
 
         } else {
             requestContactsPermission();
@@ -197,26 +196,8 @@ public class userListActivity extends AppCompatActivity {
     }
 
     private void requestContactsPermission() {
-        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+        if (ActivityCompat.shouldShowRequestPermissionRationale(userListActivity.this,
                 Manifest.permission.READ_CONTACTS)) {
-            new AlertDialog.Builder(getApplicationContext())
-                    .setTitle("Permission needed")
-                    .setMessage("This permission is needed because we require access to your contacts")
-                    .setPositiveButton("ok", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            ActivityCompat.requestPermissions(userListActivity.this,
-                                    new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST);
-                        }
-                    })
-                    .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                        }
-                    })
-                    .create().show();
-        } else {
             ActivityCompat.requestPermissions(userListActivity.this,
                     new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST);
         }
@@ -225,6 +206,7 @@ public class userListActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == CONTACTS_REQUEST)  {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && contactsList!=null) {
+                contactsList=getPhoneNumbers();
                 loadUsers(contactsList);
 
             } else {

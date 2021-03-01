@@ -313,6 +313,15 @@ public class chatActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         menuInflater =getMenuInflater();
         menuInflater.inflate(R.menu.menu,menu);
+        MenuItem settings=menu.findItem(R.id.settingsButton);
+        settings.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent intent = new Intent(chatActivity.this , settingsActivity.class);
+                startActivity(intent);
+                return false;
+            }
+        });
         return true;
     }
 
