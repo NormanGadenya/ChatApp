@@ -12,7 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Start a new chat"
-        android:textColor="@color/black"
+        android:textColor="?colorOnPrimary"
         android:textSize="30sp"
         app:layout_constraintBottom_toBottomOf="@+id/recyclerViewChatList"
         app:layout_constraintEnd_toEndOf="@+id/recyclerViewChatList"

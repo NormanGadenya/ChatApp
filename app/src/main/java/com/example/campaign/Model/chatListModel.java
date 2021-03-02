@@ -1,9 +1,9 @@
 package com.example.campaign.Model;
 
-public class chatListModel {
+public class chatListModel implements Comparable {
     private String userId;
     private String userName;
-    private String description;
+    private String description,descriptionId;
     private String date,time;
     private String phoneNumber, profileUrI;
 
@@ -76,5 +76,21 @@ public class chatListModel {
 
     public void setTime(String time) {
         this.time = time;
+    }
+
+
+    @Override
+    public int compareTo(Object o) {
+        chatListModel chatListModel =(chatListModel) o;
+
+        return chatListModel.getDescriptionId().compareTo(this.descriptionId);
+    }
+
+    public void setDescriptionId(String descriptionId) {
+        this.descriptionId = descriptionId;
+    }
+
+    public String getDescriptionId() {
+        return descriptionId;
     }
 }

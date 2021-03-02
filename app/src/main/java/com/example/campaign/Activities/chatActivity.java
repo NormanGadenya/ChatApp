@@ -5,6 +5,8 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -13,11 +15,13 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -36,9 +40,12 @@ import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
+import com.example.campaign.Interfaces.RecyclerViewInterface;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.R;
 import com.example.campaign.adapter.messageListAdapter;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -55,23 +62,30 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class chatActivity extends AppCompatActivity {
+import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
-    private String otherUserId, message, profileUrI,text,date,time,messageStatus,otherUserName;
+public class chatActivity extends AppCompatActivity implements RecyclerViewInterface {
+
+    private String otherUserId, message, profileUrI,text,date,time,messageStatus,messageId,otherUserName;
     private FirebaseDatabase database;
-    private List<messageListModel> list1 = new ArrayList<>();
+    private List<messageListModel> messageList = new ArrayList<>();
     private RecyclerView recyclerView ;
     private ImageButton sendButton,attachButton;
     private TextView newMessage,userName;
     private CircularImageView profilePic;
     private FirebaseUser user ;
+    private FirebaseStorage firebaseStorage;
     private StorageReference mStorageReference;
     private Uri selected;
+    private Context context;
     private MenuInflater menuInflater;
     private ProgressBar progressBar;
+    private messageListAdapter messageListAdapter;
+    private Vibrator vibrator;
 
 
 
+    private FirebaseStorage storage= FirebaseStorage.getInstance();
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,7 +94,8 @@ public class chatActivity extends AppCompatActivity {
         user= FirebaseAuth.getInstance().getCurrentUser();
         InitialiseControllers();
         database = FirebaseDatabase.getInstance();
-        mStorageReference= FirebaseStorage.getInstance().getReference();
+        firebaseStorage= FirebaseStorage.getInstance();
+        mStorageReference=firebaseStorage.getReference();
         if(otherUserId==null){
             loadSharedPreferenceData();
             System.out.println("otherUserId"+otherUserId);
@@ -116,6 +131,9 @@ public class chatActivity extends AppCompatActivity {
         }
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        messageListAdapter=new messageListAdapter(messageList, chatActivity.this, profileUrI,this);
+        recyclerView.setAdapter(messageListAdapter);
+
 
 
         try{
@@ -152,8 +170,72 @@ public class chatActivity extends AppCompatActivity {
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             startActivityForResult(intent,2);
         });
+        ItemTouchHelper.SimpleCallback simpleCallback=new ItemTouchHelper.SimpleCallback(0,ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT){
 
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                try {
+                    int position = viewHolder.getAdapterPosition();
+                    switch (messageList.get(position).getType()) {
+                        case "TEXT":
+                            vibrator = (Vibrator) context.getSystemService(VIBRATOR_SERVICE);
+                            vibrator.vibrate(50);
+                            messageId = messageList.get(position).getMessageId();
+                            Toast.makeText(context, "itemDeleted", Toast.LENGTH_LONG).show();
+                            DatabaseReference messageRef = database.getReference().child("chats").child(user.getUid()).child(otherUserId);
+                            messageRef.child(messageId).removeValue();
+                            messageList.remove(position);
+                            messageListAdapter.notifyItemRemoved(position);
+
+                            break;
+                        case "IMAGE":
+                            messageId = messageList.get(position).getMessageId();
+                            String imageUrI = messageList.get(position).getImageUrI();
+                            vibrator = (Vibrator) context.getSystemService(VIBRATOR_SERVICE);
+                            vibrator.vibrate(50);
+                            Toast.makeText(context, "itemDeleted", Toast.LENGTH_LONG).show();
+                            StorageReference imageRef = firebaseStorage.getReferenceFromUrl(imageUrI);
+                            imageRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void aVoid) {
+                                    DatabaseReference messageRef = database.getReference().child("chats").child(user.getUid()).child(otherUserId);
+                                    messageRef.child(messageId).removeValue();
+                                    messageList.remove(position);
+                                    messageListAdapter.notifyItemRemoved(position);
+                                }
+                            }).addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    Toast.makeText(context, "Something went wrong", Toast.LENGTH_LONG).show();
+                                }
+                            });
+                    }
+                }catch (Exception e){
+                    Log.e("Error",e.getLocalizedMessage());
+                }
+            }
+
+            @Override
+            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+                new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+                        .addBackgroundColor(ContextCompat.getColor(chatActivity.this,R.color.Red_200))
+                        .addActionIcon(R.drawable.remove)
+                        .create()
+                        .decorate();
+
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+
+            }
+        };
+        ItemTouchHelper itemTouchHelper=new ItemTouchHelper(simpleCallback);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
     }
+
 
     private void loadSharedPreferenceData() {
         SharedPreferences sharedPreferences=getSharedPreferences("sharedPreferences",MODE_PRIVATE);
@@ -192,31 +274,29 @@ public class chatActivity extends AppCompatActivity {
         if(otherUserId!=null){
             saveSharedPreferenceData();
         }
-
+        context=getApplicationContext();
         userName=findViewById(R.id.userName);
         recyclerView=findViewById(R.id.recyclerView1);
     }
 
     private void getMessages(){
 
-
         DatabaseReference messageRef=database.getReference().child("chats").child(user.getUid()).child(otherUserId);
         messageRef.addValueEventListener(new ValueEventListener(){
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                list1.clear();
+                messageList.clear();
                 for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
                     try{
                         messageListModel message = snapshot.getValue(messageListModel.class);
-                        message.setMessageId(snapshot.getKey());
-
                         messageStatus=message.getMessageStatus();
+                        message.setMessageId(snapshot.getKey());
                         String receiver = message.getReceiver();
-                        list1.add(message);
+                        messageList.add(message);
 
 
-                        if (list1.size() >= 1) {
-                            recyclerView.scrollToPosition(list1.size()-1);
+                        if (messageList.size() >= 1) {
+                            recyclerView.scrollToPosition(messageList.size()-1);
                         }
 
                         if (receiver.equals(user.getUid())){
@@ -228,8 +308,10 @@ public class chatActivity extends AppCompatActivity {
                     }catch(Exception e){
                         Log.d("error1",e.getMessage());
                     }
+
+                    messageListAdapter.notifyDataSetChanged();
                 }
-                recyclerView.setAdapter(new messageListAdapter(list1, chatActivity.this, profileUrI));
+
 
             }
 
@@ -238,7 +320,10 @@ public class chatActivity extends AppCompatActivity {
 
             }
         });
+
     }
+
+
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -343,4 +428,52 @@ public class chatActivity extends AppCompatActivity {
         finish();
     }
 
+    @Override
+    public void onItemClick(int position) {
+
+        Intent intent =new Intent(context, viewImageActivity.class)
+                .putExtra("imageUrI", messageList.get(position).getImageUrI())
+                .putExtra("profileUrI", messageList.get(position).getProfileUrI())
+                .putExtra("userId",otherUserId)
+                .putExtra("userName",otherUserName);
+        startActivity(intent);
+
+    }
+
+    @Override
+    public void onLongItemClick(int position) {
+        switch (messageList.get(position).getType()){
+            case "TEXT":
+                vibrator=(Vibrator)context.getSystemService(VIBRATOR_SERVICE);
+                vibrator.vibrate(50);
+                messageId= messageList.get(position).getMessageId();
+                Toast.makeText(context,"itemDeleted",Toast.LENGTH_LONG).show();
+                DatabaseReference messageRef=database.getReference().child("chats").child(user.getUid()).child(otherUserId);
+                messageRef.child(messageId).removeValue();
+                messageListAdapter.notifyItemRemoved(position);
+
+                break;
+            case "IMAGE":
+                messageId= messageList.get(position).getMessageId();
+                String imageUrI= messageList.get(position).getImageUrI();
+                vibrator=(Vibrator)context.getSystemService(VIBRATOR_SERVICE);
+                vibrator.vibrate(50);
+                Toast.makeText(context,"itemDeleted",Toast.LENGTH_LONG).show();
+                StorageReference imageRef=firebaseStorage.getReferenceFromUrl(imageUrI);
+                imageRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        DatabaseReference messageRef=database.getReference().child("chats").child(user.getUid()).child(otherUserId);
+                        messageRef.child(messageId).removeValue();
+                        messageListAdapter.notifyItemRemoved(position);
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(context,"Something went wrong",Toast.LENGTH_LONG).show();
+                    }
+                });
+        }
+
+    }
 }

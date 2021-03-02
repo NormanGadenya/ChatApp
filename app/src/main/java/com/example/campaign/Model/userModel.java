@@ -4,6 +4,7 @@ public class userModel {
     private String userName,userId;
     private String phoneNumber;
     private String profileUrI;
+    private Boolean onlineStatus;
 
     public userModel(){
 
@@ -47,5 +48,13 @@ public class userModel {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public Boolean getOnlineStatus() {
+        return onlineStatus;
+    }
+
+    public void setOnlineStatus(Boolean onlineStatus) {
+        this.onlineStatus = onlineStatus;
     }
 }
