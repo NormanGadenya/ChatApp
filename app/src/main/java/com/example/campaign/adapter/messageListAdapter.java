@@ -3,6 +3,7 @@ package com.example.campaign.adapter;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BlendMode;
 import android.graphics.drawable.Drawable;
 import android.os.Vibrator;
 import android.view.LayoutInflater;
@@ -45,20 +46,12 @@ import static android.content.Context.VIBRATOR_SERVICE;
 
 public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.Holder> {
     private List<messageListModel> list;
-
-    private FirebaseDatabase database = FirebaseDatabase.getInstance();
-
     public Context context;
     private RecyclerViewInterface recyclerViewInterface;
-    private View view;
-
-
     private static final int MESSAGE_LEFT=0;
     private static final int MESSAGE_RIGHT=1;
     private FirebaseUser user;
     private String profileUrI;
-
-    private Vibrator vibrator;
 
     public messageListAdapter(List<messageListModel> list, Context context, String profileUrI, RecyclerViewInterface recyclerViewInterface) {
         this.list = list;
@@ -97,7 +90,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         user= FirebaseAuth.getInstance().getCurrentUser();
         final messageListModel messageList=list.get(position);
 
-        if(messageList.getReceiver().equals(user.getUid())){
+        if(messageList.getReceiver()!=null && messageList.getReceiver().equals(user.getUid())){
 
             return MESSAGE_LEFT;
         }
@@ -122,6 +115,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
             time=itemView.findViewById(R.id.time);
             progressBar=itemView.findViewById(R.id.progressBar);
 
+
         }
         void bind(final messageListModel messageList){
             switch(messageList.getType()){
@@ -144,6 +138,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                     progressBar.setVisibility(itemView.VISIBLE);
                     imageView.setVisibility(itemView.VISIBLE);
                     message.setVisibility(itemView.GONE);
+                    imageView.setBackgroundColor(messageList.getBackgroundColor());
                     imageView.setOnLongClickListener(new View.OnLongClickListener() {
                         @SuppressLint("MissingPermission")
                         @Override
@@ -163,6 +158,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         @Override
                         public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
                             progressBar.setVisibility(View.GONE);
+
                             return false;
                         }
                     }).into(imageView);

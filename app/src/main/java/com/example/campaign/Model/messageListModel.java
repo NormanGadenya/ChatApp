@@ -2,6 +2,7 @@ package com.example.campaign.Model;
 
 public class messageListModel {
     private String text,profileUrI;
+    private int backgroundColor;
     private String receiver,date,time,messageStatus, imageUrI,type,userName,messageId;
 
 
@@ -100,5 +101,13 @@ public class messageListModel {
 
     public void setMessageId(String messageId) {
         this.messageId = messageId;
+    }
+
+    public int getBackgroundColor() {
+        return backgroundColor;
+    }
+
+    public void setBackgroundColor(int backgroundColor) {
+        this.backgroundColor = backgroundColor;
     }
 }

@@ -19,7 +19,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Campaign">
         <activity
-            android:name=".Activities.settingsActivity"
+            android:name=".Activities.SettingsActivity"
+            android:theme="@style/Theme.Campaign.NoActionBar"
             android:parentActivityName=".Activities.chatActivity" />
         <activity android:name=".Activities.MainActivity" />
         <activity
@@ -34,10 +35,13 @@
             android:theme="@style/Theme.Campaign" />
         <activity
             android:name=".Activities.registrationActivity"
-            android:theme="@style/Theme.Campaign.NoActionBar" />
+            android:theme="@style/Theme.Campaign.NoActionBar" >
+
+        </activity>
         <activity
             android:name=".Activities.otpActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
+
         <activity
             android:name=".Activities.signUpActivity"
             android:theme="@style/Theme.Campaign.NoActionBar">
@@ -47,6 +51,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service android:name=".Notifications.MyFirebaseIdService" />
     </application>
 
 </manifest>

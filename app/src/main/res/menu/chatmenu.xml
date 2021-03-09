@@ -4,6 +4,11 @@
     <item android:id="@+id/search"
         android:title="Search"
         android:icon="@drawable/ic_baseline_search_24"
-        app:showAsAction="always"
+        app:showAsAction="ifRoom"
         app:actionViewClass="android.widget.SearchView"/>
+    <item
+        android:id="@+id/settingsButton"
+        android:title="Settings"
+        app:showAsAction="never"
+        />
 </menu>

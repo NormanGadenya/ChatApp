@@ -2,7 +2,9 @@ package com.example.campaign.Activities;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -15,6 +17,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -43,6 +46,8 @@ import com.google.firebase.storage.StorageReference;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
 import java.io.ByteArrayOutputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeUnit;
 
 
@@ -54,7 +59,7 @@ public class registrationActivity extends AppCompatActivity {
     private FloatingActionButton selProfilePic,gallery_button,camera_button,remove_button;
     private String userId;
     private String phoneNumber;
-    private View wrapper;
+    private CardView wrapper;
     private Uri selected;
     private ProgressBar progressBar;
     private CircularImageView profilePic;
@@ -63,6 +68,7 @@ public class registrationActivity extends AppCompatActivity {
     private StorageReference mStorageReference;
     private boolean btnSelected=false;
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -152,13 +158,14 @@ public class registrationActivity extends AppCompatActivity {
         gallery_button=findViewById(R.id.gallery_button);
         remove_button=findViewById(R.id.remove_button);
         camera_button=findViewById(R.id.camera_button);
-        wrapper=findViewById(R.id.wrapper_sel_profile);
+        wrapper=findViewById(R.id.layout_actions);
         profilePic=findViewById(R.id.image_profile);
         progressBar=findViewById(R.id.progressBar1);
     }
 
 
-    private void uploadFile(String name,String phoneNumber,String userId) {
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void uploadFile(String name, String phoneNumber, String userId) {
         
         if (selected != null) {
             Name.setEnabled(true);
@@ -177,6 +184,9 @@ public class registrationActivity extends AppCompatActivity {
                     DatabaseReference myRef = database.getReference();
                     userModel userModel =new userModel();
                     userModel.setUserName(name);
+                    userModel.setLastSeenDate(getDate());
+                    userModel.setLastSeenTime(getTime());
+                    userModel.setOnline("true");
                     userModel.setPhoneNumber(phoneNumber);
                     userModel.setProfileUrI(downloadUri.toString());
 
@@ -296,6 +306,7 @@ public class registrationActivity extends AppCompatActivity {
         else if(requestCode ==CAMERA_REQUEST && resultCode== Activity.RESULT_OK && data!=null){
             try{
                 Bitmap bitmap=(Bitmap) data.getExtras().get("data");
+
                 selected=getImageUri(bitmap);
                 profilePic.setImageBitmap(bitmap);
                 wrapper.setVisibility(View.GONE);
@@ -311,6 +322,19 @@ public class registrationActivity extends AppCompatActivity {
             Name.setEnabled(true);
         }
 
+    }
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private String getTime(){
+        LocalDateTime myDateObj = LocalDateTime.now();
+        DateTimeFormatter timeObj = DateTimeFormatter.ofPattern("HH:mm");
+        return myDateObj.format(timeObj);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private String getDate(){
+        LocalDateTime myDateObj = LocalDateTime.now();
+        DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        return myDateObj.format(dateObj);
     }
 
 }

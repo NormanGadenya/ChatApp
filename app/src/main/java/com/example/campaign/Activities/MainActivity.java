@@ -2,20 +2,30 @@ package com.example.campaign.Activities;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.MenuItemCompat;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.Manifest;
+import android.app.Notification;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Canvas;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Vibrator;
+import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -26,6 +36,7 @@ import android.widget.ImageView;
 import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.Toolbar;
 
 import com.example.campaign.Interfaces.RecyclerViewInterface;
 import com.example.campaign.Model.chatListModel;
@@ -45,28 +56,46 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.StorageReference;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
 
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
-public class MainActivity extends AppCompatActivity  {
-     private List<String> chatListId;
-     private RecyclerView recyclerView;
-     private FloatingActionButton newChat;
-     private TextView welcomeMsg;
-     private ImageView welcomeEmoji;
-     private Context context;
-     private FirebaseUser user;
-     private FirebaseDatabase database;
-     private List<chatListModel> list;
-     private chatListAdapter chatListAdapter;
-     private Handler handler;
-     private MenuInflater menuInflater;
-     private String lastMessage,time,date,userName,profileUrI,descriptionId;
-     private String TAG ="chatListAct";
+import static android.content.Context.MODE_PRIVATE;
+import static com.example.campaign.App.MESSAGE_CHANNEL_ID;
+
+public class MainActivity extends AppCompatActivity  implements RecyclerViewInterface {
+    private List<String> chatListId;
+    private RecyclerView recyclerView;
+    private FloatingActionButton newChat;
+    private TextView welcomeMsg;
+    private ImageView welcomeEmoji;
+    private Context context;
+    private FirebaseUser user;
+    private FirebaseDatabase database;
+    private List<chatListModel> list;
+    private chatListAdapter chatListAdapter;
+    private Handler handler;
+    public  Map<String, String> namePhoneMap= new HashMap<String, String>(); ;
+    private MenuInflater menuInflater;
+    private String lastMessage,time,date,userName,profileUrI,descriptionId;
+    private String TAG ="chatListAct";
+    private NotificationManagerCompat notificationManagerCompat;
+    private List<String> messageKeys=new ArrayList<>();
+    private Set<String> chatUIds=new HashSet<>();
+    private HashMap <String ,userModel>userInfo=new HashMap<>();
+    private HashMap <String ,messageListModel>messages=new HashMap<>();
+    private int CONTACTS_REQUEST=110;
+    private Set<String> contactsList=new HashSet<>();
+
 
 
 
@@ -75,30 +104,36 @@ public class MainActivity extends AppCompatActivity  {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         InitializeControllers();
+        requestContactsPermission();
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        ActionBar actionBar=getSupportActionBar();
+        actionBar.setTitle("Inbox");
+
+
 
         recyclerView.setHasFixedSize(true);
         database = FirebaseDatabase.getInstance();
-        DatabaseReference onlineRef=database.getReference();
-        onlineRef.child("onlineStatus").child(user.getUid());
-        onlineRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                boolean online=snapshot.getValue(Boolean.class);
-                if(!online){
-                    onlineRef.setValue(true);
-                    onlineRef.onDisconnect().setValue(false);
+
+        if (ContextCompat.checkSelfPermission(context,
+                Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if(contactsList==null){
+                        contactsList=getPhoneNumbers();
+                        saveSharedPreferenceData();
+                    }
+
                 }
-            }
+            });
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
-        chatListAdapter=new chatListAdapter(list, MainActivity.this);
+        } else {
+            requestContactsPermission();
+        }
+        chatListAdapter=new chatListAdapter(list, MainActivity.this,this);
         recyclerView.setAdapter(chatListAdapter);
         getChatList();
+
         newChat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -107,7 +142,6 @@ public class MainActivity extends AppCompatActivity  {
                 finish();
             }
         });
-
     }
 
 
@@ -122,27 +156,37 @@ public class MainActivity extends AppCompatActivity  {
         handler=new Handler();
         welcomeEmoji=findViewById(R.id.welcomeEmoji);
         welcomeMsg=findViewById(R.id.startNewChatMsg);
+        notificationManagerCompat=NotificationManagerCompat.from(context);
 
     }
 
     private void getChatList() {
         chatListId.clear();
         list.clear();
+
         DatabaseReference chatListRef=database.getReference().child("chats");
         chatListRef.child(user.getUid()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                list.clear();
+                //list.clear();
                 chatListId.clear();
-                welcomeMsg.setVisibility(View.VISIBLE);
-                welcomeEmoji.setVisibility(View.VISIBLE);
+
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()){
                     chatListId.add(dataSnapshot.getKey());
+                    Log.d("scdcd",snapshot.toString());
+                    chatUIds.add(dataSnapshot.getKey());
+
                     welcomeMsg.setVisibility(View.GONE);
                     welcomeEmoji.setVisibility(View.GONE);
+
                 }
                 getUserInfo();
-                chatListAdapter.notifyDataSetChanged();
+                if(chatListId.size()==0){
+                    welcomeMsg.setVisibility(View.VISIBLE);
+                    welcomeEmoji.setVisibility(View.VISIBLE);
+                }
+//                getUInfo();
+//                chatListAdapter.notifyDataSetChanged();
 
             }
 
@@ -168,12 +212,10 @@ public class MainActivity extends AppCompatActivity  {
                         String otherUserId = list.get(position).getUserId();
                         Toast.makeText(context, "chat deleted", Toast.LENGTH_LONG).show();
                         DatabaseReference chatRef = database.getReference().child("chats").child(user.getUid()).child(otherUserId);
-                        chatRef.removeValue();
                         list.remove(position);
+                        chatRef.removeValue();
+                        //list.remove(position);
                         chatListAdapter.notifyItemRemoved(position);
-
-
-
 
                 }catch (Exception e){
                     Log.e("Error",e.getLocalizedMessage());
@@ -196,10 +238,39 @@ public class MainActivity extends AppCompatActivity  {
         itemTouchHelper.attachToRecyclerView(recyclerView);
 
     }
+    private void getUserInfo() {
+        DatabaseReference userDetailRef=database.getReference().child("UserDetails");
+
+        userDetailRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                list.clear();
+                for(DataSnapshot dataSnapshot:snapshot.getChildren()){
+                    if(chatListId.contains(dataSnapshot.getKey())){
+                        String userId=dataSnapshot.getKey();
+                        userModel user= dataSnapshot.getValue(userModel.class);
+                        userName=user.getUserName();
+                        profileUrI=user.getProfileUrI();
+                        chatListModel chat=new chatListModel();
+                        chat.setUserName(userName);
+                        chat.setUserId(userId);
+                        chat.setProfileUrI(profileUrI);
+                        list.add(chat);
+                        chatListAdapter.notifyDataSetChanged();
+//                        getLastMessage(userId,userName,profileUrI);
+//                        Log.d(TAG,userInfo.toString());
+                    }
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
+        });
+    }
+
     private void getLastMessage(String userId,String userName,String profileUrI) {
         DatabaseReference messageRef=database.getReference().child("chats").child(user.getUid());
-
-        handler.post(() -> messageRef.child(userId).addValueEventListener(new ValueEventListener(){
+        handler.post(() -> messageRef.child(userId).orderByKey().limitToLast(1).addValueEventListener(new ValueEventListener(){
             @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -207,28 +278,26 @@ public class MainActivity extends AppCompatActivity  {
 
                 for(DataSnapshot dataSnapshot: snapshot.getChildren()){
                     try{
+
                         messageListModel m=dataSnapshot.getValue(messageListModel.class);
                         String text=m.getText();
                         String imageUrI=m.getImageUrI();
                         if(text!=null){
-                            if (text.length()>30){
-                                String i=text.substring(0,30);
-                                lastMessage=i+"...";
-                            } else{
-                                lastMessage=text;
-                            }
+                            lastMessage=formatLastMessage(text);
                         }
+                        messageKeys.add(dataSnapshot.getKey());
                         if(imageUrI!=null){
-                            lastMessage="issa_photo";
+                            lastMessage="CODE_PHOTOGRAPH";
                         }
                         date=m.getDate();
                         time=m.getTime();
                         descriptionId=dataSnapshot.getKey();
 
                     }catch(Exception e){
-                        Log.d("error",e.getMessage());
+                        Log.d("error",dataSnapshot.toString());
                     }
                 }
+
                 chatListModel chat=new chatListModel();
                 chat.setDate(date);
                 chat.setUserName(userName);
@@ -238,6 +307,7 @@ public class MainActivity extends AppCompatActivity  {
                 chat.setDescription(lastMessage);
                 chat.setDescriptionId(descriptionId);
                 chat.setTime(time);
+
                 list.add(chat);
                 Collections.sort(list);
 
@@ -253,49 +323,159 @@ public class MainActivity extends AppCompatActivity  {
             }
         }));
 
+    }
 
+    private String formatLastMessage(String text) {
 
+        if (text.length()>30){
+            String i=text.substring(0,30);
+            text=i+"...";
+        } else{
+
+        }
+
+        return text;
     }
 
 
-    private void getUserInfo() {
+    private void saveSharedPreferenceData() {
+        SharedPreferences sharedPreferences =getSharedPreferences("contactsSharedPreferences",MODE_PRIVATE);
+        SharedPreferences.Editor editor=sharedPreferences.edit();
+        editor.putStringSet("contactsList",contactsList);
+        editor.apply();
+    }
+
+    private void getUInfo(){
         DatabaseReference userDetailRef=database.getReference().child("UserDetails");
-        handler.post(new Runnable() {
+        userDetailRef.addValueEventListener(new ValueEventListener() {
+
             @Override
-            public void run() {
-                for (String userID : chatListId){
-                    userDetailRef.child(userID).addValueEventListener(new ValueEventListener() {
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for(DataSnapshot dataSnapshot:snapshot.getChildren()){
+                    for(String uid :chatUIds){
+                        userModel user= dataSnapshot.getValue(userModel.class);
+                        userInfo.put(uid,user);
 
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    }
 
-                            userModel user= snapshot.getValue(userModel.class);
-                            Log.d(TAG,user.getUserName());
-                            userName=user.getUserName();
-                            profileUrI=user.getProfileUrI();
-                            getLastMessage(userID,userName,profileUrI);
-                            Log.d(TAG,snapshot.toString());
-
-                        }
-
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-
-                        }
-                    });
-//
                 }
+                for(String uid :chatUIds){
+                    getLastMessagem(uid);
+                }
+
+
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
             }
         });
+    }
+    private void getLastMessagem(String userId) {
+        DatabaseReference messageRef=database.getReference().child("chats").child(user.getUid());
+        handler.post(() -> messageRef.child(userId).orderByKey().limitToLast(1).addValueEventListener(new ValueEventListener(){
+            @RequiresApi(api = Build.VERSION_CODES.N)
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+
+                for(DataSnapshot dataSnapshot: snapshot.getChildren()){
+                    try{
+
+                        messageListModel m=dataSnapshot.getValue(messageListModel.class);
+                        String text=m.getText();
+                        String imageUrI=m.getImageUrI();
+                        if(text!=null){
+                            lastMessage=formatLastMessage(text);
+                        }
+                        messageKeys.add(dataSnapshot.getKey());
+                        if(imageUrI!=null){
+                            lastMessage="CODE_PHOTOGRAPH";
+                        }
+                        date=m.getDate();
+                        time=m.getTime();
+                        descriptionId=dataSnapshot.getKey();
+
+                    }catch(Exception e){
+                        Log.d("error",dataSnapshot.toString());
+                    }
+                }
+                Log.d("error_",userInfo.get(userId).getUserName());
+                chatListModel chat=new chatListModel();
+                chat.setDate(date);
+                chat.setUserName(userInfo.get(userId).getUserName());
+
+                chat.setUserId(userId);
+                chat.setProfileUrI(userInfo.get(userId).getProfileUrI());
+                chat.setDescription(lastMessage);
+                chat.setDescriptionId(descriptionId);
+                chat.setTime(time);
+
+                list.add(chat);
+                Collections.sort(list);
+
+                if (chatListAdapter!=null){
+                    chatListAdapter.notifyDataSetChanged();
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        }));
+
+    }
+    void  setup(String userId){
+        Log.d(TAG,messages.toString());
+        if(messages!=null && chatUIds!=null){
+
+                messageListModel m=messages.get(userId);
+                chatListModel chat=new chatListModel();
+                chat.setUserName(userInfo.get(userId).getUserName());
+                chat.setUserId(userId);
+                //String messageId=m.getMessageId();
+                System.out.println(m.getMessageId()+"kdc");
+                if(m!=null){
+                    chat.setDescriptionId(m.getMessageId());
+                }
+
+                String finalMessage;
+                try{
+                    String imageUrI=messages.get(userId).getImageUrI();
+                    if(imageUrI!=null){
+                        finalMessage="CODE_PHOTOGRAPH";
+                        chat.setDescription(finalMessage);
+                    }
+                    String text=messages.get(userId).getText();
+
+
+                    if(text!=null){
+                        finalMessage =formatLastMessage(text);
+                        chat.setDescription(finalMessage);
+                    }
+                }catch (Exception e){
+
+                }
+
+
+                chat.setTime(messages.get(userId).getTime());
+                chat.setDate(messages.get(userId).getDate());
+
+                list.add(chat);
+                //Collections.sort(list);
+                chatListAdapter.notifyDataSetChanged();
+            }
+
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menuInflater =getMenuInflater();
         menuInflater.inflate(R.menu.chatmenu,menu);
-        MenuItem item=menu.findItem(R.id.search);
-        SearchView searchView= (SearchView) MenuItemCompat.getActionView(item);
+        MenuItem searchItem=menu.findItem(R.id.search);
+        MenuItem settingsItem=menu.findItem(R.id.settingsButton);
+        SearchView searchView= (SearchView) MenuItemCompat.getActionView(searchItem);
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String s) {
@@ -317,12 +497,21 @@ public class MainActivity extends AppCompatActivity  {
                 return false;
             }
         });
+        settingsItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent intent=new Intent(getApplicationContext(),SettingsActivity.class);
+                startActivity(intent);
+                return false;
+            }
+        });
+
         return true;
     }
 
     private void searchUsers(String query) {
-        chatListId.clear();
-        list.clear();
+//        chatListId.clear();
+//        list.clear();
         DatabaseReference chatListRef=database.getReference().child("chats");
         chatListRef.child(user.getUid()).addValueEventListener(new ValueEventListener() {
             @Override
@@ -347,38 +536,168 @@ public class MainActivity extends AppCompatActivity  {
 
     private void getSearchUserInfo(String query) {
         DatabaseReference userDetailRef=database.getReference().child("UserDetails");
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                for (String userID : chatListId){
-                    userDetailRef.child(userID).addValueEventListener(new ValueEventListener() {
 
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+            for (String userId : chatListId){
+                userDetailRef.child(userId).addValueEventListener(new ValueEventListener() {
 
-                            userModel user= snapshot.getValue(userModel.class);
-                            Log.d(TAG,user.getUserName());
-                            userName=user.getUserName();
-                            profileUrI=user.getProfileUrI();
-                            if (userName.toLowerCase().contains(query.toLowerCase())){
-                                getLastMessage(userID,userName,profileUrI);
-                            }
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
 
-                            Log.d(TAG,snapshot.toString());
-
+                        userModel user= snapshot.getValue(userModel.class);
+                        Log.d(TAG,user.getUserName());
+                        userName=user.getUserName();
+                        profileUrI=user.getProfileUrI();
+                        if (userName.toLowerCase().contains(query.toLowerCase())){
+                            chatListModel chat=new chatListModel();
+                            chat.setUserName(userName);
+                            chat.setUserId(userId);
+                            chat.setProfileUrI(profileUrI);
+                            list.add(chat);
+                            chatListAdapter.notifyDataSetChanged();
                         }
 
+                        Log.d(TAG,snapshot.toString());
 
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
+                    }
 
-                        }
-                    });
-//
-                }
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
+
             }
-        });
     }
 
 
+    @Override
+    public void onItemClick(int position) {
+        if(list!=null){
+            Intent intent =new Intent(context, chatActivity.class)
+                    .putExtra("userId",list.get(position).getUserId())
+                    .putExtra("userName",list.get(position).getUserName())
+                    .putExtra("profileUrI",list.get(position).getProfileUrI());
+
+            startActivity(intent);
+        }
+    }
+
+    @Override
+    public void onLongItemClick(int position) {
+
+    }
+
+    public void sendNotifications(){
+        Notification notification=new NotificationCompat.Builder(context,MESSAGE_CHANNEL_ID)
+                .setSmallIcon(R.drawable.chat_communication_svgrepo_com)
+                .setContentTitle("Message: " + userName)
+                .setContentText(lastMessage)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .build();
+        notificationManagerCompat.notify(1,notification);
+    }
+
+    public boolean isAlphanumeric2(String str) {
+        for (int i=0; i<str.length(); i++) {
+            char c = str.charAt(i);
+            if (c < 0x30 || (c >= 0x3a && c <= 0x40) || (c > 0x5a && c <= 0x60) || c > 0x7a)
+                return false;
+        }
+        return true;
+    }
+    private Set<String> getPhoneNumbers() {
+        Set<String> phoneNumbers=new HashSet<>();
+        Cursor phones = context.getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
+
+        // Loop Through All The Numbers
+        while (phones.moveToNext()) {
+
+            String name = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+            String phoneNumber = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+
+            // Cleanup the phone number
+            phoneNumber = phoneNumber.replaceAll("[()\\s-]+", "");
+
+            // Enter Into Hash Map
+            namePhoneMap.put(phoneNumber, name);
+
+        }
+        for (Map.Entry<String, String> entry : namePhoneMap.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+            if (key.contains("+")){
+                phoneNumbers.add(key);
+            }else{
+                if(isAlphanumeric2(key)){
+                    Long i=Long.parseLong(key);
+                    String j="+256"+i;
+                    phoneNumbers.add(j);
+                }
+            }
+        }
+        phones.close();
+        return phoneNumbers;
+    }
+
+    private void requestContactsPermission() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
+                android.Manifest.permission.READ_CONTACTS)) {
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST);
+        }
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == CONTACTS_REQUEST)  {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && contactsList!=null) {
+                contactsList=getPhoneNumbers();
+                saveSharedPreferenceData();
+
+//                loadUsers(contactsList);
+
+            } else {
+                Toast.makeText(getApplicationContext(), "Permission DENIED", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private String getTime(){
+        LocalDateTime myDateObj = LocalDateTime.now();
+        DateTimeFormatter timeObj = DateTimeFormatter.ofPattern("HH:mm");
+        return myDateObj.format(timeObj);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private String getDate(){
+        LocalDateTime myDateObj = LocalDateTime.now();
+        DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        return myDateObj.format(dateObj);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void status(String status){
+        DatabaseReference userDetailRef=database.getReference().child("UserDetails").child(user.getUid());
+        Map<String ,Object> onlineStatus=new HashMap<>();
+        onlineStatus.put("lastSeenDate",getDate());
+        onlineStatus.put("lastSeenTime",getTime());
+        onlineStatus.put("online",status);
+
+        userDetailRef.updateChildren(onlineStatus);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    protected void onResume() {
+        super.onResume();
+        status("true");
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    protected void onPause() {
+        super.onPause();
+        status("false");
+    }
 }

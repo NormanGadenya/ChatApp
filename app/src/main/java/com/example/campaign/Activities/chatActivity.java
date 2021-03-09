@@ -6,6 +6,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -15,12 +16,15 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Vibrator;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -31,6 +35,7 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.view.MenuInflater;
 
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,10 +47,12 @@ import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.example.campaign.Interfaces.RecyclerViewInterface;
 import com.example.campaign.Model.messageListModel;
+import com.example.campaign.Model.userModel;
 import com.example.campaign.R;
 import com.example.campaign.adapter.messageListAdapter;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -54,24 +61,31 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
+import jp.wasabeef.glide.transformations.BlurTransformation;
 
 public class chatActivity extends AppCompatActivity implements RecyclerViewInterface {
 
-    private String otherUserId, message, profileUrI,text,date,time,messageStatus,messageId,otherUserName;
+    private String otherUserId, message, profileUrI,messageStatus,messageId,otherUserName,lastSeen;
     private FirebaseDatabase database;
     private List<messageListModel> messageList = new ArrayList<>();
     private RecyclerView recyclerView ;
     private ImageButton sendButton,attachButton;
-    private TextView newMessage,userName;
+    private TextView newMessage,userName,lastSeenMessage;
     private CircularImageView profilePic;
     private FirebaseUser user ;
     private FirebaseStorage firebaseStorage;
@@ -79,9 +93,11 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
     private Uri selected;
     private Context context;
     private MenuInflater menuInflater;
-    private ProgressBar progressBar;
+    private ProgressBar progressBar, imageLoadProgressBar;
     private messageListAdapter messageListAdapter;
     private Vibrator vibrator;
+    private ImageView backgroundImageView,onlineStatus;
+
 
 
 
@@ -129,10 +145,12 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
         }catch(Exception e){
             profilePic.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
         }
-
+        statusCheck(otherUserId);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         messageListAdapter=new messageListAdapter(messageList, chatActivity.this, profileUrI,this);
         recyclerView.setAdapter(messageListAdapter);
+        Glide.with(getApplicationContext()).load("https://images.unsplash.com/photo-1497250681960-ef046c08a56e?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=334&q=80").
+                transform(new BlurTransformation(10)).into(backgroundImageView);
 
 
 
@@ -142,7 +160,6 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
             Log.d("Error" ,e.getLocalizedMessage());
         }
 
-        final MediaPlayer mediaPlayer= MediaPlayer.create(this,R.raw.messagesound);
 
         sendButton.setOnClickListener(view -> {
             DatabaseReference sMessage_1=database.getReference().child("chats").child(otherUserId).child(user.getUid()).push();
@@ -164,7 +181,6 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
 
 
         });
-//
 
         attachButton.setOnClickListener(view ->{
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -222,20 +238,69 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
 
             @Override
             public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
-                new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+               new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
                         .addBackgroundColor(ContextCompat.getColor(chatActivity.this,R.color.Red_200))
                         .addActionIcon(R.drawable.remove)
+
                         .create()
                         .decorate();
-
                 super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
 
             }
         };
         ItemTouchHelper itemTouchHelper=new ItemTouchHelper(simpleCallback);
         itemTouchHelper.attachToRecyclerView(recyclerView);
+
     }
 
+    private void statusCheck(String otherUserId){
+
+        DatabaseReference userDetailRef=database.getReference().child("UserDetails").child(otherUserId);
+        userDetailRef.addValueEventListener(new ValueEventListener() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+
+                    userModel user=snapshot.getValue(userModel.class);
+                    Log.d("scdvf",user.getOnline());
+                    if(user.getOnline().equals("true")){
+                        onlineStatus.setVisibility(View.VISIBLE);
+                        lastSeen="online";
+                        lastSeenMessage.setText(lastSeen);
+
+                    }else{
+                        String lastSeenDate=user.getLastSeenDate();
+                        String lastSeenTime=user.getLastSeenTime();
+                        if (lastSeenDate==getDate()){
+                            lastSeen= "Last seen today at "+ lastSeenTime;
+                        }else{
+                            lastSeen= "Last seen on " +lastSeenDate +" at "+ lastSeenTime;
+                        }
+                        lastSeenMessage.setText(lastSeen);
+                        lastSeenMessage.setVisibility(View.VISIBLE);
+                        onlineStatus.setVisibility(View.GONE);
+                    }
+                final Handler handler = new Handler(Looper.getMainLooper());
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        lastSeenMessage.setVisibility(View.GONE);
+                        lastSeenMessage.animate().scaleX(0.2f).setDuration(2000);
+                    }
+                }, 2000);
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+
+
+    }
 
     private void loadSharedPreferenceData() {
         SharedPreferences sharedPreferences=getSharedPreferences("sharedPreferences",MODE_PRIVATE);
@@ -250,7 +315,6 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
         editor.putString("otherUserName",otherUserName);
         editor.putString("otherUserId",otherUserId);
         editor.putString("profileUrI",profileUrI);
-
         editor.apply();
     }
 
@@ -264,13 +328,18 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
         @SuppressLint("InflateParams") View actionBarView=LayoutInflater.inflate(R.layout.chat_custom_bar,null);
         actionBar.setCustomView(actionBarView);
         sendButton=findViewById(R.id.sendButton);
+        onlineStatus=findViewById(R.id.onlineStatus);
+        lastSeenMessage=findViewById(R.id.lastSeen);
         attachButton= findViewById(R.id.attachButton);
         profilePic=findViewById(R.id.image_profile);
         newMessage=findViewById(R.id.message_container);
         progressBar=findViewById(R.id.progressBar2);
+        backgroundImageView=findViewById(R.id.backgroundView);
+        imageLoadProgressBar=findViewById(R.id.progressBarImageLoad);
         otherUserId=getIntent().getStringExtra("userId");
         otherUserName=getIntent().getStringExtra("userName");
         profileUrI =getIntent().getStringExtra("profileUrI");
+
         if(otherUserId!=null){
             saveSharedPreferenceData();
         }
@@ -292,17 +361,11 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
                         messageStatus=message.getMessageStatus();
                         message.setMessageId(snapshot.getKey());
                         String receiver = message.getReceiver();
+                        message.setReceiver(receiver);
                         messageList.add(message);
-
 
                         if (messageList.size() >= 1) {
                             recyclerView.scrollToPosition(messageList.size()-1);
-                        }
-
-                        if (receiver.equals(user.getUid())){
-                            messageRef.child(snapshot.getKey()).child("messageStatus").setValue("read");
-                        }else{
-                            messageRef.child(snapshot.getKey()).child("messageStatus").setValue("unread");
                         }
 
                     }catch(Exception e){
@@ -324,7 +387,6 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
     }
 
 
-
     @RequiresApi(api = Build.VERSION_CODES.O)
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -340,41 +402,76 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
 
     }
 
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void uploadFile(String userId, String otherUserId) {
         ProgressBar progressBar=findViewById(R.id.progressBar);
         if (selected != null) {
+            imageLoadProgressBar.setVisibility(View.VISIBLE);
             StorageReference fileReference = mStorageReference.child(System.currentTimeMillis()
                     + ".jpg");
+            UploadTask uploadTask =fileReference.putFile(selected);
+            uploadTask.continueWithTask(task -> {
 
-            fileReference.putFile(selected).continueWithTask(task -> {
                 if (!task.isSuccessful()) {
+
                     throw task.getException();
                 }
                 return fileReference.getDownloadUrl();
             }).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     Uri downloadUri = task.getResult();
-                    DatabaseReference myRef = database.getReference();
-                    messageListModel message=new messageListModel();
-                    assert downloadUri != null;
-                    message.setImageUrI(downloadUri.toString());
-                    message.setTime(getTime());
-                    message.setDate(getDate());
-                    message.setType("IMAGE");
-                    message.setReceiver(otherUserId);
 
-                    try{
-                        myRef.child("chats").child(userId).child(otherUserId).push().setValue(message);
-                        myRef.child("chats").child(otherUserId).child(userId).push().setValue(message);
-
-
-                    }catch(Exception e){
-                        Log.d("error",e.getLocalizedMessage());
-                        progressBar.setVisibility(View.GONE);
+                    Bitmap bitmap = null;
+                    try {
+                        bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selected);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
+                    Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
+                            @Override
+                            public void onGenerated(@Nullable Palette palette) {
+                                if(palette!=null){
+                                    Palette.Swatch vibrantSwatch = palette.getMutedSwatch();
+                                    if(vibrantSwatch != null){
+                                        int backgroundColor= vibrantSwatch.getRgb();
+                                        DatabaseReference myRef = database.getReference();
+                                        messageListModel message=new messageListModel();
+
+                                        assert downloadUri != null;
+                                        message.setBackgroundColor(backgroundColor);
+                                        message.setImageUrI(downloadUri.toString());
+                                        message.setTime(getTime());
+                                        message.setDate(getDate());
+                                        message.setType("IMAGE");
+                                        message.setReceiver(otherUserId);
+
+                                        try{
+                                            myRef.child("chats").child(userId).child(otherUserId).push().setValue(message);
+                                            myRef.child("chats").child(otherUserId).child(userId).push().setValue(message);
+
+
+                                        }catch(Exception e){
+                                            Log.d("error",e.getLocalizedMessage());
+                                            progressBar.setVisibility(View.GONE);
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                imageLoadProgressBar.setVisibility(View.GONE);
+
+
+            });
+            uploadTask.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onProgress(@NonNull UploadTask.TaskSnapshot snapshot) {
+                    double progress=(100*snapshot.getBytesTransferred()/snapshot.getTotalByteCount());
+                    imageLoadProgressBar.setProgress((int)progress);
                 }
             });
+
         } else {
             Toast.makeText(this, "No file selected", Toast.LENGTH_SHORT).show();
         }
@@ -402,7 +499,7 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
         settings.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Intent intent = new Intent(chatActivity.this , settingsActivity.class);
+                Intent intent = new Intent(chatActivity.this , SettingsActivity.class);
                 startActivity(intent);
                 return false;
             }
@@ -442,38 +539,30 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
 
     @Override
     public void onLongItemClick(int position) {
-        switch (messageList.get(position).getType()){
-            case "TEXT":
-                vibrator=(Vibrator)context.getSystemService(VIBRATOR_SERVICE);
-                vibrator.vibrate(50);
-                messageId= messageList.get(position).getMessageId();
-                Toast.makeText(context,"itemDeleted",Toast.LENGTH_LONG).show();
-                DatabaseReference messageRef=database.getReference().child("chats").child(user.getUid()).child(otherUserId);
-                messageRef.child(messageId).removeValue();
-                messageListAdapter.notifyItemRemoved(position);
 
-                break;
-            case "IMAGE":
-                messageId= messageList.get(position).getMessageId();
-                String imageUrI= messageList.get(position).getImageUrI();
-                vibrator=(Vibrator)context.getSystemService(VIBRATOR_SERVICE);
-                vibrator.vibrate(50);
-                Toast.makeText(context,"itemDeleted",Toast.LENGTH_LONG).show();
-                StorageReference imageRef=firebaseStorage.getReferenceFromUrl(imageUrI);
-                imageRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        DatabaseReference messageRef=database.getReference().child("chats").child(user.getUid()).child(otherUserId);
-                        messageRef.child(messageId).removeValue();
-                        messageListAdapter.notifyItemRemoved(position);
-                    }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(context,"Something went wrong",Toast.LENGTH_LONG).show();
-                    }
-                });
-        }
+    }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void status(String status){
+        DatabaseReference userDetailRef=database.getReference().child("UserDetails").child(user.getUid());
+        Map<String ,Object> onlineStatus=new HashMap<>();
+        onlineStatus.put("lastSeenDate",getDate());
+        onlineStatus.put("lastSeenTime",getTime());
+        onlineStatus.put("online",status);
+        userDetailRef.updateChildren(onlineStatus);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    protected void onResume() {
+        super.onResume();
+        status("true");
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    protected void onPause() {
+        super.onPause();
+        status("false");
     }
 }

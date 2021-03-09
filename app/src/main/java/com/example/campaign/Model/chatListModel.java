@@ -82,7 +82,6 @@ public class chatListModel implements Comparable {
     @Override
     public int compareTo(Object o) {
         chatListModel chatListModel =(chatListModel) o;
-
         return chatListModel.getDescriptionId().compareTo(this.descriptionId);
     }
 

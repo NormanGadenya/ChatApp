@@ -13,19 +13,24 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_marginTop="8dp"
+        app:civ_background_color="@color/black"
         android:visibility="visible"
        android:layout_marginLeft="16dp"
         app:srcCompat="@drawable/ic_male_avatar_svgrepo_com" />
 
     <TextView
         android:id="@+id/userName"
-        android:layout_width="wrap_content"
+        android:layout_width="150dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_centerVertical="true"
         android:fontFamily="sans-serif-condensed-medium"
         android:text="Gadenya"
+        android:autoSizeTextType="uniform"
+        android:autoSizeMinTextSize="12sp"
+        android:autoSizeMaxTextSize="100sp"
+        android:autoSizeStepGranularity="2sp"
         android:textColor="@color/white"
-        android:textSize="30sp"
+        android:textSize="24sp"
         android:layout_marginLeft="70dp"
          />
 
@@ -37,4 +42,15 @@
         style="?android:attr/progressBarStyle"
         android:layout_width="40dp"
         android:layout_height="40dp" />
+
+    <ImageView
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:id="@+id/onlineStatus"
+        android:visibility="visible"
+        android:src="@drawable/online_status"
+        android:layout_marginRight="-20dp"
+        android:layout_centerVertical="true"
+        />
+
 </RelativeLayout>

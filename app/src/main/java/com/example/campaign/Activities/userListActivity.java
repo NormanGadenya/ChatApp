@@ -15,6 +15,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -43,8 +44,10 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class userListActivity extends AppCompatActivity {
     private List<String> chatListId;
@@ -61,7 +64,7 @@ public class userListActivity extends AppCompatActivity {
     private MenuInflater menuInflater;
     public  Map<String, String> namePhoneMap ;
     private int CONTACTS_REQUEST=110;
-    private List<String> contactsList;
+    private Set<String> contactsList=new HashSet<>();
 
 
     @Override
@@ -80,7 +83,11 @@ public class userListActivity extends AppCompatActivity {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    contactsList=getPhoneNumbers();
+                    loadSharedPreferenceData();
+                    if (contactsList==null){
+                        contactsList=getPhoneNumbers();
+                    }
+
                     loadUsers(contactsList);
                 }
             });
@@ -101,15 +108,19 @@ public class userListActivity extends AppCompatActivity {
         handler=new Handler();
         context=getApplicationContext();
         namePhoneMap= new HashMap<String, String>();
-        contactsList=new ArrayList<>();
         ActionBar actionBar=getSupportActionBar();
         actionBar.setTitle("Select Contact");
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowCustomEnabled(true);
 
     }
+    private void loadSharedPreferenceData() {
+        SharedPreferences sharedPreferences=getSharedPreferences("contactsSharedPreferences",MODE_PRIVATE);
+        contactsList=sharedPreferences.getStringSet("contactsList",null);
 
-    private void loadUsers(List<String> contacts){
+    }
+
+    private void loadUsers(Set<String> contacts){
         DatabaseReference userDetails=database.getReference().child("UserDetails");
         handler.post(new Runnable() {
             @Override
@@ -161,8 +172,8 @@ public class userListActivity extends AppCompatActivity {
         }
         return true;
     }
-    private List<String> getPhoneNumbers() {
-        List<String> phoneNumbers=new ArrayList<>();
+    private Set<String> getPhoneNumbers() {
+        Set<String> phoneNumbers=new HashSet<>();
         Cursor phones = context.getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
 
         // Loop Through All The Numbers
@@ -206,7 +217,11 @@ public class userListActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == CONTACTS_REQUEST)  {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && contactsList!=null) {
-                contactsList=getPhoneNumbers();
+                loadSharedPreferenceData();
+                if(contactsList==null){
+                    System.out.println("scscdvf");
+                    contactsList=getPhoneNumbers();
+                }
                 loadUsers(contactsList);
 
             } else {

@@ -4,7 +4,9 @@ public class userModel {
     private String userName,userId;
     private String phoneNumber;
     private String profileUrI;
-    private Boolean onlineStatus;
+    private String online;
+    private String lastSeenDate;
+    private String lastSeenTime;
 
     public userModel(){
 
@@ -50,11 +52,27 @@ public class userModel {
         this.userId = userId;
     }
 
-    public Boolean getOnlineStatus() {
-        return onlineStatus;
+    public String getOnline() {
+        return online;
     }
 
-    public void setOnlineStatus(Boolean onlineStatus) {
-        this.onlineStatus = onlineStatus;
+    public void setOnline(String online) {
+        this.online = online;
+    }
+
+    public String getLastSeenDate() {
+        return lastSeenDate;
+    }
+
+    public void setLastSeenDate(String lastSeenDate) {
+        this.lastSeenDate = lastSeenDate;
+    }
+
+    public String getLastSeenTime() {
+        return lastSeenTime;
+    }
+
+    public void setLastSeenTime(String lastSeenTime) {
+        this.lastSeenTime = lastSeenTime;
     }
 }

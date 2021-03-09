@@ -5,19 +5,27 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?colorPrimaryVariant"
+    android:animateLayoutChanges="true"
     tools:context=".Activities.chatActivity">
 
 
+    <ImageView
+        android:layout_width="match_parent"
+        android:id="@+id/backgroundView"
+        android:layout_height="match_parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:scaleType="centerCrop"
+        />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView1"
         android:layout_width="match_parent"
-        android:layoutAnimation="@anim/layout_anim"
         android:layout_height="0dp"
-
+        android:layoutAnimation="@anim/layout_anim"
         app:layout_constraintBottom_toTopOf="@+id/constraint_layout2"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -72,7 +80,25 @@
             app:srcCompat="@drawable/send" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:text="last seen today"
+        android:textAlignment="center"
+        android:background="#59000000"
 
+        android:textColor="@color/white"
+        app:layout_constraintTop_toTopOf="parent"
+        android:id="@+id/lastSeen"/>
+    <ProgressBar
+        android:id="@+id/progressBarImageLoad"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="wrap_content"
+        android:visibility="gone"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/lastSeen" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
