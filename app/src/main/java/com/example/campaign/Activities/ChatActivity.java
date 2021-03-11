@@ -144,6 +144,18 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             profilePic.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
         }
         statusCheck(otherUserId);
+        newMessage.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if(hasFocus){
+                    attachButton.setVisibility(View.GONE);
+
+                }
+                else{
+                    attachButton.setVisibility(View.VISIBLE);
+                }
+            }
+        });
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         messageListAdapter=new messageListAdapter(messageList, ChatActivity.this, profileUrI,this);
         recyclerView.setAdapter(messageListAdapter);
@@ -356,6 +368,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     }
 
 
+
     private void InitialiseControllers() {
         ActionBar actionBar=getSupportActionBar();
         actionBar.setTitle("");
@@ -376,7 +389,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         otherUserId=getIntent().getStringExtra("userId");
         otherUserName=getIntent().getStringExtra("userName");
         profileUrI =getIntent().getStringExtra("profileUrI");
-
         if(otherUserId!=null){
             saveSharedPreferenceData();
         }
@@ -386,7 +398,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     }
 
     private void getMessages(){
-
         DatabaseReference messageRef=database.getReference().child("chats").child(user.getUid()).child(otherUserId);
         messageRef.addValueEventListener(new ValueEventListener(){
             @Override
@@ -449,9 +460,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                     + ".jpg");
             UploadTask uploadTask =fileReference.putFile(selected);
             uploadTask.continueWithTask(task -> {
-
                 if (!task.isSuccessful()) {
-
                     throw task.getException();
                 }
                 return fileReference.getDownloadUrl();

@@ -77,6 +77,8 @@ public class UserProfileActivity extends AppCompatActivity {
         editUserNameBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                userName.setVisibility(View.GONE);
+                editUserNameBtn.setVisibility(View.GONE);
                 editUserName.setVisibility(View.VISIBLE);
             }
         });
@@ -95,6 +97,8 @@ public class UserProfileActivity extends AppCompatActivity {
                 // If the event is a key-down event on the "enter" button
                 if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
                         (keyCode == KeyEvent.KEYCODE_ENTER)) {
+                    userName.setVisibility(View.VISIBLE);
+                    editUserNameBtn.setVisibility(View.VISIBLE);
                     editedUserName=editUserName.getText().toString();
                     userName.setText(editedUserName);
                     editUserName.setVisibility(View.GONE);
@@ -249,7 +253,7 @@ public class UserProfileActivity extends AppCompatActivity {
                         if(palette!=null){
                             Palette.Swatch vibrantSwatch = palette.getMutedSwatch();
                             if(vibrantSwatch != null){
-
+                                getResources().getDrawable(R.drawable.title_background).setTint(vibrantSwatch.getRgb());
                             }
                         }
                     }

@@ -166,7 +166,7 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
 
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()){
                     chatListId.add(dataSnapshot.getKey());
-                    Log.d("scdcd",snapshot.toString());
+
                     chatUIds.add(dataSnapshot.getKey());
 
                     welcomeMsg.setVisibility(View.GONE);
@@ -428,7 +428,7 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
                 chat.setUserName(userInfo.get(userId).getUserName());
                 chat.setUserId(userId);
                 //String messageId=m.getMessageId();
-                System.out.println(m.getMessageId()+"kdc");
+
                 if(m!=null){
                     chat.setDescriptionId(m.getMessageId());
                 }

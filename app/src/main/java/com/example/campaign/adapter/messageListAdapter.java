@@ -7,6 +7,7 @@ import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -90,7 +91,8 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
     public class Holder extends RecyclerView.ViewHolder {
         private TextView message,time;
-        private CircularImageView profilePic,messageStatus;
+        private CircularImageView profilePic;
+        private ImageView messageStatus;
         private ZoomInImageView imageView;
         private ProgressBar progressBar;
 
@@ -168,11 +170,11 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
             }
             if (messageList.getMessageStatus()=="read"){
-                messageStatus.setImageResource(R.drawable.circle_read);
+                messageStatus.setImageResource(R.drawable.ic_baseline_done_24);
 
             }
             else{
-                messageStatus.setImageResource(R.drawable.circle_unread);
+                messageStatus.setImageResource(R.drawable.ic_baseline_done_24);
             }
         }
     }

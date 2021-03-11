@@ -96,16 +96,6 @@
                 android:layout_marginStart="16dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/textView5" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/userName"
-                android:layout_marginTop="8dp"
-                android:layout_marginStart="16dp"
-                android:id="@+id/nameDescription"
-                android:text="This is your user name and will be visible to all your Chat contacts"
-                android:textColor="?colorOnPrimary"/>
             <EditText
                 android:layout_width="200dp"
                 android:id="@+id/editUserName"
@@ -115,16 +105,31 @@
                 android:textColorHint="#CCCACA"
                 android:textColor="?colorOnPrimary"
                 android:layout_height="wrap_content"
-                app:layout_constraintTop_toBottomOf="@id/nameDescription"
+                app:layout_constraintTop_toBottomOf="@id/userName"
                 app:layout_constraintStart_toStartOf="parent"
                 android:layout_marginLeft="16dp"
                 android:layout_marginTop="16dp"/>
+            <TextView
+                android:id="@+id/nameDescription"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="16dp"
+                android:text="This is your user name and will be visible to all your Chat contacts"
+                android:textAlignment="center"
+                android:textColor="?colorOnPrimary"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/editUserName" />
+
+
             <ImageButton
                 android:id="@+id/editUserNameButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
                 android:layout_marginLeft="16dp"
+                android:layout_marginTop="8dp"
                 android:background="#0000"
                 android:clickable="true"
                 app:layout_constraintStart_toEndOf="@+id/userName"
