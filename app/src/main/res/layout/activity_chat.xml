@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="?colorPrimaryVariant"
     android:animateLayoutChanges="true"
-    tools:context=".Activities.chatActivity">
+    tools:context=".Activities.ChatActivity">
 
 
     <ImageView
@@ -83,10 +83,8 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="20dp"
-        android:text="last seen today"
         android:textAlignment="center"
         android:background="#59000000"
-
         android:textColor="@color/white"
         app:layout_constraintTop_toTopOf="parent"
         android:id="@+id/lastSeen"/>

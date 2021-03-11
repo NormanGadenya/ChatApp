@@ -13,7 +13,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -36,8 +35,6 @@ import com.example.campaign.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.PhoneAuthOptions;
-import com.google.firebase.auth.PhoneAuthProvider;
 import com.google.firebase.auth.UserInfo;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -48,10 +45,9 @@ import com.mikhaellopez.circularimageview.CircularImageView;
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.concurrent.TimeUnit;
 
 
-public class registrationActivity extends AppCompatActivity {
+public class RegistrationActivity extends AppCompatActivity {
     private Button submit_button;
     private EditText Name;
     private FirebaseDatabase database;
@@ -88,7 +84,7 @@ public class registrationActivity extends AppCompatActivity {
             String name = Name.getText().toString();
             progressBar.setVisibility(View.VISIBLE);
             if(name.isEmpty()){
-                Toast.makeText(registrationActivity.this, "Please fill in the fields", Toast.LENGTH_SHORT).show();
+                Toast.makeText(RegistrationActivity.this, "Please fill in the fields", Toast.LENGTH_SHORT).show();
             }else{
                 if (user!=null) {
 
@@ -124,7 +120,7 @@ public class registrationActivity extends AppCompatActivity {
         });
 
         gallery_button.setOnClickListener(v -> {
-            if (ContextCompat.checkSelfPermission(registrationActivity.this,
+            if (ContextCompat.checkSelfPermission(RegistrationActivity.this,
                     Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
                     Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                     startActivityForResult(intent,GALLERY_REQUEST);
@@ -134,7 +130,7 @@ public class registrationActivity extends AppCompatActivity {
             }
         });
         camera_button.setOnClickListener(v -> {
-            if (ContextCompat.checkSelfPermission(registrationActivity.this,
+            if (ContextCompat.checkSelfPermission(RegistrationActivity.this,
                     Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
                 Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 startActivityForResult(cameraIntent,  CAMERA_REQUEST);
@@ -198,7 +194,7 @@ public class registrationActivity extends AppCompatActivity {
                         System.out.println(e.getLocalizedMessage());
                     }
                     progressBar.setVisibility(View.GONE);
-                    Intent chatList=new Intent(registrationActivity.this, signUpActivity.class);
+                    Intent chatList=new Intent(RegistrationActivity.this, SignUpActivity.class);
                     startActivity(chatList);
 
                 }
@@ -231,7 +227,7 @@ public class registrationActivity extends AppCompatActivity {
             new AlertDialog.Builder(this)
                     .setTitle("Permission needed")
                     .setMessage("This permission is needed because we need to access your storage")
-                    .setPositiveButton("ok", (dialog, which) -> ActivityCompat.requestPermissions(registrationActivity.this,
+                    .setPositiveButton("ok", (dialog, which) -> ActivityCompat.requestPermissions(RegistrationActivity.this,
                             new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, GALLERY_REQUEST))
                     .setNegativeButton("cancel", (dialog, which) -> dialog.dismiss())
                     .create().show();
@@ -247,7 +243,7 @@ public class registrationActivity extends AppCompatActivity {
             new AlertDialog.Builder(this)
                     .setTitle("Permission needed")
                     .setMessage("This permission is needed because we need to access your camera")
-                    .setPositiveButton("ok", (dialog, which) -> ActivityCompat.requestPermissions(registrationActivity.this,
+                    .setPositiveButton("ok", (dialog, which) -> ActivityCompat.requestPermissions(RegistrationActivity.this,
                             new String[] {Manifest.permission.CAMERA}, CAMERA_REQUEST))
                     .setNegativeButton("cancel", (dialog, which) -> dialog.dismiss())
                     .create().show();

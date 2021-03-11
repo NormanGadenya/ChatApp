@@ -32,7 +32,7 @@ import com.zolad.zoominimageview.ZoomInImageView;
 import jp.wasabeef.glide.transformations.BlurTransformation;
 
 
-public class viewImageActivity extends AppCompatActivity {
+public class ViewImageActivity extends AppCompatActivity {
     private ImageView imageView2;
     private ProgressBar progressBar;
 
@@ -71,12 +71,6 @@ public class viewImageActivity extends AppCompatActivity {
 
 
     }
-
-
-
-
-
-
 
 
 }

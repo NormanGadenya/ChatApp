@@ -18,32 +18,35 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Campaign">
-        <activity
-            android:name=".Activities.SettingsActivity"
+        <activity android:name=".Activities.SettingsActivity"
+            android:parentActivityName=".Activities.MainActivity"
             android:theme="@style/Theme.Campaign.NoActionBar"
-            android:parentActivityName=".Activities.chatActivity" />
+            ></activity>
+        <activity
+
+            android:name=".Activities.UserProfileActivity"
+            android:parentActivityName=".Activities.ChatActivity"
+            android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity android:name=".Activities.MainActivity" />
         <activity
-            android:name=".Activities.userListActivity"
+            android:name=".Activities.UserListActivity"
+            android:theme="@style/AppTheme.Transparent"
             android:parentActivityName=".Activities.MainActivity" />
         <activity
-            android:name=".Activities.chatActivity"
+            android:name=".Activities.ChatActivity"
             android:parentActivityName=".Activities.MainActivity" />
         <activity
-            android:name=".Activities.viewImageActivity"
-            android:parentActivityName=".Activities.chatActivity"
+            android:name=".Activities.ViewImageActivity"
+            android:parentActivityName=".Activities.ChatActivity"
             android:theme="@style/Theme.Campaign" />
         <activity
-            android:name=".Activities.registrationActivity"
-            android:theme="@style/Theme.Campaign.NoActionBar" >
-
-        </activity>
+            android:name=".Activities.RegistrationActivity"
+            android:theme="@style/Theme.Campaign.NoActionBar"></activity>
         <activity
-            android:name=".Activities.otpActivity"
+            android:name=".Activities.OtpActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
-
         <activity
-            android:name=".Activities.signUpActivity"
+            android:name=".Activities.SignUpActivity"
             android:theme="@style/Theme.Campaign.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

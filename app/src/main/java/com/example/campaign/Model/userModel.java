@@ -7,6 +7,8 @@ public class userModel {
     private String online;
     private String lastSeenDate;
     private String lastSeenTime;
+    private String chatWallpaper;
+    private int chatBlur;
 
     public userModel(){
 
@@ -74,5 +76,21 @@ public class userModel {
 
     public void setLastSeenTime(String lastSeenTime) {
         this.lastSeenTime = lastSeenTime;
+    }
+
+    public String getChatWallpaper() {
+        return chatWallpaper;
+    }
+
+    public void setChatWallpaper(String chatWallpaper) {
+        this.chatWallpaper = chatWallpaper;
+    }
+
+    public int getChatBlur() {
+        return chatBlur;
+    }
+
+    public void setChatBlur(int chatBlur) {
+        this.chatBlur = chatBlur;
     }
 }

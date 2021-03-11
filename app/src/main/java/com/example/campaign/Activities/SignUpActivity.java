@@ -27,7 +27,7 @@ import com.google.firebase.auth.PhoneAuthProvider;
 
 import java.util.concurrent.TimeUnit;
 
-public class signUpActivity extends AppCompatActivity {
+public class SignUpActivity extends AppCompatActivity {
     private FirebaseAuth Auth;
     private EditText phoneNumberEdit;
     private PhoneAuthProvider.OnVerificationStateChangedCallbacks mCallBacks;
@@ -53,13 +53,13 @@ public class signUpActivity extends AppCompatActivity {
                 PhoneAuthOptions options = PhoneAuthOptions.newBuilder(Auth)
                         .setPhoneNumber(phone)
                         .setTimeout(60L , TimeUnit.SECONDS)
-                        .setActivity(signUpActivity.this)
+                        .setActivity(SignUpActivity.this)
                         .setCallbacks(mCallBacks)
                         .build();
                 PhoneAuthProvider.verifyPhoneNumber(options);
 
             }else{
-                Toast.makeText(signUpActivity.this,"please enter valid phone Number",Toast.LENGTH_LONG).show();
+                Toast.makeText(SignUpActivity.this,"please enter valid phone Number",Toast.LENGTH_LONG).show();
             }
         });
 
@@ -76,13 +76,13 @@ public class signUpActivity extends AppCompatActivity {
                         PhoneAuthOptions options = PhoneAuthOptions.newBuilder(Auth)
                                 .setPhoneNumber(phone)
                                 .setTimeout(60L , TimeUnit.SECONDS)
-                                .setActivity(signUpActivity.this)
+                                .setActivity(SignUpActivity.this)
                                 .setCallbacks(mCallBacks)
                                 .build();
                         PhoneAuthProvider.verifyPhoneNumber(options);
 
                     }else{
-                        Toast.makeText(signUpActivity.this,"please enter valid phone Number",Toast.LENGTH_LONG).show();
+                        Toast.makeText(SignUpActivity.this,"please enter valid phone Number",Toast.LENGTH_LONG).show();
                     }
                     return true;
                 }
@@ -99,7 +99,7 @@ public class signUpActivity extends AppCompatActivity {
 
             @Override
             public void onVerificationFailed(@NonNull FirebaseException e) {
-                Toast.makeText(signUpActivity.this,e.getMessage(),Toast.LENGTH_LONG).show();
+                Toast.makeText(SignUpActivity.this,e.getMessage(),Toast.LENGTH_LONG).show();
                 progressBar.setVisibility(View.GONE);
             }
             
@@ -115,7 +115,7 @@ public class signUpActivity extends AppCompatActivity {
         }
     }
     private void sendToChats(){
-        Intent mainIntent = new Intent(signUpActivity.this , MainActivity.class);
+        Intent mainIntent = new Intent(SignUpActivity.this , MainActivity.class);
         startActivity(mainIntent);
         finish();
     }
@@ -123,14 +123,14 @@ public class signUpActivity extends AppCompatActivity {
     private void signIn(PhoneAuthCredential credential){
         Auth.signInWithCredential(credential).addOnCompleteListener(task -> {
             if (task.isSuccessful()){
-                Intent registration = new Intent(signUpActivity.this , registrationActivity.class);
+                Intent registration = new Intent(SignUpActivity.this , RegistrationActivity.class);
                 startActivity(registration);
                 progressBar.setVisibility(View.GONE);
                 finish();
             }else{
-                Intent otpIntent = new Intent(signUpActivity.this , otpActivity.class);
+                Intent otpIntent = new Intent(SignUpActivity.this , OtpActivity.class);
                 startActivity(otpIntent);
-                Toast.makeText(signUpActivity.this,task.getException().getMessage(),Toast.LENGTH_LONG).show();
+                Toast.makeText(SignUpActivity.this,task.getException().getMessage(),Toast.LENGTH_LONG).show();
                 progressBar.setVisibility(View.GONE);
 
             }

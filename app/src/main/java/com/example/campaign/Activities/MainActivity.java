@@ -5,6 +5,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
@@ -36,7 +37,6 @@ import android.widget.ImageView;
 import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.Toolbar;
 
 import com.example.campaign.Interfaces.RecyclerViewInterface;
 import com.example.campaign.Model.chatListModel;
@@ -44,8 +44,6 @@ import com.example.campaign.Model.messageListModel;
 import com.example.campaign.Model.userModel;
 import com.example.campaign.adapter.chatListAdapter;
 import com.example.campaign.R;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -54,7 +52,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.StorageReference;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -64,12 +61,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableMap;
 import java.util.Set;
 
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
-import static android.content.Context.MODE_PRIVATE;
 import static com.example.campaign.App.MESSAGE_CHANNEL_ID;
 
 public class MainActivity extends AppCompatActivity  implements RecyclerViewInterface {
@@ -137,9 +132,7 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
         newChat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent mainIntent = new Intent(MainActivity.this , userListActivity.class);
-                startActivity(mainIntent);
-                finish();
+                presentActivity(v);
             }
         });
     }
@@ -474,7 +467,8 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
         menuInflater =getMenuInflater();
         menuInflater.inflate(R.menu.chatmenu,menu);
         MenuItem searchItem=menu.findItem(R.id.search);
-        MenuItem settingsItem=menu.findItem(R.id.settingsButton);
+        MenuItem profileDetails=menu.findItem(R.id.profileButton);
+        MenuItem settings=menu.findItem(R.id.settingsButton);
         SearchView searchView= (SearchView) MenuItemCompat.getActionView(searchItem);
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
@@ -497,16 +491,35 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
                 return false;
             }
         });
-        settingsItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+        profileDetails.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Intent intent=new Intent(getApplicationContext(),SettingsActivity.class);
+                Intent intent=new Intent(getApplicationContext(), UserProfileActivity.class);
                 startActivity(intent);
                 return false;
             }
         });
-
+        settings.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent intent = new Intent(getApplicationContext() , SettingsActivity.class);
+                startActivity(intent);
+                return false;
+            }
+        });
         return true;
+    }
+    public void presentActivity(View view) {
+        ActivityOptionsCompat options = ActivityOptionsCompat.
+                makeSceneTransitionAnimation(this, view, "transition");
+        int revealX = (int) (view.getX() + view.getWidth() / 2);
+        int revealY = (int) (view.getY() + view.getHeight() / 2);
+
+        Intent intent = new Intent(this, UserListActivity.class);
+        intent.putExtra(UserListActivity.EXTRA_CIRCULAR_REVEAL_X, revealX);
+        intent.putExtra(UserListActivity.EXTRA_CIRCULAR_REVEAL_Y, revealY);
+
+        ActivityCompat.startActivity(this, intent, options.toBundle());
     }
 
     private void searchUsers(String query) {
@@ -573,12 +586,13 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
     @Override
     public void onItemClick(int position) {
         if(list!=null){
-            Intent intent =new Intent(context, chatActivity.class)
+            Intent intent =new Intent(context, ChatActivity.class)
                     .putExtra("userId",list.get(position).getUserId())
                     .putExtra("userName",list.get(position).getUserName())
                     .putExtra("profileUrI",list.get(position).getProfileUrI());
 
             startActivity(intent);
+
         }
     }
 
@@ -683,7 +697,6 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
         onlineStatus.put("lastSeenDate",getDate());
         onlineStatus.put("lastSeenTime",getTime());
         onlineStatus.put("online",status);
-
         userDetailRef.updateChildren(onlineStatus);
     }
 

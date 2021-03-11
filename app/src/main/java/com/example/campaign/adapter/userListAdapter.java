@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.campaign.Model.userModel;
 import com.example.campaign.R;
-import com.example.campaign.Activities.chatActivity;
+import com.example.campaign.Activities.ChatActivity;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
 import java.util.List;
@@ -55,7 +55,7 @@ public class userListAdapter extends RecyclerView.Adapter<userListAdapter.Holder
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                context.startActivity(new Intent(context, chatActivity.class)
+                context.startActivity(new Intent(context, ChatActivity.class)
                         .putExtra("userId",userList.getUserId())
                         .putExtra("userName",userList.getUserName())
                         .putExtra("profileUrI",userList.getProfileUrI())

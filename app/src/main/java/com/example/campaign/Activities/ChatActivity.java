@@ -19,7 +19,6 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -42,6 +41,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
@@ -52,7 +52,6 @@ import com.example.campaign.R;
 import com.example.campaign.adapter.messageListAdapter;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -73,12 +72,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 import jp.wasabeef.glide.transformations.BlurTransformation;
 
-public class chatActivity extends AppCompatActivity implements RecyclerViewInterface {
+public class ChatActivity extends AppCompatActivity implements RecyclerViewInterface {
 
     private String otherUserId, message, profileUrI,messageStatus,messageId,otherUserName,lastSeen;
     private FirebaseDatabase database;
@@ -136,7 +134,7 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
             profilePic.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent =new Intent(getApplicationContext(),viewImageActivity.class);
+                    Intent intent =new Intent(getApplicationContext(), ViewImageActivity.class);
                     intent.putExtra("imageUrI",profileUrI);
                     startActivity(intent);
                 }
@@ -147,10 +145,9 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
         }
         statusCheck(otherUserId);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        messageListAdapter=new messageListAdapter(messageList, chatActivity.this, profileUrI,this);
+        messageListAdapter=new messageListAdapter(messageList, ChatActivity.this, profileUrI,this);
         recyclerView.setAdapter(messageListAdapter);
-        Glide.with(getApplicationContext()).load("https://images.unsplash.com/photo-1497250681960-ef046c08a56e?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=334&q=80").
-                transform(new BlurTransformation(10)).into(backgroundImageView);
+        getCurrentWallpaper();
 
 
 
@@ -239,7 +236,7 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
             @Override
             public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
                new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
-                        .addBackgroundColor(ContextCompat.getColor(chatActivity.this,R.color.Red_200))
+                        .addBackgroundColor(ContextCompat.getColor(ChatActivity.this,R.color.Red_200))
                         .addActionIcon(R.drawable.remove)
 
                         .create()
@@ -251,6 +248,45 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
         ItemTouchHelper itemTouchHelper=new ItemTouchHelper(simpleCallback);
         itemTouchHelper.attachToRecyclerView(recyclerView);
 
+    }
+    private void getCurrentWallpaper(){
+        DatabaseReference myRef = database.getReference().child("UserDetails").child(user.getUid());
+        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                userModel user=snapshot.getValue(userModel.class);
+                String chatWallpaperUrI=user.getChatWallpaper();
+                int blur=user.getChatBlur();
+                progressBar.setVisibility(View.VISIBLE);
+                if(chatWallpaperUrI!=null){
+                    Glide.with(getApplicationContext())
+                            .load(chatWallpaperUrI)
+                            .transform(new BlurTransformation(blur))
+                            .addListener(new RequestListener<Drawable>() {
+                                @Override
+                                public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                                    progressBar.setVisibility(View.GONE);
+                                    return false;
+                                }
+
+                                @Override
+                                public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                                    progressBar.setVisibility(View.GONE);
+                                    return false;
+                                }
+                            })
+                            .into(backgroundImageView)
+                    ;
+                }
+
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
     }
 
     private void statusCheck(String otherUserId){
@@ -267,6 +303,7 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
                     if(user.getOnline().equals("true")){
                         onlineStatus.setVisibility(View.VISIBLE);
                         lastSeen="online";
+                        Log.d("scdvf",lastSeen);
                         lastSeenMessage.setText(lastSeen);
 
                     }else{
@@ -286,7 +323,7 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
                     @Override
                     public void run() {
                         lastSeenMessage.setVisibility(View.GONE);
-                        lastSeenMessage.animate().scaleX(0.2f).setDuration(2000);
+                        lastSeenMessage.animate().scaleX(0.0f).setDuration(2000);
                     }
                 }, 2000);
 
@@ -495,16 +532,27 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
     public boolean onCreateOptionsMenu(Menu menu) {
         menuInflater =getMenuInflater();
         menuInflater.inflate(R.menu.menu,menu);
+        MenuItem profileDetails=menu.findItem(R.id.profileButton);
         MenuItem settings=menu.findItem(R.id.settingsButton);
+        profileDetails.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent intent = new Intent(ChatActivity.this , UserProfileActivity.class);
+                startActivity(intent);
+
+                return false;
+            }
+        });
         settings.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Intent intent = new Intent(chatActivity.this , SettingsActivity.class);
+                Intent intent = new Intent(ChatActivity.this , SettingsActivity.class);
                 startActivity(intent);
                 return false;
             }
         });
         return true;
+
     }
 
     @Override
@@ -520,7 +568,7 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
 
     @Override
     public void onBackPressed() {
-        Intent mainIntent = new Intent(chatActivity.this , MainActivity.class);
+        Intent mainIntent = new Intent(ChatActivity.this , MainActivity.class);
         startActivity(mainIntent);
         finish();
     }
@@ -528,7 +576,7 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
     @Override
     public void onItemClick(int position) {
 
-        Intent intent =new Intent(context, viewImageActivity.class)
+        Intent intent =new Intent(context, ViewImageActivity.class)
                 .putExtra("imageUrI", messageList.get(position).getImageUrI())
                 .putExtra("profileUrI", messageList.get(position).getProfileUrI())
                 .putExtra("userId",otherUserId)
@@ -563,6 +611,13 @@ public class chatActivity extends AppCompatActivity implements RecyclerViewInter
     @Override
     protected void onPause() {
         super.onPause();
+        status("false");
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    protected void onStop() {
+        super.onStop();
         status("false");
     }
 }

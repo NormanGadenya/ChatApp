@@ -11,13 +11,14 @@ import androidx.recyclerview.widget.RecyclerView;
 
 
 import android.Manifest;
-import android.app.AlertDialog;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract;
@@ -26,6 +27,9 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewAnimationUtils;
+import android.view.ViewTreeObserver;
+import android.view.animation.AccelerateInterpolator;
 import android.widget.ProgressBar;
 import android.widget.SearchView;
 import android.widget.Toast;
@@ -49,7 +53,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class userListActivity extends AppCompatActivity {
+public class UserListActivity extends AppCompatActivity {
+    public static final String EXTRA_CIRCULAR_REVEAL_X="EXTRA_CIRCULAR_REVEAL_X" ;
+    public static final String EXTRA_CIRCULAR_REVEAL_Y = "EXTRA_CIRCULAR_REVEAL_Y";
+
+    View rootLayout;
+    private int revealX;
+    private int revealY;
     private List<String> chatListId;
     private RecyclerView recyclerView;
 
@@ -75,7 +85,7 @@ public class userListActivity extends AppCompatActivity {
         progressBar.setVisibility(View.VISIBLE);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         database = FirebaseDatabase.getInstance();
-        userListAdapter=new userListAdapter(list,userListActivity.this);
+        userListAdapter=new userListAdapter(list, UserListActivity.this);
 
         recyclerView.setAdapter(userListAdapter);
         if (ContextCompat.checkSelfPermission(context,
@@ -95,6 +105,30 @@ public class userListActivity extends AppCompatActivity {
         } else {
             requestContactsPermission();
         }
+        final Intent intent = getIntent();
+
+        if (savedInstanceState == null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
+                intent.hasExtra(EXTRA_CIRCULAR_REVEAL_X) &&
+                intent.hasExtra(EXTRA_CIRCULAR_REVEAL_Y)) {
+            rootLayout.setVisibility(View.INVISIBLE);
+
+            revealX = intent.getIntExtra(EXTRA_CIRCULAR_REVEAL_X, 0);
+            revealY = intent.getIntExtra(EXTRA_CIRCULAR_REVEAL_Y, 0);
+
+
+            ViewTreeObserver viewTreeObserver = rootLayout.getViewTreeObserver();
+            if (viewTreeObserver.isAlive()) {
+                viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        revealActivity(revealX, revealY);
+                        rootLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                });
+            }
+        } else {
+            rootLayout.setVisibility(View.VISIBLE);
+        }
 
 
     }
@@ -112,7 +146,47 @@ public class userListActivity extends AppCompatActivity {
         actionBar.setTitle("Select Contact");
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowCustomEnabled(true);
+        rootLayout = findViewById(R.id.root_layout);
 
+    }
+
+    protected void revealActivity(int x, int y) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            float finalRadius = (float) (Math.max(rootLayout.getWidth(), rootLayout.getHeight()) * 1.1);
+
+            // create the animator for this view (the start radius is zero)
+            Animator circularReveal = ViewAnimationUtils.createCircularReveal(rootLayout, x, y, 0, finalRadius);
+            circularReveal.setDuration(400);
+            circularReveal.setInterpolator(new AccelerateInterpolator());
+
+            // make the view visible and start the animation
+            rootLayout.setVisibility(View.VISIBLE);
+            circularReveal.start();
+        } else {
+            finish();
+        }
+    }
+
+    protected void unRevealActivity() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            finish();
+        } else {
+            float finalRadius = (float) (Math.max(rootLayout.getWidth(), rootLayout.getHeight()) * 1.1);
+            Animator circularReveal = ViewAnimationUtils.createCircularReveal(
+                    rootLayout, revealX, revealY, finalRadius, 0);
+
+            circularReveal.setDuration(400);
+            circularReveal.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    rootLayout.setVisibility(View.INVISIBLE);
+                    finish();
+                }
+            });
+
+
+            circularReveal.start();
+        }
     }
     private void loadSharedPreferenceData() {
         SharedPreferences sharedPreferences=getSharedPreferences("contactsSharedPreferences",MODE_PRIVATE);
@@ -207,9 +281,9 @@ public class userListActivity extends AppCompatActivity {
     }
 
     private void requestContactsPermission() {
-        if (ActivityCompat.shouldShowRequestPermissionRationale(userListActivity.this,
+        if (ActivityCompat.shouldShowRequestPermissionRationale(UserListActivity.this,
                 Manifest.permission.READ_CONTACTS)) {
-            ActivityCompat.requestPermissions(userListActivity.this,
+            ActivityCompat.requestPermissions(UserListActivity.this,
                     new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST);
         }
     }
@@ -243,7 +317,8 @@ public class userListActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        Intent mainIntent = new Intent(userListActivity.this , MainActivity.class);
+
+        Intent mainIntent = new Intent(UserListActivity.this , MainActivity.class);
         startActivity(mainIntent);
         finish();
     }
@@ -252,8 +327,19 @@ public class userListActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         menuInflater =getMenuInflater();
         menuInflater.inflate(R.menu.chatmenu,menu);
-        MenuItem item=menu.findItem(R.id.search);
-        SearchView searchView= (SearchView) MenuItemCompat.getActionView(item);
+        MenuItem searchItem=menu.findItem(R.id.search);
+        MenuItem profileDetails=menu.findItem(R.id.profileButton);
+        MenuItem settings=menu.findItem(R.id.settingsButton);
+        SearchView searchView= (SearchView) MenuItemCompat.getActionView(searchItem);
+        profileDetails.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent intent = new Intent(UserListActivity.this, UserProfileActivity.class);
+                startActivity(intent);
+
+                return false;
+            }
+        });
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String s) {
@@ -277,6 +363,14 @@ public class userListActivity extends AppCompatActivity {
                         loadUsers(contactsList);
                     }
                 }
+                return false;
+            }
+        });
+        settings.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent intent = new Intent(getApplicationContext() , SettingsActivity.class);
+                startActivity(intent);
                 return false;
             }
         });

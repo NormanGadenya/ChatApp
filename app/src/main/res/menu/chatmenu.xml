@@ -6,6 +6,12 @@
         android:icon="@drawable/ic_baseline_search_24"
         app:showAsAction="ifRoom"
         app:actionViewClass="android.widget.SearchView"/>
+
+    <item
+        android:id="@+id/profileButton"
+        android:title="Profile details"
+        app:showAsAction="never"
+        android:icon="@drawable/person"/>
     <item
         android:id="@+id/settingsButton"
         android:title="Settings"

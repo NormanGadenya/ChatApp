@@ -1,15 +1,11 @@
 package com.example.campaign.adapter;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Build;
 import android.os.Vibrator;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -18,7 +14,6 @@ import androidx.annotation.RequiresApi;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.campaign.Activities.chatActivity;
 import com.example.campaign.Interfaces.RecyclerViewInterface;
 import com.example.campaign.Model.chatListModel;
 import com.example.campaign.Model.messageListModel;
@@ -35,8 +30,6 @@ import com.mikhaellopez.circularimageview.CircularImageView;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-
-import static android.content.Context.VIBRATOR_SERVICE;
 
 
 public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder> {
@@ -102,6 +95,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
             tvDesc = itemView.findViewById(R.id.desc);
             tvName = itemView.findViewById(R.id.userName);
             profile = itemView.findViewById(R.id.image_profile);
+
         }
     }
 
