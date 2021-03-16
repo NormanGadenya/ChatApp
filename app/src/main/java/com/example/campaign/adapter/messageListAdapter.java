@@ -7,6 +7,8 @@ import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -53,14 +55,15 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     @NonNull
     @Override
     public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view;
         if(viewType ==MESSAGE_LEFT){
-            View view =LayoutInflater.from(context).inflate(R.layout.chat_item_left,parent,false);
-            return new Holder(view);
-        }else{
-            View view =LayoutInflater.from(context).inflate(R.layout.chat_item_right,parent,false);
-            return new Holder(view);
-        }
+            view =LayoutInflater.from(context).inflate(R.layout.chat_item_left,parent,false);
 
+        }else{
+            view =LayoutInflater.from(context).inflate(R.layout.chat_item_right,parent,false);
+
+        }
+        return new Holder(view);
     }
 
     @Override
@@ -95,12 +98,13 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         private ImageView messageStatus;
         private ZoomInImageView imageView;
         private ProgressBar progressBar;
+        private ImageButton delete;
 
 
 
         public Holder(@NonNull View itemView) {
             super(itemView);
-
+            delete=itemView.findViewById(R.id.delete);
             imageView=itemView.findViewById(R.id.imageView);
             profilePic=itemView.findViewById(R.id.image_profile);
             message = itemView.findViewById(R.id.show_message);
@@ -130,14 +134,21 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                 case "IMAGE":
                     progressBar.setVisibility(itemView.VISIBLE);
                     imageView.setVisibility(itemView.VISIBLE);
-                    message.setVisibility(itemView.GONE);
+                    if(messageList.getText()==null){
+                        message.setVisibility(itemView.GONE);
+                    }else{
+                        message.setText(messageList.getText());
+                        message.setVisibility(itemView.VISIBLE);
+                    }
+
                     imageView.setBackgroundColor(messageList.getBackgroundColor());
                     imageView.setClipToOutline(true);
                     imageView.setOnLongClickListener(new View.OnLongClickListener() {
                         @SuppressLint("MissingPermission")
                         @Override
                         public boolean onLongClick(View v) {
-                            recyclerViewInterface.onLongItemClick(getAdapterPosition());
+//                            recyclerViewInterface.getAdapterPosition();
+//                            delete.setVisibility(View.VISIBLE);
                             return true;
                         }
                     });

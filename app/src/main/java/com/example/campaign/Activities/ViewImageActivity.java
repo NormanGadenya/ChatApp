@@ -35,15 +35,26 @@ import jp.wasabeef.glide.transformations.BlurTransformation;
 public class ViewImageActivity extends AppCompatActivity {
     private ImageView imageView2;
     private ProgressBar progressBar;
+    private String otherUserName;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_act);
-
+        otherUserName=getIntent().getStringExtra("userName");
         ActionBar actionBar=getSupportActionBar();
-        actionBar.setTitle("");
+        String direction=getIntent().getStringExtra("Direction");
+        if(direction!=null){
+            if(direction.equals("to")){
+                actionBar.setTitle("To "+ otherUserName);
+            }else{
+                actionBar.setTitle("From "+ otherUserName);
+            }
+        }else{
+            actionBar.setTitle("To "+ otherUserName);
+        }
+
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowCustomEnabled(true);
 

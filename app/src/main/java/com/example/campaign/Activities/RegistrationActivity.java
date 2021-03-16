@@ -12,6 +12,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -23,6 +24,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -145,6 +147,7 @@ public class RegistrationActivity extends AppCompatActivity {
             profilePic.setImageResource(R.drawable.person);
             wrapper.setVisibility(View.GONE);
         });
+
     }
 
     private void InitializeControllers() {
@@ -236,7 +239,13 @@ public class RegistrationActivity extends AppCompatActivity {
                     new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, GALLERY_REQUEST);
         }
     }
-
+    private void closeKeyboard(){
+        View view=this.getCurrentFocus();
+        if (view!=null){
+            InputMethodManager im=(InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            im.hideSoftInputFromWindow(view.getWindowToken(),0);
+        }
+    }
     private void requestCameraPermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                 Manifest.permission.CAMERA)) {
@@ -333,4 +342,9 @@ public class RegistrationActivity extends AppCompatActivity {
         return myDateObj.format(dateObj);
     }
 
+    @Override
+    public void onBackPressed() {
+
+     wrapper.setVisibility(View.GONE);
+    }
 }

@@ -31,6 +31,8 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.view.MenuInflater;
 
@@ -144,18 +146,19 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             profilePic.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
         }
         statusCheck(otherUserId);
-        newMessage.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if(hasFocus){
-                    attachButton.setVisibility(View.GONE);
+//        newMessage.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+//            @Override
+//            public void onFocusChange(View v, boolean hasFocus) {
+//                if(hasFocus){
+//                    attachButton.setVisibility(View.GONE);
+//
+//                }
+//                else{
+//                    attachButton.setVisibility(View.VISIBLE);
+//                }
+//            }
+//        });
 
-                }
-                else{
-                    attachButton.setVisibility(View.VISIBLE);
-                }
-            }
-        });
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         messageListAdapter=new messageListAdapter(messageList, ChatActivity.this, profileUrI,this);
         recyclerView.setAdapter(messageListAdapter);
@@ -206,6 +209,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 try {
                     int position = viewHolder.getAdapterPosition();
+
                     switch (messageList.get(position).getType()) {
                         case "TEXT":
                             vibrator = (Vibrator) context.getSystemService(VIBRATOR_SERVICE);
@@ -247,12 +251,12 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
             @Override
             public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
-               new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
-                        .addBackgroundColor(ContextCompat.getColor(ChatActivity.this,R.color.Red_200))
-                        .addActionIcon(R.drawable.remove)
-
-                        .create()
-                        .decorate();
+//               new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+//                        .addBackgroundColor(ContextCompat.getColor(ChatActivity.this,R.color.Red_200))
+//                        .addActionIcon(R.drawable.remove)
+//
+//                        .create()
+//                        .decorate();
                 super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
 
             }
@@ -269,8 +273,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 userModel user=snapshot.getValue(userModel.class);
                 String chatWallpaperUrI=user.getChatWallpaper();
                 int blur=user.getChatBlur();
-                progressBar.setVisibility(View.VISIBLE);
                 if(chatWallpaperUrI!=null){
+                    progressBar.setVisibility(View.VISIBLE);
                     Glide.with(getApplicationContext())
                             .load(chatWallpaperUrI)
                             .transform(new BlurTransformation(blur))
@@ -311,25 +315,26 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
 
                     userModel user=snapshot.getValue(userModel.class);
-                    Log.d("scdvf",user.getOnline());
-                    if(user.getOnline().equals("true")){
-                        onlineStatus.setVisibility(View.VISIBLE);
-                        lastSeen="online";
-                        Log.d("scdvf",lastSeen);
-                        lastSeenMessage.setText(lastSeen);
+                    if(user.getOnline()!=null){
+                        if(user.getOnline().equals("true")){
+                            onlineStatus.setVisibility(View.VISIBLE);
+                            lastSeen="online";
+                            lastSeenMessage.setText(lastSeen);
 
-                    }else{
-                        String lastSeenDate=user.getLastSeenDate();
-                        String lastSeenTime=user.getLastSeenTime();
-                        if (lastSeenDate==getDate()){
-                            lastSeen= "Last seen today at "+ lastSeenTime;
                         }else{
-                            lastSeen= "Last seen on " +lastSeenDate +" at "+ lastSeenTime;
+                            String lastSeenDate=user.getLastSeenDate();
+                            String lastSeenTime=user.getLastSeenTime();
+                            if (lastSeenDate==getDate()){
+                                lastSeen= "Last seen today at "+ lastSeenTime;
+                            }else{
+                                lastSeen= "Last seen on " +lastSeenDate +" at "+ lastSeenTime;
+                            }
+                            lastSeenMessage.setText(lastSeen);
+                            lastSeenMessage.setVisibility(View.VISIBLE);
+                            onlineStatus.setVisibility(View.GONE);
                         }
-                        lastSeenMessage.setText(lastSeen);
-                        lastSeenMessage.setVisibility(View.VISIBLE);
-                        onlineStatus.setVisibility(View.GONE);
                     }
+
                 final Handler handler = new Handler(Looper.getMainLooper());
                 handler.postDelayed(new Runnable() {
                     @Override
@@ -346,8 +351,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
             }
         });
-
-
 
     }
 
@@ -371,7 +374,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     private void InitialiseControllers() {
         ActionBar actionBar=getSupportActionBar();
-        actionBar.setTitle("");
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowCustomEnabled(true);
         LayoutInflater LayoutInflater=(LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -440,11 +442,17 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode==2 && resultCode== Activity.RESULT_OK && data!=null){
             selected=data.getData();
-            try{
-                uploadFile(user.getUid(),otherUserId);
-            }catch(Exception e){
-                Log.d("error",e.getLocalizedMessage());
-            }
+            Intent intent=new Intent(getApplicationContext(),sendImage.class)
+                    .putExtra("imageUrI",selected.toString())
+                    .putExtra("otherUserId",otherUserId)
+                    .putExtra("otherUserName",otherUserName);
+            startActivity(intent);
+
+//            try{
+//                uploadFile(user.getUid(),otherUserId);
+//            }catch(Exception e){
+//                Log.d("error",e.getLocalizedMessage());
+//            }
 
         }
 
@@ -546,7 +554,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         profileDetails.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Intent intent = new Intent(ChatActivity.this , UserProfileActivity.class);
+                Intent intent = new Intent(ChatActivity.this , UserProfileActivity.class).putExtra("userName",otherUserName);
                 startActivity(intent);
 
                 return false;
@@ -590,6 +598,11 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 .putExtra("profileUrI", messageList.get(position).getProfileUrI())
                 .putExtra("userId",otherUserId)
                 .putExtra("userName",otherUserName);
+        if(messageList.get(position).getReceiver()==user.getUid()){
+            intent.putExtra("Direction","from");
+        }else{
+            intent.putExtra("Direction","to");
+        }
         startActivity(intent);
 
     }

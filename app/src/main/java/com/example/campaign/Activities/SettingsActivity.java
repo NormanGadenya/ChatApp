@@ -190,7 +190,7 @@ public class SettingsActivity extends AppCompatActivity implements RecyclerViewI
           @Override
           public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
               changed=true;
-              if(chatWallpaperUrI!=null || selected==null){
+              if(chatWallpaperUrI!=null || selected==null && imageView!=null){
                   seekBarProgress=progress/4;
                   imageView.setBlur(seekBarProgress);
               }

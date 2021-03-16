@@ -18,20 +18,23 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Campaign">
-        <activity android:name=".Activities.SettingsActivity"
-            android:parentActivityName=".Activities.MainActivity"
-            android:theme="@style/Theme.Campaign.NoActionBar"
+        <activity
+            android:name=".Activities.sendImage"
+            android:parentActivityName=".Activities.ChatActivity"
             ></activity>
         <activity
-
+            android:name=".Activities.SettingsActivity"
+            android:parentActivityName=".Activities.MainActivity"
+            android:theme="@style/Theme.Campaign.NoActionBar" />
+        <activity
             android:name=".Activities.UserProfileActivity"
             android:parentActivityName=".Activities.ChatActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity android:name=".Activities.MainActivity" />
         <activity
             android:name=".Activities.UserListActivity"
-            android:theme="@style/AppTheme.Transparent"
-            android:parentActivityName=".Activities.MainActivity" />
+            android:parentActivityName=".Activities.MainActivity"
+            android:theme="@style/AppTheme.Transparent" />
         <activity
             android:name=".Activities.ChatActivity"
             android:parentActivityName=".Activities.MainActivity" />
