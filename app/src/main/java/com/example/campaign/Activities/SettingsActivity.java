@@ -2,6 +2,7 @@ package com.example.campaign.Activities;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -13,6 +14,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -96,6 +98,9 @@ public class SettingsActivity extends AppCompatActivity implements RecyclerViewI
         imageView.setClipToOutline(true);
         imageView.setBackgroundResource(R.drawable.card_background3);
         seekBar=findViewById(R.id.seekBar);
+
+
+
         progressBar=findViewById(R.id.progressBarChatWallpaper);
         firebaseStorage=FirebaseStorage.getInstance();
         mStorageReference=firebaseStorage.getReference();
@@ -169,6 +174,20 @@ public class SettingsActivity extends AppCompatActivity implements RecyclerViewI
                                 @Override
                                 public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
                                     progressBar.setVisibility(View.GONE);
+                                    DatabaseReference myRef = database.getReference().child("UserDetails").child(firebaseUser.getUid());
+                                    myRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                            userModel user=snapshot.getValue(userModel.class);
+                                            seekBar.setProgress(user.getChatBlur()*4);
+                                        }
+
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+
+                                        }
+                                    });
+
                                     return false;
                                 }
                             })
@@ -187,12 +206,22 @@ public class SettingsActivity extends AppCompatActivity implements RecyclerViewI
     }
     private void getOpacity(){
       seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+          @RequiresApi(api = Build.VERSION_CODES.O)
           @Override
           public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
               changed=true;
               if(chatWallpaperUrI!=null || selected==null && imageView!=null){
                   seekBarProgress=progress/4;
-                  imageView.setBlur(seekBarProgress);
+                  try{
+                      if(seekBarProgress!=1){
+                          imageView.setBlur(seekBarProgress);
+                      }
+
+                  }catch (Exception e){
+                      e.getStackTrace();
+                  }
+
               }
 
           }
@@ -228,50 +257,54 @@ public class SettingsActivity extends AppCompatActivity implements RecyclerViewI
     private void uploadFile( String userId) {
         DatabaseReference myRef = database.getReference().child("UserDetails").child(userId);
         progressBar.setVisibility(View.VISIBLE);
+        Map<String ,Object> userDetail=new HashMap<>();
         if (selected != null) {
-            StorageReference fileReference = mStorageReference.child(System.currentTimeMillis()
-                    + ".jpg");
-            UploadTask uploadTask =fileReference.putFile(selected);
-            uploadTask.continueWithTask(task -> {
-
-                if (!task.isSuccessful()) {
-
-                    throw task.getException();
-                }
-                return fileReference.getDownloadUrl();
-
-            }).addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    progressBar.setVisibility(View.GONE);
-                    Uri downloadUri = task.getResult();
-//
-
-
-                    Map<String ,Object> userDetail=new HashMap<>();
-
-                    try{
-                        userDetail.put("chatWallpaper",downloadUri.toString());
-                        if(changed){
-                            userDetail.put("chatBlur",seekBarProgress);
-                        }
-
-                        myRef.updateChildren(userDetail);
-                    }catch (Exception e){
-                        Log.e("Error",e.getLocalizedMessage());
+            try{
+                userDetail.put("chatWallpaper",selected.toString());
+                if(changed){
+                    if(seekBarProgress<1){
+                        seekBarProgress=1;
                     }
-                    Toast.makeText(getApplicationContext(), "Successfully updated", Toast.LENGTH_SHORT).show();
+                    userDetail.put("chatBlur",seekBarProgress);
                 }
-            });
+
+                myRef.updateChildren(userDetail);
+            }catch (Exception e){
+                Log.e("Error",e.getLocalizedMessage());
+            }
+//
+//            StorageReference fileReference = mStorageReference.child(System.currentTimeMillis()
+//                    + ".jpg");
+//            UploadTask uploadTask =fileReference.putFile(selected);
+//            uploadTask.continueWithTask(task -> {
+//
+//                if (!task.isSuccessful()) {
+//
+//                    throw task.getException();
+//                }
+//                return fileReference.getDownloadUrl();
+//
+//            }).addOnCompleteListener(task -> {
+//                if (task.isSuccessful()) {
+//                    progressBar.setVisibility(View.GONE);
+//                    Uri downloadUri = task.getResult();
+////
+//
+//
+//                   }
+//            });
         }else{
-            Map<String ,Object> userDetail=new HashMap<>();
+
             if(changed){
                 progressBar.setVisibility(View.GONE);
                 userDetail.put("chatBlur",seekBarProgress);
                 myRef.updateChildren(userDetail);
-                Toast.makeText(getApplicationContext(), "Successfully updated", Toast.LENGTH_SHORT).show();
+
             }
 
         }
+        progressBar.setVisibility(View.GONE);
+        Toast.makeText(getApplicationContext(), "Successfully updated", Toast.LENGTH_SHORT).show();
     }
 
     @Override

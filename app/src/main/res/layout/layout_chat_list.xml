@@ -35,7 +35,6 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:textColor="?colorOnSecondary"
-                android:text="Username"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -44,7 +43,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="?colorOnSecondary"
-                android:text="15/04/2020"
                 android:textSize="14sp" />
 
         </LinearLayout>
@@ -69,7 +67,6 @@
                 android:id="@+id/desc"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Description.."
                 android:textColor="?colorOnSecondary"
                 android:textSize="14sp"
                 app:layout_constraintBottom_toBottomOf="parent"

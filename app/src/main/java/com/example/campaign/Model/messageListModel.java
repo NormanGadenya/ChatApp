@@ -1,9 +1,12 @@
 package com.example.campaign.Model;
 
-public class messageListModel {
+import java.io.Serializable;
+
+public class messageListModel implements Serializable {
     private String text,profileUrI;
     private int backgroundColor;
     private String receiver,date,time,messageStatus, imageUrI,type,userName,messageId;
+    private boolean isChecked=false;
 
 
 
@@ -21,6 +24,9 @@ public class messageListModel {
         this.type = type;
         this.userName=userName;
         this.profileUrI=profileUrI;
+    }
+    public messageListModel(String date){
+        this.date=date;
     }
 
     public String getReceiver() {
@@ -109,5 +115,13 @@ public class messageListModel {
 
     public void setBackgroundColor(int backgroundColor) {
         this.backgroundColor = backgroundColor;
+    }
+
+    public boolean isChecked() {
+        return isChecked;
+    }
+
+    public void setChecked(boolean checked) {
+        isChecked = checked;
     }
 }

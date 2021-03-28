@@ -5,21 +5,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".Activities.ViewImageActivity">
+    >
 
     <ImageView
         android:id="@+id/backgroundView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
-        android:src="@drawable/black"
         android:tint="#88000000"
 
         tools:layout_editor_absoluteX="42dp"
         tools:layout_editor_absoluteY="0dp" />
 
     <com.zolad.zoominimageview.ZoomInImageView
-        android:id="@+id/imageView2"
+        android:id="@+id/imageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:maxWidth="300dp"

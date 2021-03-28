@@ -13,5 +13,12 @@
         app:showAsAction="never"
         android:id="@+id/settingsButton"
         />
+    <item
+        android:id="@+id/delete"
+        android:icon="@drawable/remove"
+        app:showAsAction="always"
+        android:visible="false"
+        android:title="Delete"
+        />
 
 </menu>

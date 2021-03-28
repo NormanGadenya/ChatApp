@@ -14,6 +14,10 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.Map.Entry;
+
 import android.Manifest;
 import android.app.Notification;
 import android.content.Context;
@@ -68,11 +72,13 @@ import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator
 import static com.example.campaign.App.MESSAGE_CHANNEL_ID;
 
 public class MainActivity extends AppCompatActivity  implements RecyclerViewInterface {
-    private List<String> chatListId;
+    private List<String> chatListId,arrangedChatListId;
     private RecyclerView recyclerView;
     private FloatingActionButton newChat;
     private TextView welcomeMsg;
     private ImageView welcomeEmoji;
+    HashMap <String,String> messageArrange=new HashMap<>();
+
     private Context context;
     private FirebaseUser user;
     private FirebaseDatabase database;
@@ -153,27 +159,76 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
 
     }
 
+    Comparator comparator(){
+        Comparator<Entry<String, String>> valueComparator = new Comparator<Entry<String,String>>() {
+
+            @Override
+            public int compare(Entry<String, String> e1, Entry<String, String> e2) {
+                String v1 = e1.getValue();
+                String v2 = e2.getValue();
+                return v2.compareTo(v1);
+            }
+        };
+        return valueComparator;
+    }
+
+    void arrangeIdList(){
+        Set<Entry<String, String>> entries = messageArrange.entrySet();
+
+        List<Entry<String, String>> listOfEntries = new ArrayList<>(entries);
+        Collections.sort(listOfEntries, comparator());
+        LinkedHashMap<String, String> sortedByValue = new LinkedHashMap<>(listOfEntries.size());
+
+        for(Entry<String, String> entry : listOfEntries){
+            sortedByValue.put(entry.getKey(), entry.getValue());
+        }
+
+        Set<Entry<String, String>> entrySetSortedByValue = sortedByValue.entrySet();
+
+        for(Entry<String, String> mapping : entrySetSortedByValue) {
+            arrangedChatListId.add(mapping.getKey());
+        }
+    }
+
     private void getChatList() {
         chatListId.clear();
         list.clear();
-
+        arrangedChatListId=new ArrayList<>();
+        DatabaseReference mRef=database.getReference().child("chats").child(user.getUid());
         DatabaseReference chatListRef=database.getReference().child("chats");
         chatListRef.child(user.getUid()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 //list.clear();
                 chatListId.clear();
-
+                arrangedChatListId.clear();
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()){
                     chatListId.add(dataSnapshot.getKey());
-
                     chatUIds.add(dataSnapshot.getKey());
-
                     welcomeMsg.setVisibility(View.GONE);
                     welcomeEmoji.setVisibility(View.GONE);
+                    String otherUserId=dataSnapshot.getKey();
+                    mRef.child(otherUserId).orderByKey().limitToLast(1).addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            arrangedChatListId.clear();
+                            for(DataSnapshot snapshot1:snapshot.getChildren()){
+                                messageArrange.put(snapshot.getKey(),snapshot1.getKey());
+
+                            }
+                            arrangeIdList();
+                            getUserInfo();
+
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
 
                 }
-                getUserInfo();
+
                 if(chatListId.size()==0){
                     welcomeMsg.setVisibility(View.VISIBLE);
                     welcomeEmoji.setVisibility(View.VISIBLE);
@@ -205,8 +260,11 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
                         String otherUserId = list.get(position).getUserId();
                         Toast.makeText(context, "chat deleted", Toast.LENGTH_LONG).show();
                         DatabaseReference chatRef = database.getReference().child("chats").child(user.getUid()).child(otherUserId);
+                        chatListId.remove(otherUserId);
+                        arrangedChatListId.remove(position);
                         list.remove(position);
                         chatRef.removeValue();
+
                         //list.remove(position);
                         chatListAdapter.notifyItemRemoved(position);
 
@@ -238,8 +296,11 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 list.clear();
+
+                HashMap <String,chatListModel> chatListOrder=new HashMap<>();
                 for(DataSnapshot dataSnapshot:snapshot.getChildren()){
-                    if(chatListId.contains(dataSnapshot.getKey())){
+                    if(arrangedChatListId.contains(dataSnapshot.getKey())){
+                        System.out.println(dataSnapshot);
                         String userId=dataSnapshot.getKey();
                         userModel user= dataSnapshot.getValue(userModel.class);
                         userName=user.getUserName();
@@ -248,11 +309,16 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
                         chat.setUserName(userName);
                         chat.setUserId(userId);
                         chat.setProfileUrI(profileUrI);
-                        list.add(chat);
-                        chatListAdapter.notifyDataSetChanged();
+                        chatListOrder.put(dataSnapshot.getKey(),chat);
+
 //                        getLastMessage(userId,userName,profileUrI);
 //                        Log.d(TAG,userInfo.toString());
                     }
+                }
+                for (String id:arrangedChatListId){
+
+                    list.add(chatListOrder.get(id));
+                    chatListAdapter.notifyDataSetChanged();
                 }
             }
             @Override
@@ -261,74 +327,7 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
         });
     }
 
-    private void getLastMessage(String userId,String userName,String profileUrI) {
-        DatabaseReference messageRef=database.getReference().child("chats").child(user.getUid());
-        handler.post(() -> messageRef.child(userId).orderByKey().limitToLast(1).addValueEventListener(new ValueEventListener(){
-            @RequiresApi(api = Build.VERSION_CODES.N)
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
 
-
-                for(DataSnapshot dataSnapshot: snapshot.getChildren()){
-                    try{
-
-                        messageListModel m=dataSnapshot.getValue(messageListModel.class);
-                        String text=m.getText();
-                        String imageUrI=m.getImageUrI();
-                        if(text!=null){
-                            lastMessage=formatLastMessage(text);
-                        }
-                        messageKeys.add(dataSnapshot.getKey());
-                        if(imageUrI!=null){
-                            lastMessage="CODE_PHOTOGRAPH";
-                        }
-                        date=m.getDate();
-                        time=m.getTime();
-                        descriptionId=dataSnapshot.getKey();
-
-                    }catch(Exception e){
-                        Log.d("error",dataSnapshot.toString());
-                    }
-                }
-
-                chatListModel chat=new chatListModel();
-                chat.setDate(date);
-                chat.setUserName(userName);
-                Log.d(TAG,userName);
-                chat.setUserId(userId);
-                chat.setProfileUrI(profileUrI);
-                chat.setDescription(lastMessage);
-                chat.setDescriptionId(descriptionId);
-                chat.setTime(time);
-
-                list.add(chat);
-                Collections.sort(list);
-
-                if (chatListAdapter!=null){
-                        chatListAdapter.notifyDataSetChanged();
-
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        }));
-
-    }
-
-    private String formatLastMessage(String text) {
-
-        if (text.length()>30){
-            String i=text.substring(0,30);
-            text=i+"...";
-        } else{
-
-        }
-
-        return text;
-    }
 
 
     private void saveSharedPreferenceData() {
@@ -338,134 +337,12 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
         editor.apply();
     }
 
-    private void getUInfo(){
-        DatabaseReference userDetailRef=database.getReference().child("UserDetails");
-        userDetailRef.addValueEventListener(new ValueEventListener() {
 
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for(DataSnapshot dataSnapshot:snapshot.getChildren()){
-                    for(String uid :chatUIds){
-                        userModel user= dataSnapshot.getValue(userModel.class);
-                        userInfo.put(uid,user);
-
-                    }
-
-                }
-                for(String uid :chatUIds){
-                    getLastMessagem(uid);
-                }
-
-
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-            }
-        });
-    }
-    private void getLastMessagem(String userId) {
-        DatabaseReference messageRef=database.getReference().child("chats").child(user.getUid());
-        handler.post(() -> messageRef.child(userId).orderByKey().limitToLast(1).addValueEventListener(new ValueEventListener(){
-            @RequiresApi(api = Build.VERSION_CODES.N)
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-
-
-                for(DataSnapshot dataSnapshot: snapshot.getChildren()){
-                    try{
-
-                        messageListModel m=dataSnapshot.getValue(messageListModel.class);
-                        String text=m.getText();
-                        String imageUrI=m.getImageUrI();
-                        if(text!=null){
-                            lastMessage=formatLastMessage(text);
-                        }
-                        messageKeys.add(dataSnapshot.getKey());
-                        if(imageUrI!=null){
-                            lastMessage="CODE_PHOTOGRAPH";
-                        }
-                        date=m.getDate();
-                        time=m.getTime();
-                        descriptionId=dataSnapshot.getKey();
-
-                    }catch(Exception e){
-                        Log.d("error",dataSnapshot.toString());
-                    }
-                }
-                Log.d("error_",userInfo.get(userId).getUserName());
-                chatListModel chat=new chatListModel();
-                chat.setDate(date);
-                chat.setUserName(userInfo.get(userId).getUserName());
-
-                chat.setUserId(userId);
-                chat.setProfileUrI(userInfo.get(userId).getProfileUrI());
-                chat.setDescription(lastMessage);
-                chat.setDescriptionId(descriptionId);
-                chat.setTime(time);
-
-                list.add(chat);
-                Collections.sort(list);
-
-                if (chatListAdapter!=null){
-                    chatListAdapter.notifyDataSetChanged();
-
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        }));
-
-    }
-    void  setup(String userId){
-        Log.d(TAG,messages.toString());
-        if(messages!=null && chatUIds!=null){
-
-                messageListModel m=messages.get(userId);
-                chatListModel chat=new chatListModel();
-                chat.setUserName(userInfo.get(userId).getUserName());
-                chat.setUserId(userId);
-                //String messageId=m.getMessageId();
-
-                if(m!=null){
-                    chat.setDescriptionId(m.getMessageId());
-                }
-
-                String finalMessage;
-                try{
-                    String imageUrI=messages.get(userId).getImageUrI();
-                    if(imageUrI!=null){
-                        finalMessage="CODE_PHOTOGRAPH";
-                        chat.setDescription(finalMessage);
-                    }
-                    String text=messages.get(userId).getText();
-
-
-                    if(text!=null){
-                        finalMessage =formatLastMessage(text);
-                        chat.setDescription(finalMessage);
-                    }
-                }catch (Exception e){
-
-                }
-
-
-                chat.setTime(messages.get(userId).getTime());
-                chat.setDate(messages.get(userId).getDate());
-
-                list.add(chat);
-                //Collections.sort(list);
-                chatListAdapter.notifyDataSetChanged();
-            }
-
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menuInflater =getMenuInflater();
-        menuInflater.inflate(R.menu.chatmenu,menu);
+        menuInflater.inflate(R.menu.chat_listmenu,menu);
         MenuItem searchItem=menu.findItem(R.id.search);
         MenuItem profileDetails=menu.findItem(R.id.profileButton);
         MenuItem settings=menu.findItem(R.id.settingsButton);
@@ -509,6 +386,7 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
         });
         return true;
     }
+
     public void presentActivity(View view) {
         ActivityOptionsCompat options = ActivityOptionsCompat.
                 makeSceneTransitionAnimation(this, view, "transition");

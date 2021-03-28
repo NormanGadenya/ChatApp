@@ -326,7 +326,7 @@ public class UserListActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menuInflater =getMenuInflater();
-        menuInflater.inflate(R.menu.chatmenu,menu);
+        menuInflater.inflate(R.menu.chat_listmenu,menu);
         MenuItem searchItem=menu.findItem(R.id.search);
         MenuItem profileDetails=menu.findItem(R.id.profileButton);
         MenuItem settings=menu.findItem(R.id.settingsButton);

@@ -5,7 +5,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -27,12 +26,11 @@ import android.os.Looper;
 import android.os.Vibrator;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.view.MenuInflater;
 
@@ -43,7 +41,6 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
@@ -75,7 +72,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 import jp.wasabeef.glide.transformations.BlurTransformation;
 
 public class ChatActivity extends AppCompatActivity implements RecyclerViewInterface {
@@ -97,7 +93,12 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private messageListAdapter messageListAdapter;
     private Vibrator vibrator;
     private ImageView backgroundImageView,onlineStatus;
+    private SharedPreferences imageSharedPreferences;
+    private ArrayList<String> imageUrIList=new ArrayList<>();
+    private ArrayList<messageListModel> selectedMessages = new ArrayList<>();
 
+    MenuItem profileDetails;
+    MenuItem settings,delete;
 
 
 
@@ -136,9 +137,9 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             profilePic.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent =new Intent(getApplicationContext(), ViewImageActivity.class);
-                    intent.putExtra("imageUrI",profileUrI);
-                    startActivity(intent);
+//                    Intent intent =new Intent(getApplicationContext(), ViewImageActivity.class);
+//                    intent.putExtra("imageUrI",profileUrI);
+//                    startActivity(intent);
                 }
             });
 
@@ -146,6 +147,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             profilePic.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
         }
         statusCheck(otherUserId);
+
+
 //        newMessage.setOnFocusChangeListener(new View.OnFocusChangeListener() {
 //            @Override
 //            public void onFocusChange(View v, boolean hasFocus) {
@@ -158,8 +161,16 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 //                }
 //            }
 //        });
+        if(imageSharedPreferences.getString("imageUrI",null)!=null && imageSharedPreferences.getString("receiver",null)!=null){
+            if(otherUserId!=null && imageSharedPreferences.getString("receiver",null).equals(otherUserId)){
+                uploadFile(user.getUid(),otherUserId);
+            }
+        }
 
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        LinearLayoutManager layoutManager
+                = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+        recyclerView.setLayoutManager(layoutManager);
         messageListAdapter=new messageListAdapter(messageList, ChatActivity.this, profileUrI,this);
         recyclerView.setAdapter(messageListAdapter);
         getCurrentWallpaper();
@@ -198,71 +209,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             startActivityForResult(intent,2);
         });
-        ItemTouchHelper.SimpleCallback simpleCallback=new ItemTouchHelper.SimpleCallback(0,ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT){
 
-            @Override
-            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
-                return false;
-            }
-
-            @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                try {
-                    int position = viewHolder.getAdapterPosition();
-
-                    switch (messageList.get(position).getType()) {
-                        case "TEXT":
-                            vibrator = (Vibrator) context.getSystemService(VIBRATOR_SERVICE);
-                            vibrator.vibrate(50);
-                            messageId = messageList.get(position).getMessageId();
-                            Toast.makeText(context, "itemDeleted", Toast.LENGTH_LONG).show();
-                            DatabaseReference messageRef = database.getReference().child("chats").child(user.getUid()).child(otherUserId);
-                            messageRef.child(messageId).removeValue();
-                            messageList.remove(position);
-                            messageListAdapter.notifyItemRemoved(position);
-
-                            break;
-                        case "IMAGE":
-                            messageId = messageList.get(position).getMessageId();
-                            String imageUrI = messageList.get(position).getImageUrI();
-                            vibrator = (Vibrator) context.getSystemService(VIBRATOR_SERVICE);
-                            vibrator.vibrate(50);
-                            Toast.makeText(context, "itemDeleted", Toast.LENGTH_LONG).show();
-                            StorageReference imageRef = firebaseStorage.getReferenceFromUrl(imageUrI);
-                            imageRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
-                                @Override
-                                public void onSuccess(Void aVoid) {
-                                    DatabaseReference messageRef = database.getReference().child("chats").child(user.getUid()).child(otherUserId);
-                                    messageRef.child(messageId).removeValue();
-                                    messageList.remove(position);
-                                    messageListAdapter.notifyItemRemoved(position);
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    Toast.makeText(context, "Something went wrong", Toast.LENGTH_LONG).show();
-                                }
-                            });
-                    }
-                }catch (Exception e){
-                    Log.e("Error",e.getLocalizedMessage());
-                }
-            }
-
-            @Override
-            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
-//               new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
-//                        .addBackgroundColor(ContextCompat.getColor(ChatActivity.this,R.color.Red_200))
-//                        .addActionIcon(R.drawable.remove)
-//
-//                        .create()
-//                        .decorate();
-                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
-
-            }
-        };
-        ItemTouchHelper itemTouchHelper=new ItemTouchHelper(simpleCallback);
-        itemTouchHelper.attachToRecyclerView(recyclerView);
 
     }
     private void getCurrentWallpaper(){
@@ -385,6 +332,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         attachButton= findViewById(R.id.attachButton);
         profilePic=findViewById(R.id.image_profile);
         newMessage=findViewById(R.id.message_container);
+        imageSharedPreferences=getSharedPreferences("selectedImagePref",MODE_PRIVATE);
         progressBar=findViewById(R.id.progressBar2);
         backgroundImageView=findViewById(R.id.backgroundView);
         imageLoadProgressBar=findViewById(R.id.progressBarImageLoad);
@@ -401,6 +349,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     private void getMessages(){
         DatabaseReference messageRef=database.getReference().child("chats").child(user.getUid()).child(otherUserId);
+
+        imageUrIList.clear();
         messageRef.addValueEventListener(new ValueEventListener(){
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -409,11 +359,15 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                     try{
                         messageListModel message = snapshot.getValue(messageListModel.class);
                         messageStatus=message.getMessageStatus();
+                        String imageUrI=message.getImageUrI();
                         message.setMessageId(snapshot.getKey());
                         String receiver = message.getReceiver();
                         message.setReceiver(receiver);
-                        messageList.add(message);
+                        if(imageUrI!=null){
+                            imageUrIList.add(imageUrI);
+                        }
 
+                        messageList.add(message);
                         if (messageList.size() >= 1) {
                             recyclerView.scrollToPosition(messageList.size()-1);
                         }
@@ -447,7 +401,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                     .putExtra("otherUserId",otherUserId)
                     .putExtra("otherUserName",otherUserName);
             startActivity(intent);
-
 //            try{
 //                uploadFile(user.getUid(),otherUserId);
 //            }catch(Exception e){
@@ -462,6 +415,9 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void uploadFile(String userId, String otherUserId) {
         ProgressBar progressBar=findViewById(R.id.progressBar);
+        selected=Uri.parse(imageSharedPreferences.getString("imageUrI",null));
+        String caption=imageSharedPreferences.getString("caption",null);
+        Log.d("HSCSHCD","done");
         if (selected != null) {
             imageLoadProgressBar.setVisibility(View.VISIBLE);
             StorageReference fileReference = mStorageReference.child(System.currentTimeMillis()
@@ -496,14 +452,16 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                                         message.setBackgroundColor(backgroundColor);
                                         message.setImageUrI(downloadUri.toString());
                                         message.setTime(getTime());
+                                        if(caption!=null){
+                                            message.setText(caption);
+                                        }
                                         message.setDate(getDate());
                                         message.setType("IMAGE");
                                         message.setReceiver(otherUserId);
 
                                         try{
-                                            myRef.child("chats").child(userId).child(otherUserId).push().setValue(message);
+//                                            myRef.child("chats").child(userId).child(otherUserId).push().setValue(message);
                                             myRef.child("chats").child(otherUserId).child(userId).push().setValue(message);
-
 
                                         }catch(Exception e){
                                             Log.d("error",e.getLocalizedMessage());
@@ -525,7 +483,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                     imageLoadProgressBar.setProgress((int)progress);
                 }
             });
-
+        imageSharedPreferences.edit().clear();
         } else {
             Toast.makeText(this, "No file selected", Toast.LENGTH_SHORT).show();
         }
@@ -545,12 +503,15 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         return myDateObj.format(dateObj);
     }
 
+
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menuInflater =getMenuInflater();
-        menuInflater.inflate(R.menu.menu,menu);
-        MenuItem profileDetails=menu.findItem(R.id.profileButton);
-        MenuItem settings=menu.findItem(R.id.settingsButton);
+        menuInflater.inflate(R.menu.chat_menu,menu);
+        profileDetails=menu.findItem(R.id.profileButton);
+        settings=menu.findItem(R.id.settingsButton);
+        delete=menu.findItem(R.id.delete);
         profileDetails.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
@@ -568,8 +529,62 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 return false;
             }
         });
+
+        delete.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                settings.setVisible(true);
+                profileDetails.setVisible(true);
+                if (messageListAdapter.getSelected().size() > 0) {
+                    for (int i = 0; i < messageListAdapter.getSelected().size(); i++) {
+                        switch (messageList.get(i).getType()) {
+                            case "TEXT":
+                                vibrator = (Vibrator) context.getSystemService(VIBRATOR_SERVICE);
+                                vibrator.vibrate(50);
+                                messageId = messageList.get(i).getMessageId();
+                                Toast.makeText(context, "itemDeleted", Toast.LENGTH_LONG).show();
+                                DatabaseReference messageRef = database.getReference().child("chats").child(user.getUid()).child(otherUserId);
+                                messageRef.child(messageId).removeValue();
+                                messageList.remove(i);
+                                messageListAdapter.notifyItemRemoved(i);
+
+                                break;
+                            case "IMAGE":
+                                messageId = messageList.get(i).getMessageId();
+                                String imageUrI = messageList.get(i).getImageUrI();
+                                vibrator = (Vibrator) context.getSystemService(VIBRATOR_SERVICE);
+                                vibrator.vibrate(50);
+                                Toast.makeText(context, "itemDeleted", Toast.LENGTH_LONG).show();
+                                StorageReference imageRef = firebaseStorage.getReferenceFromUrl(imageUrI);
+                                int finalI = i;
+                                imageRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        DatabaseReference messageRef = database.getReference().child("chats").child(user.getUid()).child(otherUserId);
+                                        messageRef.child(messageId).removeValue();
+                                        messageList.remove(finalI);
+                                        messageListAdapter.notifyItemRemoved(finalI);
+                                    }
+                                }).addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Toast.makeText(context, "Something went wrong", Toast.LENGTH_LONG).show();
+                                    }
+                                });
+                        }
+                    }
+
+                } else {
+                    showToast("No Selection");
+                }
+                return false;
+            }
+        });
         return true;
 
+    }
+    private void showToast(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -593,23 +608,36 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     @Override
     public void onItemClick(int position) {
 
+        System.out.println(messageListAdapter.getSelected().size());
+        if(messageListAdapter.getSelected().size()<1){
+            delete.setVisible(false);
+            profileDetails.setVisible(true);
+            settings.setVisible(true);
+        }else{
+            delete.setVisible(true);
+            profileDetails.setVisible(false);
+            settings.setVisible(false);
+        }
+
+    }
+
+    @Override
+    public void onLongItemClick(int position) {
         Intent intent =new Intent(context, ViewImageActivity.class)
+                .putExtra("position",position)
+                .putExtra("imageList", imageUrIList)
                 .putExtra("imageUrI", messageList.get(position).getImageUrI())
                 .putExtra("profileUrI", messageList.get(position).getProfileUrI())
                 .putExtra("userId",otherUserId)
                 .putExtra("userName",otherUserName);
+        Log.d("position",String.valueOf(position));
+
         if(messageList.get(position).getReceiver()==user.getUid()){
             intent.putExtra("Direction","from");
         }else{
             intent.putExtra("Direction","to");
         }
         startActivity(intent);
-
-    }
-
-    @Override
-    public void onLongItemClick(int position) {
-
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
