@@ -1,12 +1,18 @@
 package com.example.campaign.adapter;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.text.Layout;
 import android.util.Log;
+import android.view.ActionMode;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -19,6 +25,11 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
 
 
@@ -28,10 +39,14 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.example.campaign.Interfaces.RecyclerViewInterface;
+import com.example.campaign.Model.ChatViewModel;
+import com.example.campaign.Model.chatListModel;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.mikhaellopez.circularimageview.CircularImageView;
 import com.zolad.zoominimageview.ZoomInImageView;
 
@@ -50,15 +65,23 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     private static final int MESSAGE_RIGHT=1;
     public static final int DATE=3;
     private FirebaseUser user;
-    private String profileUrI;
+    private String profileUrI,otherUserId;
+    private Activity activity;
+    private ChatViewModel chatViewModel;
+    boolean isSelected,isEnabled=false;
+    FirebaseDatabase database=FirebaseDatabase.getInstance();
+    ArrayList<messageListModel> selected=new ArrayList<>();
+    private FirebaseUser firebaseUser=FirebaseAuth.getInstance().getCurrentUser();
 
 
 
-    public messageListAdapter(List<messageListModel> list, Context context, String profileUrI, RecyclerViewInterface recyclerViewInterface) {
+    public messageListAdapter(List<messageListModel> list, Context context, String profileUrI, RecyclerViewInterface recyclerViewInterface,Activity activity,String otherUserId) {
         this.list = list;
         this.context = context;
         this.profileUrI=profileUrI;
         this.recyclerViewInterface=recyclerViewInterface;
+        this.activity=activity;
+        this.otherUserId=otherUserId;
     }
 
     @NonNull
@@ -74,6 +97,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         }else{
             view =LayoutInflater.from(context).inflate(R.layout.chat_item_date,parent,false);
         }
+        chatViewModel= ViewModelProviders.of((FragmentActivity)activity).get(ChatViewModel.class);
         return new Holder(view);
     }
 
@@ -90,43 +114,120 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         }
         setTimeTextVisibility(list.get(position).getDate(), previousTs, holder.msgGroupDate);
 
-
-//        holder.itemView.setBackgroundColor(m.isChecked() ? R.color.dark_purple :R.color.transparent);
-//
-//        holder.itemView.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                m.setChecked(!m.isChecked());
-//                holder.itemView.setBackgroundColor(m.isChecked() ? R.color.dark_purple :R.color.transparent);
-//            }
-//        });
-//        if(m.isChecked()){
-//            recyclerViewInterface.onLongItemClick(position);
-//            holder.itemView.setBackgroundColor(R.color.red);
-//
-//        }else {
-//
-//        }
-
+        if(isSelected){
+            holder.checkBox.setVisibility(View.VISIBLE);
+            holder.itemView.setBackgroundColor(Color.LTGRAY);
+        }else{
+            holder.checkBox.setVisibility(View.GONE);
+            holder.itemView.setBackgroundColor(Color.TRANSPARENT);
+        }
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                recyclerViewInterface.onItemClick(position);
-                list.get(position).setChecked(!list.get(position).isChecked());
-                if(list.get(position).isChecked()){
-                    holder.itemView.setBackgroundResource(R.color.deepBlueT);
-                }else{
-                    holder.itemView.setBackgroundResource(R.color.transparent);
-
+            public void onClick(View v) {
+                if(isEnabled){
+                    clickedItem(holder);
                 }
 
-
             }
+        });
+
+        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+
+                if(!isEnabled){
+                    ActionMode.Callback callback= new ActionMode.Callback() {
+                        @Override
+                        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                            MenuInflater menuInflater=mode.getMenuInflater();
+                            menuInflater.inflate(R.menu.action_menu,menu);
+                            return true;
+                        }
+                        @Override
+                        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                            isEnabled=true;
+                            clickedItem(holder);
+                            chatViewModel.getText().observe((LifecycleOwner)activity,new Observer<String>(){
+
+                                @Override
+                                public void onChanged(String s) {
+                                    mode.setTitle(String.format("%s selected",s));
+                                }
+                            });
+                            return true;
+                        }
+
+                        @Override
+                        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                            int id=item.getItemId();
+                            switch (id){
+                                case R.id.menu_delete:
+                                    DatabaseReference messageRef=database.getReference().child("chats").child(firebaseUser.getUid()).child(otherUserId);
+                                    for(messageListModel c:selected){
+                                        list.remove(c);
+                                        messageRef.child(c.getMessageId()).removeValue();
+                                        notifyDataSetChanged();
+                                    }
+                                    mode.finish();
+                                    break;
+
+                                case R.id.menu_selectAll:
+                                    if(selected.size() ==list.size()){
+                                        isSelected=false;
+                                        selected.clear();
+                                    }else{
+                                        isSelected=true;
+                                        selected.clear();
+                                        selected.addAll(list);
+                                    }
+                                    chatViewModel.setText(String.valueOf(selected.size()));
+                                    notifyDataSetChanged();
+                                    break;
+
+                            }
+                            return true;
+                        }
+
+                        @Override
+                        public void onDestroyActionMode(ActionMode mode) {
+                            isEnabled=false;
+                            isSelected=false;
+                            selected.clear();
+                            notifyDataSetChanged();
+                        }
+                    };
+                    ((AppCompatActivity)v.getContext()).startActionMode(callback);
+                }else{
+                    clickedItem(holder);
+
+                }
+                return true;
+            }
+
         });
 
 
 
 
+
+
+
+
+    }
+
+    private void clickedItem(Holder holder) {
+        messageListModel messageListModel=list.get(holder.getAdapterPosition());
+        if(holder.checkBox.getVisibility()==View.GONE){
+            holder.checkBox.setVisibility(View.VISIBLE);
+            holder.itemView.setBackgroundResource(R.color.deepBlueT);
+            selected.add(messageListModel);
+        }else{
+            holder.checkBox.setVisibility(View.GONE);
+            holder.itemView.setBackgroundColor(Color.TRANSPARENT);
+            selected.remove(messageListModel);
+            Log.d("item_count",String.valueOf(selected.size()));
+        }
+        chatViewModel.setText(String.valueOf(selected.size()));
     }
 
     @Override
@@ -158,7 +259,8 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         private ProgressBar progressBar;
         private ImageButton delete;
         private TextView date;
-
+        private ImageView checkBox;
+        private View layout;
 
 
         public Holder(@NonNull View itemView) {
@@ -172,6 +274,8 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
             progressBar=itemView.findViewById(R.id.progressBar);
             date=itemView.findViewById(R.id.date);
             msgGroupDate=itemView.findViewById(R.id.msgGroupDate);
+            checkBox=itemView.findViewById(R.id.checkBox);
+            layout=itemView.findViewById(R.id.const2);
 
 
         }
@@ -312,15 +416,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
 
 
-    public ArrayList<messageListModel> getSelected() {
-        ArrayList<messageListModel> selected = new ArrayList<>();
-        for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).isChecked()) {
-                selected.add(list.get(i));
-            }
-        }
-        return selected;
-    }
+
 
 }
 

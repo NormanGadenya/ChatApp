@@ -12,7 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Current Date"
-        android:visibility="gone"
+        android:visibility="visible"
         android:padding="4dp"
         android:background="@drawable/card_background2"
         android:textColor="@color/white"
@@ -96,16 +96,16 @@
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
     <ImageButton
+        android:id="@+id/checkBox"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/remove"
-        android:visibility="gone"
+        android:layout_marginStart="8dp"
         android:background="@color/transparent"
-        app:layout_constraintEnd_toStartOf="@id/const2"
-        app:layout_constraintTop_toTopOf="parent"
+        android:src="@drawable/ic_baseline_check_circle_24"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginRight="4dp"
-        android:id="@+id/delete"
-        />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

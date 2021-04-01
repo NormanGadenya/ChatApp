@@ -1,20 +1,36 @@
 package com.example.campaign.adapter;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Vibrator;
+import android.util.Log;
+import android.view.ActionMode;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.campaign.Activities.ChatActivity;
 import com.example.campaign.Interfaces.RecyclerViewInterface;
+import com.example.campaign.Model.ChatViewModel;
 import com.example.campaign.Model.chatListModel;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.R;
@@ -29,6 +45,7 @@ import com.mikhaellopez.circularimageview.CircularImageView;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -38,12 +55,19 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     private FirebaseUser firebaseUser =FirebaseAuth.getInstance().getCurrentUser();
     private RecyclerViewInterface recyclerViewInterface;
     private FirebaseDatabase database = FirebaseDatabase.getInstance();
-    private Vibrator vibrator;
+    private Activity activity;
+    private ChatViewModel chatViewModel;
+    boolean isSelected,isEnabled=false;
+    ArrayList<chatListModel> selected=new ArrayList<>();
 
-    public chatListAdapter(List<chatListModel> list, Context context,RecyclerViewInterface recyclerViewInterface) {
+
+
+    public chatListAdapter(List<chatListModel> list, Context context,RecyclerViewInterface recyclerViewInterface,Activity activity) {
         this.list = list;
         this.context = context;
         this.recyclerViewInterface=recyclerViewInterface;
+        this.activity = activity;
+
 
     }
 
@@ -51,6 +75,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     @Override
     public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(context).inflate(R.layout.layout_chat_list,parent,false);
+        chatViewModel= ViewModelProviders.of((FragmentActivity)activity).get(ChatViewModel.class);
 
         return new Holder(view);
 
@@ -71,11 +96,134 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
             Glide.with(context).load(chatlist.getProfileUrI()).into(holder.profile);
         }
 
+        if(chatlist.getTyping()!=null){
+            if(chatlist.getTyping()){
+                holder.tvTyping.setVisibility(View.VISIBLE);
+                holder.tvDesc.setVisibility(View.GONE);
+                holder.tvDate.setVisibility(View.GONE);
+            }else{
+                holder.tvTyping.setVisibility(View.GONE);
+                holder.tvDesc.setVisibility(View.VISIBLE);
+                holder.tvDate.setVisibility(View.VISIBLE);
+            }
+        }
 
         holder.itemView.setOnClickListener(v -> {
             recyclerViewInterface.onItemClick(holder.getAdapterPosition());
+            if(isEnabled){
+                clickedItem(holder);
+            }else{
+                if(list!=null){
+                    Intent intent =new Intent(context, ChatActivity.class)
+                            .putExtra("userId",list.get(position).getUserId())
+                            .putExtra("userName",list.get(position).getUserName())
+                            .putExtra("profileUrI",list.get(position).getProfileUrI());
+
+                    activity.startActivity(intent);
+
+                }
+            }
+
         });
 
+        if(isSelected){
+            holder.checkBox.setVisibility(View.VISIBLE);
+            holder.itemView.setBackgroundColor(Color.LTGRAY);
+        }else{
+            holder.checkBox.setVisibility(View.GONE);
+            holder.itemView.setBackgroundColor(Color.TRANSPARENT);
+        }
+
+        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                if(!isEnabled){
+                    ActionMode.Callback callback= new ActionMode.Callback() {
+                        @Override
+                        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                            MenuInflater menuInflater=mode.getMenuInflater();
+                            menuInflater.inflate(R.menu.action_menu,menu);
+                            return true;
+                        }
+                        @Override
+                        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                            isEnabled=true;
+                            clickedItem(holder);
+                            chatViewModel.getText().observe((LifecycleOwner)activity,new Observer<String>(){
+
+                                @Override
+                                public void onChanged(String s) {
+                                    mode.setTitle(String.format("%s selected",s));
+                                }
+                            });
+                            return true;
+                        }
+
+                        @Override
+                        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                            int id=item.getItemId();
+                            switch (id){
+                                case R.id.menu_delete:
+                                    DatabaseReference chatRef=database.getReference().child("chats").child(firebaseUser.getUid());
+                                    for(chatListModel c:selected){
+                                        list.remove(c);
+                                        chatRef.child(c.getUserId()).removeValue();
+                                        notifyDataSetChanged();
+                                    }
+                                    mode.finish();
+                                    break;
+
+                                case R.id.menu_selectAll:
+                                    if(selected.size() ==list.size()){
+                                        isSelected=false;
+                                        selected.clear();
+                                    }else{
+                                        isSelected=true;
+                                        selected.clear();
+                                        selected.addAll(list);
+                                    }
+                                    chatViewModel.setText(String.valueOf(selected.size()));
+                                    notifyDataSetChanged();
+                                    break;
+
+                            }
+                            return true;
+                        }
+
+                        @Override
+                        public void onDestroyActionMode(ActionMode mode) {
+                            isEnabled=false;
+                            isSelected=false;
+                            selected.clear();
+                            notifyDataSetChanged();
+                        }
+                    };
+                    ((AppCompatActivity)v.getContext()).startActionMode(callback);
+                }else{
+                    clickedItem(holder);
+
+                }
+                return true;
+            }
+
+        });
+
+
+    }
+
+    private void clickedItem(Holder holder) {
+        chatListModel chatListModel=list.get(holder.getAdapterPosition());
+        if(holder.checkBox.getVisibility()==View.GONE){
+            holder.checkBox.setVisibility(View.VISIBLE);
+            holder.itemView.setBackgroundColor(Color.LTGRAY);
+            selected.add(chatListModel);
+        }else{
+            holder.checkBox.setVisibility(View.GONE);
+            holder.itemView.setBackgroundColor(Color.TRANSPARENT);
+            selected.remove(chatListModel);
+            Log.d("item_count",String.valueOf(selected.size()));
+        }
+        chatViewModel.setText(String.valueOf(selected.size()));
     }
 
     @Override
@@ -84,9 +232,11 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     }
 
     public static class Holder extends RecyclerView.ViewHolder {
-        private TextView tvName, tvDesc, tvDate;
+        private TextView tvName, tvDesc, tvDate,tvTyping;
         private CircularImageView profile;
         private ImageView imageView;
+        private ImageView checkBox;
+
 
         public Holder(@NonNull View itemView) {
             super(itemView);
@@ -95,6 +245,9 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
             tvDesc = itemView.findViewById(R.id.desc);
             tvName = itemView.findViewById(R.id.userName);
             profile = itemView.findViewById(R.id.image_profile);
+            tvTyping=itemView.findViewById(R.id.tv_typing);
+            checkBox=itemView.findViewById(R.id.checkBox);
+
 
         }
     }

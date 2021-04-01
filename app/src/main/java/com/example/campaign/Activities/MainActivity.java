@@ -6,7 +6,6 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.ActivityOptionsCompat;
-import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.MenuItemCompat;
@@ -19,7 +18,6 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
 import android.Manifest;
-import android.app.Notification;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -69,8 +67,6 @@ import java.util.Set;
 
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
-import static com.example.campaign.App.MESSAGE_CHANNEL_ID;
-
 public class MainActivity extends AppCompatActivity  implements RecyclerViewInterface {
     private List<String> chatListId,arrangedChatListId;
     private RecyclerView recyclerView;
@@ -87,7 +83,7 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
     private Handler handler;
     public  Map<String, String> namePhoneMap= new HashMap<String, String>(); ;
     private MenuInflater menuInflater;
-    private String lastMessage,time,date,userName,profileUrI,descriptionId;
+    private String userName,profileUrI;
     private String TAG ="chatListAct";
     private NotificationManagerCompat notificationManagerCompat;
     private List<String> messageKeys=new ArrayList<>();
@@ -131,7 +127,7 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
         } else {
             requestContactsPermission();
         }
-        chatListAdapter=new chatListAdapter(list, MainActivity.this,this);
+        chatListAdapter=new chatListAdapter(list, MainActivity.this,this,this);
         recyclerView.setAdapter(chatListAdapter);
         getChatList();
 
@@ -250,6 +246,7 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
                 return false;
             }
 
+            @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 try {
@@ -262,11 +259,13 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
                         DatabaseReference chatRef = database.getReference().child("chats").child(user.getUid()).child(otherUserId);
                         chatListId.remove(otherUserId);
                         arrangedChatListId.remove(position);
-                        list.remove(position);
+//                        list.remove(position);
                         chatRef.removeValue();
 
+                        
                         //list.remove(position);
                         chatListAdapter.notifyItemRemoved(position);
+
 
                 }catch (Exception e){
                     Log.e("Error",e.getLocalizedMessage());
@@ -291,12 +290,10 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
     }
     private void getUserInfo() {
         DatabaseReference userDetailRef=database.getReference().child("UserDetails");
-
         userDetailRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 list.clear();
-
                 HashMap <String,chatListModel> chatListOrder=new HashMap<>();
                 for(DataSnapshot dataSnapshot:snapshot.getChildren()){
                     if(arrangedChatListId.contains(dataSnapshot.getKey())){
@@ -308,18 +305,16 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
                         chatListModel chat=new chatListModel();
                         chat.setUserName(userName);
                         chat.setUserId(userId);
+                        chat.setTyping(user.getTyping());
                         chat.setProfileUrI(profileUrI);
                         chatListOrder.put(dataSnapshot.getKey(),chat);
-
-//                        getLastMessage(userId,userName,profileUrI);
-//                        Log.d(TAG,userInfo.toString());
                     }
                 }
                 for (String id:arrangedChatListId){
-
                     list.add(chatListOrder.get(id));
                     chatListAdapter.notifyDataSetChanged();
                 }
+
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
@@ -401,8 +396,6 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
     }
 
     private void searchUsers(String query) {
-//        chatListId.clear();
-//        list.clear();
         DatabaseReference chatListRef=database.getReference().child("chats");
         chatListRef.child(user.getUid()).addValueEventListener(new ValueEventListener() {
             @Override
@@ -443,6 +436,7 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
                             chat.setUserName(userName);
                             chat.setUserId(userId);
                             chat.setProfileUrI(profileUrI);
+                            chat.setTyping(chat.getTyping());
                             list.add(chat);
                             chatListAdapter.notifyDataSetChanged();
                         }
@@ -463,15 +457,7 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
 
     @Override
     public void onItemClick(int position) {
-        if(list!=null){
-            Intent intent =new Intent(context, ChatActivity.class)
-                    .putExtra("userId",list.get(position).getUserId())
-                    .putExtra("userName",list.get(position).getUserName())
-                    .putExtra("profileUrI",list.get(position).getProfileUrI());
 
-            startActivity(intent);
-
-        }
     }
 
     @Override
@@ -479,16 +465,16 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
 
     }
 
-    public void sendNotifications(){
-        Notification notification=new NotificationCompat.Builder(context,MESSAGE_CHANNEL_ID)
-                .setSmallIcon(R.drawable.chat_communication_svgrepo_com)
-                .setContentTitle("Message: " + userName)
-                .setContentText(lastMessage)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                .build();
-        notificationManagerCompat.notify(1,notification);
-    }
+//    public void sendNotifications(){
+//        Notification notification=new NotificationCompat.Builder(context,MESSAGE_CHANNEL_ID)
+//                .setSmallIcon(R.drawable.chat_communication_svgrepo_com)
+//                .setContentTitle("Message: " + userName)
+//                .setContentText(lastMessage)
+//                .setPriority(NotificationCompat.PRIORITY_HIGH)
+//                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+//                .build();
+//        notificationManagerCompat.notify(1,notification);
+//    }
 
     public boolean isAlphanumeric2(String str) {
         for (int i=0; i<str.length(); i++) {
@@ -546,8 +532,6 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
                 contactsList=getPhoneNumbers();
                 saveSharedPreferenceData();
 
-//                loadUsers(contactsList);
-
             } else {
                 Toast.makeText(getApplicationContext(), "Permission DENIED", Toast.LENGTH_SHORT).show();
             }
@@ -569,7 +553,7 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private void status(String status){
+    private void status(boolean status){
         DatabaseReference userDetailRef=database.getReference().child("UserDetails").child(user.getUid());
         Map<String ,Object> onlineStatus=new HashMap<>();
         onlineStatus.put("lastSeenDate",getDate());
@@ -582,13 +566,13 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
     @Override
     protected void onResume() {
         super.onResume();
-        status("true");
+        status(true);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onPause() {
         super.onPause();
-        status("false");
+        status(false);
     }
 }

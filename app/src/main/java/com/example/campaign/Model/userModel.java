@@ -4,11 +4,12 @@ public class userModel {
     private String userName,userId;
     private String phoneNumber;
     private String profileUrI;
-    private String online;
+    private Boolean online;
     private String lastSeenDate;
     private String lastSeenTime;
     private String chatWallpaper;
     private int chatBlur;
+    private Boolean Typing;
 
     public userModel(){
 
@@ -54,11 +55,11 @@ public class userModel {
         this.userId = userId;
     }
 
-    public String getOnline() {
+    public Boolean getOnline() {
         return online;
     }
 
-    public void setOnline(String online) {
+    public void setOnline(Boolean online) {
         this.online = online;
     }
 
@@ -92,5 +93,13 @@ public class userModel {
 
     public void setChatBlur(int chatBlur) {
         this.chatBlur = chatBlur;
+    }
+
+    public Boolean getTyping() {
+        return Typing;
+    }
+
+    public void setTyping(Boolean typing) {
+        this.Typing = typing;
     }
 }

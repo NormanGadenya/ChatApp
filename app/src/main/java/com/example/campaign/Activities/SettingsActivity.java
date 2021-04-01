@@ -112,7 +112,7 @@ public class SettingsActivity extends AppCompatActivity implements RecyclerViewI
         editWallpaper=findViewById(R.id.editWallpaper);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         String profileUrI="";
-        messageListAdapter=new messageListAdapter(messageList, getApplicationContext(), profileUrI,this);
+        messageListAdapter=new messageListAdapter(messageList, getApplicationContext(), profileUrI,this,this,"");
         recyclerView.setAdapter(messageListAdapter);
         messageList.add(new messageListModel(" Hi","123","","02:00","","","TEXT","",""));
         messageList.add(new messageListModel(" Hey",firebaseUser.getUid(),"","02:00","","","TEXT","",""));
@@ -362,5 +362,26 @@ public class SettingsActivity extends AppCompatActivity implements RecyclerViewI
             }
         }
 
+    }
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void status(boolean status){
+        DatabaseReference userDetailRef=database.getReference().child("UserDetails").child(firebaseUser.getUid());
+        Map<String ,Object> onlineStatus=new HashMap<>();
+        onlineStatus.put("online",status);
+        userDetailRef.updateChildren(onlineStatus);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    protected void onResume() {
+        super.onResume();
+        status(true);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    protected void onPause() {
+        super.onPause();
+        status(false);
     }
 }

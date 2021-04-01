@@ -25,12 +25,16 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Vibrator;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.view.MenuInflater;
 
@@ -81,7 +85,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private List<messageListModel> messageList = new ArrayList<>();
     private RecyclerView recyclerView ;
     private ImageButton sendButton,attachButton;
-    private TextView newMessage,userName,lastSeenMessage;
+    private TextView userName,lastSeenMessage;
+    private EditText newMessage;
     private CircularImageView profilePic;
     private FirebaseUser user ;
     private FirebaseStorage firebaseStorage;
@@ -94,6 +99,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private Vibrator vibrator;
     private ImageView backgroundImageView,onlineStatus;
     private SharedPreferences imageSharedPreferences;
+    private LinearLayoutManager layoutManager;
     private ArrayList<String> imageUrIList=new ArrayList<>();
     private ArrayList<messageListModel> selectedMessages = new ArrayList<>();
 
@@ -146,21 +152,9 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         }catch(Exception e){
             profilePic.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
         }
+        getTypingStatus();
         statusCheck(otherUserId);
 
-
-//        newMessage.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-//            @Override
-//            public void onFocusChange(View v, boolean hasFocus) {
-//                if(hasFocus){
-//                    attachButton.setVisibility(View.GONE);
-//
-//                }
-//                else{
-//                    attachButton.setVisibility(View.VISIBLE);
-//                }
-//            }
-//        });
         if(imageSharedPreferences.getString("imageUrI",null)!=null && imageSharedPreferences.getString("receiver",null)!=null){
             if(otherUserId!=null && imageSharedPreferences.getString("receiver",null).equals(otherUserId)){
                 uploadFile(user.getUid(),otherUserId);
@@ -168,10 +162,9 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         }
 
 
-        LinearLayoutManager layoutManager
-                = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+        layoutManager= new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
-        messageListAdapter=new messageListAdapter(messageList, ChatActivity.this, profileUrI,this);
+        messageListAdapter=new messageListAdapter(messageList, ChatActivity.this, profileUrI,this,this,otherUserId);
         recyclerView.setAdapter(messageListAdapter);
         getCurrentWallpaper();
 
@@ -191,7 +184,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
             String formattedDate = getDate();
             String formattedTime=getTime();
-            //mediaPlayer.start();
             messageListModel m=new messageListModel();
             m.setText(message);
             m.setReceiver(otherUserId);
@@ -211,6 +203,42 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         });
 
 
+    }
+
+    private void getTypingStatus(){
+        DatabaseReference typingRef=database.getReference().child("UserDetails").child(user.getUid());
+        HashMap<String,Object> typingStatus= new HashMap<>();
+        newMessage.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+                if (count>=1){
+                    typingStatus.put("Typing",true);
+
+                }else{
+                    typingStatus.put("Typing",false);
+
+                }
+                typingRef.updateChildren(typingStatus);
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (count>=1){
+                    typingStatus.put("Typing",true);
+
+                }else{
+                    typingStatus.put("Typing",false);
+
+                }
+                typingRef.updateChildren(typingStatus);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
     }
     private void getCurrentWallpaper(){
         DatabaseReference myRef = database.getReference().child("UserDetails").child(user.getUid());
@@ -263,7 +291,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
                     userModel user=snapshot.getValue(userModel.class);
                     if(user.getOnline()!=null){
-                        if(user.getOnline().equals("true")){
+                        if(user.getOnline()){
                             onlineStatus.setVisibility(View.VISIBLE);
                             lastSeen="online";
                             lastSeenMessage.setText(lastSeen);
@@ -281,13 +309,13 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                             onlineStatus.setVisibility(View.GONE);
                         }
                     }
-
+//
                 final Handler handler = new Handler(Looper.getMainLooper());
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        lastSeenMessage.setVisibility(View.GONE);
-                        lastSeenMessage.animate().scaleX(0.0f).setDuration(2000);
+                         lastSeenMessage.setVisibility(View.GONE);
+//                        lastSeenMessage.animate().scaleX(0.0f).setDuration(2000);
                     }
                 }, 2000);
 
@@ -530,56 +558,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             }
         });
 
-        delete.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                settings.setVisible(true);
-                profileDetails.setVisible(true);
-                if (messageListAdapter.getSelected().size() > 0) {
-                    for (int i = 0; i < messageListAdapter.getSelected().size(); i++) {
-                        switch (messageList.get(i).getType()) {
-                            case "TEXT":
-                                vibrator = (Vibrator) context.getSystemService(VIBRATOR_SERVICE);
-                                vibrator.vibrate(50);
-                                messageId = messageList.get(i).getMessageId();
-                                Toast.makeText(context, "itemDeleted", Toast.LENGTH_LONG).show();
-                                DatabaseReference messageRef = database.getReference().child("chats").child(user.getUid()).child(otherUserId);
-                                messageRef.child(messageId).removeValue();
-                                messageList.remove(i);
-                                messageListAdapter.notifyItemRemoved(i);
-
-                                break;
-                            case "IMAGE":
-                                messageId = messageList.get(i).getMessageId();
-                                String imageUrI = messageList.get(i).getImageUrI();
-                                vibrator = (Vibrator) context.getSystemService(VIBRATOR_SERVICE);
-                                vibrator.vibrate(50);
-                                Toast.makeText(context, "itemDeleted", Toast.LENGTH_LONG).show();
-                                StorageReference imageRef = firebaseStorage.getReferenceFromUrl(imageUrI);
-                                int finalI = i;
-                                imageRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
-                                    @Override
-                                    public void onSuccess(Void aVoid) {
-                                        DatabaseReference messageRef = database.getReference().child("chats").child(user.getUid()).child(otherUserId);
-                                        messageRef.child(messageId).removeValue();
-                                        messageList.remove(finalI);
-                                        messageListAdapter.notifyItemRemoved(finalI);
-                                    }
-                                }).addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        Toast.makeText(context, "Something went wrong", Toast.LENGTH_LONG).show();
-                                    }
-                                });
-                        }
-                    }
-
-                } else {
-                    showToast("No Selection");
-                }
-                return false;
-            }
-        });
         return true;
 
     }
@@ -608,40 +586,31 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     @Override
     public void onItemClick(int position) {
 
-        System.out.println(messageListAdapter.getSelected().size());
-        if(messageListAdapter.getSelected().size()<1){
-            delete.setVisible(false);
-            profileDetails.setVisible(true);
-            settings.setVisible(true);
-        }else{
-            delete.setVisible(true);
-            profileDetails.setVisible(false);
-            settings.setVisible(false);
-        }
+
 
     }
 
     @Override
     public void onLongItemClick(int position) {
-        Intent intent =new Intent(context, ViewImageActivity.class)
-                .putExtra("position",position)
-                .putExtra("imageList", imageUrIList)
-                .putExtra("imageUrI", messageList.get(position).getImageUrI())
-                .putExtra("profileUrI", messageList.get(position).getProfileUrI())
-                .putExtra("userId",otherUserId)
-                .putExtra("userName",otherUserName);
-        Log.d("position",String.valueOf(position));
-
-        if(messageList.get(position).getReceiver()==user.getUid()){
-            intent.putExtra("Direction","from");
-        }else{
-            intent.putExtra("Direction","to");
-        }
-        startActivity(intent);
+//        Intent intent =new Intent(context, ViewImageActivity.class)
+//                .putExtra("position",position)
+//                .putExtra("imageList", imageUrIList)
+//                .putExtra("imageUrI", messageList.get(position).getImageUrI())
+//                .putExtra("profileUrI", messageList.get(position).getProfileUrI())
+//                .putExtra("userId",otherUserId)
+//                .putExtra("userName",otherUserName);
+//        Log.d("position",String.valueOf(position));
+//
+//        if(messageList.get(position).getReceiver()==user.getUid()){
+//            intent.putExtra("Direction","from");
+//        }else{
+//            intent.putExtra("Direction","to");
+//        }
+//        startActivity(intent);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private void status(String status){
+    private void status(boolean status){
         DatabaseReference userDetailRef=database.getReference().child("UserDetails").child(user.getUid());
         Map<String ,Object> onlineStatus=new HashMap<>();
         onlineStatus.put("lastSeenDate",getDate());
@@ -654,20 +623,14 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     @Override
     protected void onResume() {
         super.onResume();
-        status("true");
+        status(true);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onPause() {
         super.onPause();
-        status("false");
+        status(false);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    @Override
-    protected void onStop() {
-        super.onStop();
-        status("false");
-    }
 }
