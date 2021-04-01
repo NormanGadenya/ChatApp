@@ -4,7 +4,7 @@
     <string name="WelcomeMessage">Welcome to our community</string>
     <string name="Enter_phone">Insert your phone Number here in the format (+256*********)</string>
     <string name="About_phone"> An SMS text message has been sent to your phone number</string>
-    <string name="phone_number">Phone Number</string>
+    <string name="phone_number">Phone Number (07*)</string>
     <string name="Logo_desc">Logo description</string>
     <string name="next">Next</string>
     <string name="Enter_otp">Insert the verification code</string>
