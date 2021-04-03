@@ -6,7 +6,8 @@ public class chatListModel implements Comparable {
     private String description,descriptionId;
     private String date,time;
     private String phoneNumber, profileUrI;
-    private Boolean Typing;
+    private Boolean Typing,online;
+
 
     public chatListModel() {
     }
@@ -100,5 +101,13 @@ public class chatListModel implements Comparable {
 
     public void setTyping(Boolean typing) {
         this.Typing = typing;
+    }
+
+    public Boolean getOnline() {
+        return online;
+    }
+
+    public void setOnline(Boolean online) {
+        this.online = online;
     }
 }

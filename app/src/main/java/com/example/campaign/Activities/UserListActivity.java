@@ -96,6 +96,7 @@ public class UserListActivity extends AppCompatActivity {
                     loadSharedPreferenceData();
                     if (contactsList==null){
                         contactsList=getPhoneNumbers();
+                        saveSharedPreferenceData();
                     }
 
                     loadUsers(contactsList);
@@ -107,9 +108,7 @@ public class UserListActivity extends AppCompatActivity {
         }
         final Intent intent = getIntent();
 
-        if (savedInstanceState == null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
-                intent.hasExtra(EXTRA_CIRCULAR_REVEAL_X) &&
-                intent.hasExtra(EXTRA_CIRCULAR_REVEAL_Y)) {
+        if (savedInstanceState == null && intent.hasExtra(EXTRA_CIRCULAR_REVEAL_X) && intent.hasExtra(EXTRA_CIRCULAR_REVEAL_Y)) {
             rootLayout.setVisibility(View.INVISIBLE);
 
             revealX = intent.getIntExtra(EXTRA_CIRCULAR_REVEAL_X, 0);
@@ -193,6 +192,12 @@ public class UserListActivity extends AppCompatActivity {
         contactsList=sharedPreferences.getStringSet("contactsList",null);
 
     }
+    private void saveSharedPreferenceData() {
+        SharedPreferences sharedPreferences =getSharedPreferences("contactsSharedPreferences",MODE_PRIVATE);
+        SharedPreferences.Editor editor=sharedPreferences.edit();
+        editor.putStringSet("contactsList",contactsList);
+        editor.apply();
+    }
 
     private void loadUsers(Set<String> contacts){
         DatabaseReference userDetails=database.getReference().child("UserDetails");
@@ -219,7 +224,9 @@ public class UserListActivity extends AppCompatActivity {
                                     userListObj.setPhoneNumber(users.getPhoneNumber());
                                     userListObj.setProfileUrI(users.getProfileUrI());
                                     userListObj.setUserId(id);
+                                    userListObj.setOnline(users.getOnline());
                                     list.add(userListObj);
+                                    Collections.sort(list,userModel::compareTo);
                                     userListAdapter.notifyDataSetChanged();
                                     progressBar.setVisibility(View.GONE);
                                 }
@@ -252,7 +259,6 @@ public class UserListActivity extends AppCompatActivity {
 
         // Loop Through All The Numbers
         while (phones.moveToNext()) {
-
             String name = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
             String phoneNumber = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
 
@@ -265,7 +271,7 @@ public class UserListActivity extends AppCompatActivity {
         }
         for (Map.Entry<String, String> entry : namePhoneMap.entrySet()) {
             String key = entry.getKey();
-            String value = entry.getValue();
+
             if (key.contains("+")){
                 phoneNumbers.add(key);
             }else{

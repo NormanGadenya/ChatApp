@@ -47,7 +47,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.mikhaellopez.circularimageview.CircularImageView;
+
 import com.zolad.zoominimageview.ZoomInImageView;
 
 
@@ -116,7 +116,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
         if(isSelected){
             holder.checkBox.setVisibility(View.VISIBLE);
-            holder.itemView.setBackgroundColor(Color.LTGRAY);
+            holder.itemView.setBackgroundResource(R.color.deepBlueT);
         }else{
             holder.checkBox.setVisibility(View.GONE);
             holder.itemView.setBackgroundColor(Color.TRANSPARENT);
@@ -127,7 +127,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                 if(isEnabled){
                     clickedItem(holder);
                 }
-
             }
         });
 
@@ -205,14 +204,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
             }
 
         });
-
-
-
-
-
-
-
-
     }
 
     private void clickedItem(Holder holder) {
@@ -253,7 +244,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
     public class Holder extends RecyclerView.ViewHolder {
         private TextView message,time,msgGroupDate;
-        private CircularImageView profilePic;
+
         private ImageView messageStatus;
         private ZoomInImageView imageView;
         private ProgressBar progressBar;
@@ -267,7 +258,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
             super(itemView);
             delete=itemView.findViewById(R.id.delete);
             imageView=itemView.findViewById(R.id.imageView);
-            profilePic=itemView.findViewById(R.id.image_profile);
+
             message = itemView.findViewById(R.id.show_message);
             messageStatus=itemView.findViewById(R.id.message_status);
             time=itemView.findViewById(R.id.time);

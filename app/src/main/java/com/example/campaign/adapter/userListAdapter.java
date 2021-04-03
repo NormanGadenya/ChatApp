@@ -2,6 +2,7 @@ package com.example.campaign.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,6 +39,19 @@ public class userListAdapter extends RecyclerView.Adapter<userListAdapter.Holder
     public void onBindViewHolder(@NonNull Holder holder, int position) {
         final userModel userList=list.get(position);
         holder.userName.setText(userList.getUserName());
+//        holder.profile.setBorderColor(context.getColor(R.color.teal_200));
+
+        if(userList.getOnline()){
+            holder.profile.setBorderColorStart( Color.CYAN);
+            holder.profile.setBorderColorEnd( Color.MAGENTA);
+
+        }else{
+            holder.profile.setBorderColorStart(context.getColor(R.color.white));
+            holder.profile.setBorderColorEnd( Color.WHITE);
+
+        }
+        holder.profile.setBorderColorDirection(CircularImageView.GradientDirection.LEFT_TO_RIGHT);
+        holder.profile.setBorderWidth(10);
         holder.phoneNumber.setText(userList.getPhoneNumber());
         System.out.println(userList.getProfileUrI());
 

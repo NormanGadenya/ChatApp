@@ -34,6 +34,7 @@ import com.example.campaign.Model.ChatViewModel;
 import com.example.campaign.Model.chatListModel;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.R;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -43,10 +44,13 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 
 public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder> {
@@ -96,6 +100,17 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
             Glide.with(context).load(chatlist.getProfileUrI()).into(holder.profile);
         }
 
+        if(chatlist.getOnline()){
+            holder.profile.setBorderColorStart( Color.CYAN);
+            holder.profile.setBorderColorEnd( Color.MAGENTA);
+
+        }else{
+            holder.profile.setBorderColorStart(context.getColor(R.color.white));
+            holder.profile.setBorderColorEnd( Color.WHITE);
+
+        }
+        holder.profile.setBorderColorDirection(CircularImageView.GradientDirection.LEFT_TO_RIGHT);
+        holder.profile.setBorderWidth(10);
         if(chatlist.getTyping()!=null){
             if(chatlist.getTyping()){
                 holder.tvTyping.setVisibility(View.VISIBLE);
@@ -108,10 +123,12 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
             }
         }
 
+
         holder.itemView.setOnClickListener(v -> {
             recyclerViewInterface.onItemClick(holder.getAdapterPosition());
             if(isEnabled){
                 clickedItem(holder);
+
             }else{
                 if(list!=null){
                     Intent intent =new Intent(context, ChatActivity.class)
@@ -149,6 +166,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                         public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
                             isEnabled=true;
                             clickedItem(holder);
+
                             chatViewModel.getText().observe((LifecycleOwner)activity,new Observer<String>(){
 
                                 @Override
@@ -156,6 +174,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                                     mode.setTitle(String.format("%s selected",s));
                                 }
                             });
+
                             return true;
                         }
 
@@ -166,9 +185,18 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                                 case R.id.menu_delete:
                                     DatabaseReference chatRef=database.getReference().child("chats").child(firebaseUser.getUid());
                                     for(chatListModel c:selected){
-                                        list.remove(c);
-                                        chatRef.child(c.getUserId()).removeValue();
-                                        notifyDataSetChanged();
+
+                                        chatRef.child(c.getUserId()).removeValue().addOnSuccessListener(
+                                                new OnSuccessListener<Void>() {
+                                                    @Override
+                                                    public void onSuccess(Void aVoid) {
+                                                        list.remove(c);
+                                                        notifyDataSetChanged();
+                                                    }
+                                                }
+                                        );
+
+
                                     }
                                     mode.finish();
                                     break;
@@ -199,6 +227,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                         }
                     };
                     ((AppCompatActivity)v.getContext()).startActionMode(callback);
+
                 }else{
                     clickedItem(holder);
 

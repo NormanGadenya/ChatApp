@@ -17,6 +17,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -68,6 +69,7 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
+
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -76,6 +78,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.hdodenhof.circleimageview.CircleImageView;
 import jp.wasabeef.glide.transformations.BlurTransformation;
 
 public class ChatActivity extends AppCompatActivity implements RecyclerViewInterface {
@@ -85,7 +88,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private List<messageListModel> messageList = new ArrayList<>();
     private RecyclerView recyclerView ;
     private ImageButton sendButton,attachButton;
-    private TextView userName,lastSeenMessage;
+    private TextView userName,lastSeenMessage,onlineStatus;
     private EditText newMessage;
     private CircularImageView profilePic;
     private FirebaseUser user ;
@@ -94,10 +97,10 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private Uri selected;
     private Context context;
     private MenuInflater menuInflater;
-    private ProgressBar progressBar, imageLoadProgressBar;
+    private ProgressBar progressBar;
     private messageListAdapter messageListAdapter;
     private Vibrator vibrator;
-    private ImageView backgroundImageView,onlineStatus;
+    private ImageView backgroundImageView;
     private SharedPreferences imageSharedPreferences;
     private LinearLayoutManager layoutManager;
     private ArrayList<String> imageUrIList=new ArrayList<>();
@@ -125,7 +128,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         }
 
         userName.setText(otherUserName);
-        try{
+        if(profileUrI!=null){
+
             Glide.with(getApplicationContext()).load(profileUrI).listener(new RequestListener<Drawable>() {
                 @Override
                 public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
@@ -149,8 +153,11 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 }
             });
 
-        }catch(Exception e){
+        }else{
+
             profilePic.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
+            profilePic.setCircleColor(Color.WHITE);
+
         }
         getTypingStatus();
         statusCheck(otherUserId);
@@ -292,9 +299,12 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                     userModel user=snapshot.getValue(userModel.class);
                     if(user.getOnline()!=null){
                         if(user.getOnline()){
-                            onlineStatus.setVisibility(View.VISIBLE);
+//                            onlineStatus.setVisibility(View.VISIBLE);
                             lastSeen="online";
-                            lastSeenMessage.setText(lastSeen);
+                            profilePic.setBorderColorStart( Color.CYAN);
+                            profilePic.setBorderColorEnd( Color.MAGENTA);
+                            profilePic.setBorderColorDirection(CircularImageView.GradientDirection.LEFT_TO_RIGHT);
+
 
                         }else{
                             String lastSeenDate=user.getLastSeenDate();
@@ -304,20 +314,24 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                             }else{
                                 lastSeen= "Last seen on " +lastSeenDate +" at "+ lastSeenTime;
                             }
-                            lastSeenMessage.setText(lastSeen);
-                            lastSeenMessage.setVisibility(View.VISIBLE);
-                            onlineStatus.setVisibility(View.GONE);
+                            profilePic.setBorderColorStart(context.getColor(R.color.white));
+                            profilePic.setBorderColorEnd( Color.WHITE);
+                            profilePic.setBorderColorDirection(CircularImageView.GradientDirection.LEFT_TO_RIGHT);
+
+
                         }
+                        profilePic.setBorderWidth(10);
+                        onlineStatus.setText(lastSeen);
                     }
 //
-                final Handler handler = new Handler(Looper.getMainLooper());
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                         lastSeenMessage.setVisibility(View.GONE);
-//                        lastSeenMessage.animate().scaleX(0.0f).setDuration(2000);
-                    }
-                }, 2000);
+//                final Handler handler = new Handler(Looper.getMainLooper());
+//                handler.postDelayed(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                         lastSeenMessage.setVisibility(View.GONE);
+////                        lastSeenMessage.animate().scaleX(0.0f).setDuration(2000);
+//                    }
+//                }, 2000);
 
             }
 
@@ -349,6 +363,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     private void InitialiseControllers() {
         ActionBar actionBar=getSupportActionBar();
+        actionBar.setTitle("");
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowCustomEnabled(true);
         LayoutInflater LayoutInflater=(LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -356,14 +371,13 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         actionBar.setCustomView(actionBarView);
         sendButton=findViewById(R.id.sendButton);
         onlineStatus=findViewById(R.id.onlineStatus);
-        lastSeenMessage=findViewById(R.id.lastSeen);
+
         attachButton= findViewById(R.id.attachButton);
         profilePic=findViewById(R.id.image_profile);
         newMessage=findViewById(R.id.message_container);
         imageSharedPreferences=getSharedPreferences("selectedImagePref",MODE_PRIVATE);
         progressBar=findViewById(R.id.progressBar2);
         backgroundImageView=findViewById(R.id.backgroundView);
-        imageLoadProgressBar=findViewById(R.id.progressBarImageLoad);
         otherUserId=getIntent().getStringExtra("userId");
         otherUserName=getIntent().getStringExtra("userName");
         profileUrI =getIntent().getStringExtra("profileUrI");
@@ -447,7 +461,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         String caption=imageSharedPreferences.getString("caption",null);
         Log.d("HSCSHCD","done");
         if (selected != null) {
-            imageLoadProgressBar.setVisibility(View.VISIBLE);
+
             StorageReference fileReference = mStorageReference.child(System.currentTimeMillis()
                     + ".jpg");
             UploadTask uploadTask =fileReference.putFile(selected);
@@ -500,7 +514,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                             }
                         });
                     }
-                imageLoadProgressBar.setVisibility(View.GONE);
+
 
 
             });
@@ -508,7 +522,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 @Override
                 public void onProgress(@NonNull UploadTask.TaskSnapshot snapshot) {
                     double progress=(100*snapshot.getBytesTransferred()/snapshot.getTotalByteCount());
-                    imageLoadProgressBar.setProgress((int)progress);
+
                 }
             });
         imageSharedPreferences.edit().clear();

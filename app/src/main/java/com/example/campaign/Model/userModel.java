@@ -1,6 +1,6 @@
 package com.example.campaign.Model;
 
-public class userModel {
+public class userModel implements Comparable{
     private String userName,userId;
     private String phoneNumber;
     private String profileUrI;
@@ -101,5 +101,11 @@ public class userModel {
 
     public void setTyping(Boolean typing) {
         this.Typing = typing;
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        userModel userModel =(userModel) o;
+        return this.userName.compareTo(userModel.userName);
     }
 }

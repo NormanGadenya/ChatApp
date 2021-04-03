@@ -239,53 +239,53 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
 
             }
         });
-        ItemTouchHelper.SimpleCallback simpleCallback=new ItemTouchHelper.SimpleCallback(0,ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT){
-
-            @Override
-            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
-                return false;
-            }
-
-            @RequiresApi(api = Build.VERSION_CODES.N)
-            @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                try {
-                    int position = viewHolder.getAdapterPosition();
-
-                        Vibrator vibrator = (Vibrator) context.getSystemService(VIBRATOR_SERVICE);
-                        vibrator.vibrate(50);
-                        String otherUserId = list.get(position).getUserId();
-                        Toast.makeText(context, "chat deleted", Toast.LENGTH_LONG).show();
-                        DatabaseReference chatRef = database.getReference().child("chats").child(user.getUid()).child(otherUserId);
-                        chatListId.remove(otherUserId);
-                        arrangedChatListId.remove(position);
-//                        list.remove(position);
-                        chatRef.removeValue();
-
-                        
-                        //list.remove(position);
-                        chatListAdapter.notifyItemRemoved(position);
-
-
-                }catch (Exception e){
-                    Log.e("Error",e.getLocalizedMessage());
-                }
-            }
-
-            @Override
-            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
-                new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
-                        .addBackgroundColor(ContextCompat.getColor(MainActivity.this,R.color.Red_200))
-                        .addActionIcon(R.drawable.remove)
-                        .create()
-                        .decorate();
-
-                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
-
-            }
-        };
-        ItemTouchHelper itemTouchHelper=new ItemTouchHelper(simpleCallback);
-        itemTouchHelper.attachToRecyclerView(recyclerView);
+//        ItemTouchHelper.SimpleCallback simpleCallback=new ItemTouchHelper.SimpleCallback(0,ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT){
+//
+//            @Override
+//            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+//                return false;
+//            }
+//
+//            @RequiresApi(api = Build.VERSION_CODES.N)
+//            @Override
+//            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+//                try {
+//                    int position = viewHolder.getAdapterPosition();
+//
+//                        Vibrator vibrator = (Vibrator) context.getSystemService(VIBRATOR_SERVICE);
+//                        vibrator.vibrate(50);
+//                        String otherUserId = list.get(position).getUserId();
+//                        Toast.makeText(context, "chat deleted", Toast.LENGTH_LONG).show();
+//                        DatabaseReference chatRef = database.getReference().child("chats").child(user.getUid()).child(otherUserId);
+//                        chatListId.remove(otherUserId);
+//                        arrangedChatListId.remove(position);
+////                        list.remove(position);
+//                        chatRef.removeValue();
+//
+//
+//                        //list.remove(position);
+//                        chatListAdapter.notifyItemRemoved(position);
+//
+//
+//                }catch (Exception e){
+//                    Log.e("Error",e.getLocalizedMessage());
+//                }
+//            }
+//
+//            @Override
+//            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+//                new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+//                        .addBackgroundColor(ContextCompat.getColor(MainActivity.this,R.color.Red_200))
+//                        .addActionIcon(R.drawable.remove)
+//                        .create()
+//                        .decorate();
+//
+//                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+//
+//            }
+//        };
+//        ItemTouchHelper itemTouchHelper=new ItemTouchHelper(simpleCallback);
+//        itemTouchHelper.attachToRecyclerView(recyclerView);
 
     }
     private void getUserInfo() {
@@ -307,6 +307,7 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
                         chat.setUserId(userId);
                         chat.setTyping(user.getTyping());
                         chat.setProfileUrI(profileUrI);
+                        chat.setOnline(user.getOnline());
                         chatListOrder.put(dataSnapshot.getKey(),chat);
                     }
                 }
