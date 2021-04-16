@@ -50,13 +50,16 @@ public class SignUpActivity extends AppCompatActivity {
             progressBar.setVisibility(View.VISIBLE);
 
             if (!phone.isEmpty()){
-                PhoneAuthOptions options = PhoneAuthOptions.newBuilder(Auth)
-                        .setPhoneNumber(phone)
-                        .setTimeout(60L , TimeUnit.SECONDS)
-                        .setActivity(SignUpActivity.this)
-                        .setCallbacks(mCallBacks)
-                        .build();
-                PhoneAuthProvider.verifyPhoneNumber(options);
+                Intent otpIntent = new Intent(SignUpActivity.this , OtpActivity.class);
+                otpIntent.putExtra("phoneNumber",phone);
+                startActivity(otpIntent);
+//                PhoneAuthOptions options = PhoneAuthOptions.newBuilder(Auth)
+//                        .setPhoneNumber(phone)
+//                        .setTimeout(60L , TimeUnit.SECONDS)
+//                        .setActivity(SignUpActivity.this)
+//                        .setCallbacks(mCallBacks)
+//                        .build();
+//                PhoneAuthProvider.verifyPhoneNumber(options);
 
             }else{
                 Toast.makeText(SignUpActivity.this,"please enter valid phone Number",Toast.LENGTH_LONG).show();
@@ -73,13 +76,18 @@ public class SignUpActivity extends AppCompatActivity {
                     progressBar.setVisibility(View.VISIBLE);
 
                     if (!phone.isEmpty()){
-                        PhoneAuthOptions options = PhoneAuthOptions.newBuilder(Auth)
-                                .setPhoneNumber(phone)
-                                .setTimeout(60L , TimeUnit.SECONDS)
-                                .setActivity(SignUpActivity.this)
-                                .setCallbacks(mCallBacks)
-                                .build();
-                        PhoneAuthProvider.verifyPhoneNumber(options);
+                        Intent otpIntent = new Intent(SignUpActivity.this , OtpActivity.class);
+                        otpIntent.putExtra("phoneNumber",phone);
+                        startActivity(otpIntent);
+                        progressBar.setVisibility(View.GONE);
+
+//                        PhoneAuthOptions options = PhoneAuthOptions.newBuilder(Auth)
+//                                .setPhoneNumber(phone)
+//                                .setTimeout(60L , TimeUnit.SECONDS)
+//                                .setActivity(SignUpActivity.this)
+//                                .setCallbacks(mCallBacks)
+//                                .build();
+//                        PhoneAuthProvider.verifyPhoneNumber(options);
 
                     }else{
                         Toast.makeText(SignUpActivity.this,"please enter valid phone Number",Toast.LENGTH_LONG).show();

@@ -68,6 +68,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     private String profileUrI,otherUserId;
     private Activity activity;
     private ChatViewModel chatViewModel;
+    private TextView msgGroupDateTop;
     boolean isSelected,isEnabled=false;
     FirebaseDatabase database=FirebaseDatabase.getInstance();
     ArrayList<messageListModel> selected=new ArrayList<>();
@@ -75,13 +76,14 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
 
 
-    public messageListAdapter(List<messageListModel> list, Context context, String profileUrI, RecyclerViewInterface recyclerViewInterface,Activity activity,String otherUserId) {
+    public messageListAdapter(List<messageListModel> list, Context context, String profileUrI, RecyclerViewInterface recyclerViewInterface,Activity activity,String otherUserId,TextView msgGroupDateTop) {
         this.list = list;
         this.context = context;
         this.profileUrI=profileUrI;
         this.recyclerViewInterface=recyclerViewInterface;
         this.activity=activity;
         this.otherUserId=otherUserId;
+        this.msgGroupDateTop=msgGroupDateTop;
     }
 
     @NonNull
@@ -106,11 +108,16 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     public void onBindViewHolder(@NonNull Holder holder, int position) {
 
         holder.bind(list.get(position));
-
+        Log.d("Adapter",position +"ada"+ String.valueOf(holder.getAdapterPosition()));
+        if(list.get(position).getDate().equals(getDate())){
+            msgGroupDateTop.setVisibility(View.GONE);
+        }else{
+            msgGroupDateTop.setVisibility(View.VISIBLE);
+        }
+        msgGroupDateTop.setText(list.get(position).getDate());
         String previousTs=null;
         if(position>=1){
             previousTs = list.get(position-1).getDate();
-
         }
         setTimeTextVisibility(list.get(position).getDate(), previousTs, holder.msgGroupDate);
 
@@ -142,6 +149,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                             menuInflater.inflate(R.menu.action_menu,menu);
                             return true;
                         }
+
                         @Override
                         public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
                             isEnabled=true;
@@ -198,7 +206,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                     ((AppCompatActivity)v.getContext()).startActionMode(callback);
                 }else{
                     clickedItem(holder);
-
                 }
                 return true;
             }
@@ -271,6 +278,8 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
         }
         void bind(final messageListModel messageList){
+            Log.d("addPos",String.valueOf(getAdapterPosition()));
+
             if(messageList.getReceiver()!=null){
 
                 switch(messageList.getType()){
@@ -332,7 +341,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         break;
 
                 }
-                if (messageList.getMessageStatus()=="read"){
+                if (messageList.isChecked()){
                     messageStatus.setImageResource(R.drawable.ic_baseline_done_all_24);
 
                 }
@@ -391,6 +400,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
         }
     }
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     private String getTime(){
         LocalDateTime myDateObj = LocalDateTime.now();

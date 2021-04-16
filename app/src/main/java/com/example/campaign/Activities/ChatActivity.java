@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -49,9 +50,17 @@ import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
+import com.example.campaign.Interfaces.APIService;
 import com.example.campaign.Interfaces.RecyclerViewInterface;
+import com.example.campaign.Model.ChatViewModel;
+import com.example.campaign.Model.chatListModel;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.Model.userModel;
+import com.example.campaign.Notifications.Client;
+import com.example.campaign.Notifications.Data;
+import com.example.campaign.Notifications.MyResponse;
+import com.example.campaign.Notifications.Sender;
+import com.example.campaign.Notifications.Token;
 import com.example.campaign.R;
 import com.example.campaign.adapter.messageListAdapter;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -62,7 +71,9 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
@@ -80,6 +91,11 @@ import java.util.Map;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import jp.wasabeef.glide.transformations.BlurTransformation;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import static android.view.View.GONE;
 
 public class ChatActivity extends AppCompatActivity implements RecyclerViewInterface {
 
@@ -88,7 +104,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private List<messageListModel> messageList = new ArrayList<>();
     private RecyclerView recyclerView ;
     private ImageButton sendButton,attachButton;
-    private TextView userName,lastSeenMessage,onlineStatus;
+    private TextView userName,lastSeenMessage,onlineStatus,typing,msgGroupDate;
     private EditText newMessage;
     private CircularImageView profilePic;
     private FirebaseUser user ;
@@ -105,11 +121,13 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private LinearLayoutManager layoutManager;
     private ArrayList<String> imageUrIList=new ArrayList<>();
     private ArrayList<messageListModel> selectedMessages = new ArrayList<>();
+    boolean notify=false;
+    ChatViewModel chatViewModel;
 
     MenuItem profileDetails;
     MenuItem settings,delete;
 
-
+    APIService apiService;
 
     private FirebaseStorage storage= FirebaseStorage.getInstance();
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -121,58 +139,40 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         InitialiseControllers();
         database = FirebaseDatabase.getInstance();
         firebaseStorage= FirebaseStorage.getInstance();
+
         mStorageReference=firebaseStorage.getReference();
+        chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
         if(otherUserId==null){
             loadSharedPreferenceData();
             System.out.println("otherUserId"+otherUserId);
         }
-
-        userName.setText(otherUserName);
-        if(profileUrI!=null){
-
-            Glide.with(getApplicationContext()).load(profileUrI).listener(new RequestListener<Drawable>() {
-                @Override
-                public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                    progressBar.setVisibility(View.GONE);
-                    return false;
-
-                }
-
-                @Override
-                public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                    progressBar.setVisibility(View.GONE);
-                    return false;
-                }
-            }).into(profilePic);
-            profilePic.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-//                    Intent intent =new Intent(getApplicationContext(), ViewImageActivity.class);
-//                    intent.putExtra("imageUrI",profileUrI);
-//                    startActivity(intent);
-                }
-            });
-
-        }else{
-
-            profilePic.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
-            profilePic.setCircleColor(Color.WHITE);
-
+        if(otherUserId!=null){
+            getOtherUserDetails(otherUserId);
         }
-        getTypingStatus();
-        statusCheck(otherUserId);
 
+        setTypingStatus();
+//        statusCheck(otherUserId);
+
+        updateStatus();
         if(imageSharedPreferences.getString("imageUrI",null)!=null && imageSharedPreferences.getString("receiver",null)!=null){
             if(otherUserId!=null && imageSharedPreferences.getString("receiver",null).equals(otherUserId)){
-                uploadFile(user.getUid(),otherUserId);
+//                uploadFile(user.getUid(),otherUserId);
             }
         }
 
 
         layoutManager= new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
-        messageListAdapter=new messageListAdapter(messageList, ChatActivity.this, profileUrI,this,this,otherUserId);
-        recyclerView.setAdapter(messageListAdapter);
+
+        chatViewModel.initChats(otherUserId);
+        messageList=chatViewModel.getMessages().getValue();
+        try{
+            messageListAdapter=new messageListAdapter(messageList, ChatActivity.this, profileUrI,this,this,otherUserId,msgGroupDate);
+            recyclerView.setAdapter(messageListAdapter);
+        }catch(Exception e){
+
+        }
+
         getCurrentWallpaper();
 
 
@@ -185,22 +185,32 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
 
         sendButton.setOnClickListener(view -> {
+            Log.d("userId",user.getUid()+ otherUserId);
             DatabaseReference sMessage_1=database.getReference().child("chats").child(otherUserId).child(user.getUid()).push();
-            DatabaseReference sMessage_2=database.getReference().child("chats").child(user.getUid()).child(otherUserId).push();
+            DatabaseReference sMessage_2=database.getReference().child("chats").child(user.getUid()).child(otherUserId);
+
             message=newMessage.getText().toString();
+//            updateToken(FirebaseInstanceId.getInstance().getToken());
+//            apiService= Client.getClient("https://fcm.googleapis.com/").create(APIService.class);
 
-            String formattedDate = getDate();
-            String formattedTime=getTime();
-            messageListModel m=new messageListModel();
-            m.setText(message);
-            m.setReceiver(otherUserId);
-            m.setDate(formattedDate);
-            m.setTime(formattedTime);
-            m.setType("TEXT");
-            sMessage_1.setValue(m);
-            sMessage_2.setValue(m);
-            newMessage.setText("");
-
+            if(!message.equals(null)){
+                String formattedDate = getDate();
+                String formattedTime=getTime();
+                messageListModel m=new messageListModel();
+                m.setText(message);
+                m.setReceiver(otherUserId);
+                m.setDate(formattedDate);
+                m.setTime(formattedTime);
+                m.setType("TEXT");
+                sMessage_1.setValue(m);
+                String messageKey= sMessage_1.getKey();
+                sMessage_2.child(messageKey).setValue(m);
+                notify=true;
+                if(notify){
+//                    sendNotification(otherUserId,otherUserName,message);
+                }
+                newMessage.setText("");
+            }
 
         });
 
@@ -209,10 +219,47 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             startActivityForResult(intent,2);
         });
 
-
     }
 
-    private void getTypingStatus(){
+//    private void sendNotification(String otherUserId, String otherUserName, String message) {
+//        DatabaseReference tokens=database.getReference("Tokens");
+//        Query query=tokens.orderByKey().equalTo(otherUserId);
+//        query.addValueEventListener(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                for(DataSnapshot dataSnapshot:snapshot.getChildren()){
+//                    Token token=dataSnapshot.getValue(Token.class);
+//                    Data data=new Data(user.getUid(),R.drawable.background_icon,otherUserName+ ":" +message,otherUserId,"New message");
+//                    Sender sender = new Sender(data,token.getToken());
+//                    apiService.sendNotification(sender)
+//                            .enqueue(new Callback<MyResponse>(){
+//
+//                                @Override
+//                                public void onResponse(Call<MyResponse> call, Response<MyResponse> response) {
+//                                    if(response.code()==200){
+//                                        if(response.body().success==1){
+//                                            showToast("failed");
+//                                        }
+//                                    }
+//                                }
+//
+//                                @Override
+//                                public void onFailure(Call<MyResponse> call, Throwable t) {
+//
+//                                }
+//                            });
+//                    notify=false;
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError error) {
+//
+//            }
+//        });
+//    }
+
+    private void setTypingStatus(){
         DatabaseReference typingRef=database.getReference().child("UserDetails").child(user.getUid());
         HashMap<String,Object> typingStatus= new HashMap<>();
         newMessage.addTextChangedListener(new TextWatcher() {
@@ -248,118 +295,103 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         });
     }
     private void getCurrentWallpaper(){
-        DatabaseReference myRef = database.getReference().child("UserDetails").child(user.getUid());
-        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                userModel user=snapshot.getValue(userModel.class);
-                String chatWallpaperUrI=user.getChatWallpaper();
-                int blur=user.getChatBlur();
-                if(chatWallpaperUrI!=null){
-                    progressBar.setVisibility(View.VISIBLE);
-                    Glide.with(getApplicationContext())
-                            .load(chatWallpaperUrI)
-                            .transform(new BlurTransformation(blur))
-                            .addListener(new RequestListener<Drawable>() {
-                                @Override
-                                public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                                    progressBar.setVisibility(View.GONE);
-                                    return false;
-                                }
 
-                                @Override
-                                public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                                    progressBar.setVisibility(View.GONE);
-                                    return false;
-                                }
-                            })
-                            .into(backgroundImageView)
-                    ;
-                }
-
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
-    }
-
-    private void statusCheck(String otherUserId){
-
-        DatabaseReference userDetailRef=database.getReference().child("UserDetails").child(otherUserId);
-        userDetailRef.addValueEventListener(new ValueEventListener() {
-            @RequiresApi(api = Build.VERSION_CODES.O)
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-
-
-                    userModel user=snapshot.getValue(userModel.class);
-                    if(user.getOnline()!=null){
-                        if(user.getOnline()){
-//                            onlineStatus.setVisibility(View.VISIBLE);
-                            lastSeen="online";
-                            profilePic.setBorderColorStart( Color.CYAN);
-                            profilePic.setBorderColorEnd( Color.MAGENTA);
-                            profilePic.setBorderColorDirection(CircularImageView.GradientDirection.LEFT_TO_RIGHT);
-
-
-                        }else{
-                            String lastSeenDate=user.getLastSeenDate();
-                            String lastSeenTime=user.getLastSeenTime();
-                            if (lastSeenDate==getDate()){
-                                lastSeen= "Last seen today at "+ lastSeenTime;
-                            }else{
-                                lastSeen= "Last seen on " +lastSeenDate +" at "+ lastSeenTime;
+        chatViewModel.initFUserInfo();
+        chatViewModel.getFUserInfo().observe(this,user ->{
+            String chatWallpaperUrI=user.getChatWallpaper();
+            int blur=user.getChatBlur();
+            if(chatWallpaperUrI!=null){
+                progressBar.setVisibility(View.VISIBLE);
+                Glide.with(getApplicationContext())
+                        .load(chatWallpaperUrI)
+                        .transform(new BlurTransformation(blur))
+                        .addListener(new RequestListener<Drawable>() {
+                            @Override
+                            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                                progressBar.setVisibility(GONE);
+                                return false;
                             }
-                            profilePic.setBorderColorStart(context.getColor(R.color.white));
-                            profilePic.setBorderColorEnd( Color.WHITE);
-                            profilePic.setBorderColorDirection(CircularImageView.GradientDirection.LEFT_TO_RIGHT);
 
-
-                        }
-                        profilePic.setBorderWidth(10);
-                        onlineStatus.setText(lastSeen);
-                    }
-//
-//                final Handler handler = new Handler(Looper.getMainLooper());
-//                handler.postDelayed(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                         lastSeenMessage.setVisibility(View.GONE);
-////                        lastSeenMessage.animate().scaleX(0.0f).setDuration(2000);
-//                    }
-//                }, 2000);
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
+                            @Override
+                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                                progressBar.setVisibility(GONE);
+                                return false;
+                            }
+                        })
+                        .into(backgroundImageView)
+                ;
             }
         });
 
     }
+    private void getTypingStatus(userModel user){
+        if(user.getTyping()!=null){
+            if(user.getTyping()){
+//                            onlineStatus.setVisibility(View.VISIBLE);
+                onlineStatus.setVisibility(GONE);
+                typing.setVisibility(View.VISIBLE);
 
+            }else{
+                onlineStatus.setVisibility(View.VISIBLE);
+                typing.setVisibility(View.GONE);
+            }
+
+        }
+
+    }
+    private void statusCheck(userModel user){
+        if(user.getOnline()!=null){
+            if(user.getOnline()){
+//                            onlineStatus.setVisibility(View.VISIBLE);
+                lastSeen="online";
+                profilePic.setBorderColorStart( Color.CYAN);
+                profilePic.setBorderColorEnd( Color.MAGENTA);
+                onlineStatus.setSelected(false);
+
+            }else{
+                String lastSeenDate=user.getLastSeenDate();
+                String lastSeenTime=user.getLastSeenTime();
+                if (lastSeenDate==getDate()){
+                    lastSeen= "Last seen today at "+ lastSeenTime;
+                }else{
+                    lastSeen= "Last seen on " +lastSeenDate +" at "+ lastSeenTime;
+                }
+                profilePic.setBorderColorStart(context.getColor(R.color.white));
+                profilePic.setBorderColorEnd( Color.WHITE);
+                onlineStatus.setSelected(true);
+
+
+
+            }
+            profilePic.setBorderColorDirection(CircularImageView.GradientDirection.LEFT_TO_RIGHT);
+            profilePic.setBorderWidth(10);
+            onlineStatus.setText(lastSeen);
+        }
+
+
+    }
     private void loadSharedPreferenceData() {
         SharedPreferences sharedPreferences=getSharedPreferences("sharedPreferences",MODE_PRIVATE);
-        otherUserName=sharedPreferences.getString("otherUserName",null);
         otherUserId=sharedPreferences.getString("otherUserId",null);
         profileUrI=sharedPreferences.getString("profileUrI",null);
+        otherUserName=sharedPreferences.getString("otherUserName",null);
+
     }
 
     private void saveSharedPreferenceData() {
         SharedPreferences sharedPreferences =getSharedPreferences("sharedPreferences",MODE_PRIVATE);
         SharedPreferences.Editor editor=sharedPreferences.edit();
-        editor.putString("otherUserName",otherUserName);
         editor.putString("otherUserId",otherUserId);
         editor.putString("profileUrI",profileUrI);
+        editor.putString("otherUserName",otherUserName);
         editor.apply();
     }
 
-
+    private void updateToken(String token) {
+        DatabaseReference reference= FirebaseDatabase.getInstance().getReference("Tokens");
+        Token token1 =new Token(token);
+        reference.child(user.getUid()).setValue(token1);
+    }
 
     private void InitialiseControllers() {
         ActionBar actionBar=getSupportActionBar();
@@ -371,16 +403,18 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         actionBar.setCustomView(actionBarView);
         sendButton=findViewById(R.id.sendButton);
         onlineStatus=findViewById(R.id.onlineStatus);
-
+        typing=findViewById(R.id.typingStatus);
         attachButton= findViewById(R.id.attachButton);
         profilePic=findViewById(R.id.image_profile);
         newMessage=findViewById(R.id.message_container);
         imageSharedPreferences=getSharedPreferences("selectedImagePref",MODE_PRIVATE);
         progressBar=findViewById(R.id.progressBar2);
         backgroundImageView=findViewById(R.id.backgroundView);
+        msgGroupDate=findViewById(R.id.msgGroupDateTop);
         otherUserId=getIntent().getStringExtra("userId");
-        otherUserName=getIntent().getStringExtra("userName");
-        profileUrI =getIntent().getStringExtra("profileUrI");
+//        otherUserName=getIntent().getStringExtra("userName");
+//        profileUrI =getIntent().getStringExtra("profileUrI");
+
         if(otherUserId!=null){
             saveSharedPreferenceData();
         }
@@ -389,46 +423,125 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         recyclerView=findViewById(R.id.recyclerView1);
     }
 
-    private void getMessages(){
-        DatabaseReference messageRef=database.getReference().child("chats").child(user.getUid()).child(otherUserId);
+    private void getOtherUserDetails(String otherUserId) {
+        DatabaseReference reference=database.getReference().child("UserDetails").child(otherUserId);
+        chatViewModel.initOtherUserInfo(otherUserId);
+        chatViewModel.getOtherUserInfo().observe(this,otherUserInfo ->{
+            otherUserName=otherUserInfo.getUserName();
+            profileUrI=otherUserInfo.getProfileUrI();
+            userName.setText(otherUserName);
+            statusCheck(otherUserInfo);
+            getTypingStatus(otherUserInfo);
+            if(profileUrI!=null){
+                Glide.with(getApplicationContext()).load(profileUrI).listener(new RequestListener<Drawable>() {
+                    @Override
+                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                        progressBar.setVisibility(GONE);
+                        return false;
 
-        imageUrIList.clear();
-        messageRef.addValueEventListener(new ValueEventListener(){
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                messageList.clear();
-                for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
-                    try{
-                        messageListModel message = snapshot.getValue(messageListModel.class);
-                        messageStatus=message.getMessageStatus();
-                        String imageUrI=message.getImageUrI();
-                        message.setMessageId(snapshot.getKey());
-                        String receiver = message.getReceiver();
-                        message.setReceiver(receiver);
-                        if(imageUrI!=null){
-                            imageUrIList.add(imageUrI);
-                        }
-
-                        messageList.add(message);
-                        if (messageList.size() >= 1) {
-                            recyclerView.scrollToPosition(messageList.size()-1);
-                        }
-
-                    }catch(Exception e){
-                        Log.d("error1",e.getMessage());
                     }
 
-                    messageListAdapter.notifyDataSetChanged();
-                }
+                    @Override
+                    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                        progressBar.setVisibility(GONE);
+                        return false;
+                    }
+                }).into(profilePic);
+                profilePic.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+//                   Intent intent =new Intent(getApplicationContext(), ViewImageActivity.class);
+//                    intent.putExtra("imageUrI",profileUrI);
+//                    startActivity(intent);
+                    }
+                });
 
+            }else{
 
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
+                profilePic.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
+                profilePic.setCircleColor(Color.WHITE);
 
             }
         });
+
+    }
+
+
+    private void getMessages(){
+        DatabaseReference messageRef=database.getReference().child("chats").child(user.getUid()).child(otherUserId);
+        DatabaseReference otherUserMRef=database.getReference().child("chats").child(otherUserId).child(user.getUid());
+        imageUrIList.clear();
+        chatViewModel.getMessages().observe(this, messageListLive -> {
+            messageList=messageListLive;
+            messageListAdapter.notifyDataSetChanged();
+            if (messageList.size() >= 1) {
+                recyclerView.scrollToPosition(messageList.size()-1);
+            }
+        });
+//        messageRef.addValueEventListener(new ValueEventListener(){
+//            @Override
+//            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+//                messageList.clear();
+//                ArrayList<String> mKeys=new ArrayList<>();
+//
+//                for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
+//                    try{
+//
+//                        messageListModel message = snapshot.getValue(messageListModel.class);
+//                        String imageUrI=message.getImageUrI();
+//                        message.setMessageId(snapshot.getKey());
+//                        String receiver = message.getReceiver();
+//                        message.setReceiver(receiver);
+//                        if(imageUrI!=null){
+//                            imageUrIList.add(imageUrI);
+//                        }
+//
+//                        messageList.add(message);
+//                        if (messageList.size() >= 1) {
+//                            recyclerView.scrollToPosition(messageList.size()-1);
+//                        }
+//                        mKeys.add(snapshot.getKey());
+//                        if(message.getReceiver()!=null){
+////                            otherUserMRef.addValueEventListener(new ValueEventListener() {
+////                                @Override
+////                                public void onDataChange(@NonNull DataSnapshot otherSnapshot) {
+////                                    for(DataSnapshot s:otherSnapshot.getChildren()){
+////
+////                                        if(mKeys.contains(s.getKey())){
+////                                            HashMap<String,Object> messageStatus=new HashMap<>();
+////                                            messageStatus.put("checked",true);
+////                                            otherUserMRef.child(s.getKey()).updateChildren(messageStatus);
+////                                        }
+////                                    }
+////
+////                                }
+////
+////                                @Override
+////                                public void onCancelled(@NonNull DatabaseError error) {
+////
+////                                }
+////                            });
+//
+//                        }
+//
+//
+//
+//                    }catch(Exception e){
+//                        Log.d("error1",e.getMessage());
+//                    }
+//
+//                    messageListAdapter.notifyDataSetChanged();
+//                }
+//
+//
+//            }
+//
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError error) {
+//
+//            }
+//        });
+
 
     }
 
@@ -443,11 +556,11 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                     .putExtra("otherUserId",otherUserId)
                     .putExtra("otherUserName",otherUserName);
             startActivity(intent);
-//            try{
-//                uploadFile(user.getUid(),otherUserId);
-//            }catch(Exception e){
-//                Log.d("error",e.getLocalizedMessage());
-//            }
+            try{
+                uploadFile(user.getUid(),otherUserId);
+            }catch(Exception e){
+                Log.d("error",e.getLocalizedMessage());
+            }
 
         }
 
@@ -461,7 +574,17 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         String caption=imageSharedPreferences.getString("caption",null);
         Log.d("HSCSHCD","done");
         if (selected != null) {
-
+            DatabaseReference myRef = database.getReference();
+            messageListModel message=new messageListModel();
+            message.setText(caption);
+            message.setImageUrI(selected.toString());
+            message.setTime(getTime());
+            message.setDate(getDate());
+            message.setType("IMAGE");
+            message.setReceiver(otherUserId);
+            DatabaseReference messageRef= myRef.child("chats").child(userId).child(otherUserId).push();
+            String messageKey=messageRef.getKey();
+            messageRef.setValue(message);
             StorageReference fileReference = mStorageReference.child(System.currentTimeMillis()
                     + ".jpg");
             UploadTask uploadTask =fileReference.putFile(selected);
@@ -502,18 +625,24 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                                         message.setReceiver(otherUserId);
 
                                         try{
-//                                            myRef.child("chats").child(userId).child(otherUserId).push().setValue(message);
-                                            myRef.child("chats").child(otherUserId).child(userId).push().setValue(message);
+                                            myRef.child("chats").child(userId).child(otherUserId).push().setValue(message);
+                                           DatabaseReference messageRef= myRef.child("chats").child(otherUserId).child(userId);
+                                           messageRef.child(messageKey).setValue(message);
 
                                         }catch(Exception e){
                                             Log.d("error",e.getLocalizedMessage());
-                                            progressBar.setVisibility(View.GONE);
+                                            progressBar.setVisibility(GONE);
                                         }
                                     }
                                 }
                             }
                         });
                     }
+                imageSharedPreferences.edit().clear();
+                SharedPreferences.Editor editor = imageSharedPreferences.edit();
+                editor.clear();
+                editor.commit();
+
 
 
 
@@ -525,6 +654,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
                 }
             });
+//        selected=null;
         imageSharedPreferences.edit().clear();
         } else {
             Toast.makeText(this, "No file selected", Toast.LENGTH_SHORT).show();
@@ -593,6 +723,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     @Override
     public void onBackPressed() {
         Intent mainIntent = new Intent(ChatActivity.this , MainActivity.class);
+        mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(mainIntent);
         finish();
     }
@@ -624,27 +755,19 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private void status(boolean status){
+    private void updateStatus(){
         DatabaseReference userDetailRef=database.getReference().child("UserDetails").child(user.getUid());
         Map<String ,Object> onlineStatus=new HashMap<>();
-        onlineStatus.put("lastSeenDate",getDate());
-        onlineStatus.put("lastSeenTime",getTime());
-        onlineStatus.put("online",status);
+        onlineStatus.put("online",true);
         userDetailRef.updateChildren(onlineStatus);
+
+        Map<String ,Object> lastSeenStatus=new HashMap<>();
+        lastSeenStatus.put("lastSeenDate",getDate());
+        lastSeenStatus.put("lastSeenTime",getTime());
+        lastSeenStatus.put("online",false);
+        userDetailRef.onDisconnect().updateChildren(lastSeenStatus);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    @Override
-    protected void onResume() {
-        super.onResume();
-        status(true);
-    }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    @Override
-    protected void onPause() {
-        super.onPause();
-        status(false);
-    }
 
 }

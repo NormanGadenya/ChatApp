@@ -24,7 +24,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -33,7 +35,9 @@ import com.example.campaign.Interfaces.RecyclerViewInterface;
 import com.example.campaign.Model.ChatViewModel;
 import com.example.campaign.Model.chatListModel;
 import com.example.campaign.Model.messageListModel;
+import com.example.campaign.Model.userModel;
 import com.example.campaign.R;
+import com.example.campaign.Repository.Repo;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -54,7 +58,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 
 
 public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder> {
-    private List<chatListModel> list;
+    private List<userModel> list;
     private Context context;
     private FirebaseUser firebaseUser =FirebaseAuth.getInstance().getCurrentUser();
     private RecyclerViewInterface recyclerViewInterface;
@@ -62,15 +66,18 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     private Activity activity;
     private ChatViewModel chatViewModel;
     boolean isSelected,isEnabled=false;
-    ArrayList<chatListModel> selected=new ArrayList<>();
+    ArrayList<userModel> selected=new ArrayList<>();
+    private ViewModelStoreOwner viewModelStoreOwner;
+    private LifecycleOwner lifecycleOwner;
 
 
 
-    public chatListAdapter(List<chatListModel> list, Context context,RecyclerViewInterface recyclerViewInterface,Activity activity) {
+    public chatListAdapter(List<userModel> list, Context context, Activity activity,ViewModelStoreOwner viewModelStoreOwner ,LifecycleOwner lifecycleOwner) {
         this.list = list;
         this.context = context;
-        this.recyclerViewInterface=recyclerViewInterface;
+        this.lifecycleOwner=lifecycleOwner;
         this.activity = activity;
+        this.viewModelStoreOwner=viewModelStoreOwner;
 
 
     }
@@ -89,7 +96,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
 
-        final chatListModel chatlist = list.get(position);
+        final userModel chatlist = list.get(position);
 
         getLastMessage(chatlist.getUserId(),holder.tvDesc,holder.tvDate,holder.imageView);
         holder.tvName.setText(chatlist.getUserName());
@@ -116,6 +123,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                 holder.tvTyping.setVisibility(View.VISIBLE);
                 holder.tvDesc.setVisibility(View.GONE);
                 holder.tvDate.setVisibility(View.GONE);
+
             }else{
                 holder.tvTyping.setVisibility(View.GONE);
                 holder.tvDesc.setVisibility(View.VISIBLE);
@@ -125,7 +133,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
 
 
         holder.itemView.setOnClickListener(v -> {
-            recyclerViewInterface.onItemClick(holder.getAdapterPosition());
+//            recyclerViewInterface.onItemClick(holder.getAdapterPosition());
             if(isEnabled){
                 clickedItem(holder);
 
@@ -184,20 +192,16 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                             switch (id){
                                 case R.id.menu_delete:
                                     DatabaseReference chatRef=database.getReference().child("chats").child(firebaseUser.getUid());
-                                    for(chatListModel c:selected){
+                                    for(userModel c:selected){
 
-                                        chatRef.child(c.getUserId()).removeValue().addOnSuccessListener(
-                                                new OnSuccessListener<Void>() {
-                                                    @Override
-                                                    public void onSuccess(Void aVoid) {
-                                                        list.remove(c);
-                                                        notifyDataSetChanged();
-                                                    }
-                                                }
-                                        );
-
+                                        chatRef.child(c.getUserId()).removeValue();
+                                        list.remove(c);
+                                        Log.d("the list",String.valueOf(list.size()));
+                                        notifyDataSetChanged();
 
                                     }
+
+
                                     mode.finish();
                                     break;
 
@@ -241,7 +245,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     }
 
     private void clickedItem(Holder holder) {
-        chatListModel chatListModel=list.get(holder.getAdapterPosition());
+        userModel chatListModel=list.get(holder.getAdapterPosition());
         if(holder.checkBox.getVisibility()==View.GONE){
             holder.checkBox.setVisibility(View.VISIBLE);
             holder.itemView.setBackgroundColor(Color.LTGRAY);
@@ -302,42 +306,71 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
 
     private void getLastMessage(String userId,TextView description,TextView dateTime,ImageView imageView){
         DatabaseReference messageRef=database.getReference();
+        chatViewModel = new ViewModelProvider(viewModelStoreOwner).get(ChatViewModel.class);
+        chatViewModel.initLastMessage(userId);
 
-        messageRef.child("chats").child(firebaseUser.getUid()).child(userId).orderByKey().limitToLast(1).addValueEventListener(new ValueEventListener() {
-            @RequiresApi(api = Build.VERSION_CODES.O)
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for(DataSnapshot dataSnapshot:snapshot.getChildren()){
-                    messageListModel message=dataSnapshot.getValue(messageListModel.class);
-                    String textMessage=message.getText();
-                    String imageUrI=message.getImageUrI();
-                    if(imageUrI==null){
-                        textMessage=formatLastMessage(textMessage);
-                        description.setText(textMessage);
-                        imageView.setVisibility(View.GONE);
-                    }else{
-                        description.setVisibility(View.GONE);
-                        imageView.setVisibility(View.VISIBLE);
-                    }
 
-                    String time=message.getTime();
-                    String date=message.getDate();
-                    if (getDate().equals(date)){
-                        dateTime.setText(time);
-                    }else{
-                        dateTime.setText(date);
-                    }
-
+        chatViewModel.getLastMessage().observe(lifecycleOwner, lastMessage -> {
+            if(lastMessage.containsKey(userId)){
+                String textMessage=lastMessage.get(userId).getText();
+                String imageUrI=lastMessage.get(userId).getImageUrI();
+                String time=lastMessage.get(userId).getTime();
+                String date=lastMessage.get(userId).getDate();
+                if (getDate().equals(date)){
+                    dateTime.setText(time);
+                }else{
+                    dateTime.setText(date);
                 }
-
-
+                if(imageUrI==null){
+                    textMessage=formatLastMessage(textMessage);
+                    description.setText(textMessage);
+                    imageView.setVisibility(View.GONE);
+                }else{
+                    description.setVisibility(View.GONE);
+                    imageView.setVisibility(View.VISIBLE);
+                }
+                chatViewModel.setLastMessage(null);
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
         });
+//        messageRef.child("chats").child(firebaseUser.getUid()).child(userId).orderByKey().limitToLast(1).addValueEventListener(new ValueEventListener() {
+//            @RequiresApi(api = Build.VERSION_CODES.O)
+//            @Override
+//            public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                String textMessage=null;
+//                String imageUrI=null;
+//                for(DataSnapshot dataSnapshot:snapshot.getChildren()){
+//                    messageListModel message=dataSnapshot.getValue(messageListModel.class);
+//                    textMessage=message.getText();
+//                    imageUrI=message.getImageUrI();
+//
+//
+//                    String time=message.getTime();
+//                    String date=message.getDate();
+//                    if (getDate().equals(date)){
+//                        dateTime.setText(time);
+//                    }else{
+//                        dateTime.setText(date);
+//                    }
+//
+//                }
+//                if(imageUrI==null){
+//                    textMessage=formatLastMessage(textMessage);
+//                    description.setText(textMessage);
+//                    imageView.setVisibility(View.GONE);
+//                }else{
+//                    description.setVisibility(View.GONE);
+//                    imageView.setVisibility(View.VISIBLE);
+//                }
+//
+//
+//            }
+//
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError error) {
+//
+//            }
+//        });
     }
 
 

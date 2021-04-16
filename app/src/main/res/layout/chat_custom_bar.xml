@@ -33,7 +33,6 @@
             android:layout_weight=".5"
             android:autoSizeTextType="uniform"
             android:fontFamily="sans-serif-condensed-medium"
-            android:text="Gadenya"
             android:textColor="@color/white"
             android:textSize="15sp"
             android:visibility="visible" />
@@ -42,11 +41,25 @@
             android:layout_width="200dp"
             android:layout_height="0dp"
             android:layout_centerVertical="true"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:freezesText="true"
+            android:singleLine="true"
             android:layout_weight=".5"
-            android:text="Online"
             android:textColor="@color/white"
             android:textSize="15sp"
             android:visibility="visible" />
+        <TextView
+            android:id="@+id/typingStatus"
+            android:layout_width="200dp"
+            android:layout_height="0dp"
+            android:layout_centerVertical="true"
+            android:layout_weight=".5"
+            android:text="Typing ..."
+            android:textColor="@color/teal_200"
+            android:textSize="15sp"
+            android:visibility="gone" />
+
     </LinearLayout>
 
     <ProgressBar

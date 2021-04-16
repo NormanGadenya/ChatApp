@@ -5,12 +5,13 @@ public class Data {
     private int icon;
     private String body;
     private String sented;
-
-    public Data(String user, int icon, String body, String sented) {
+    private String title;
+    public Data(String user, int icon, String body, String sented,String title) {
         this.user = user;
         this.icon = icon;
         this.body = body;
         this.sented = sented;
+        this.title=title;
     }
 
     public String getUser() {

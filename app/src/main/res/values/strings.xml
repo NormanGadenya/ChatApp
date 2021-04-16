@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Chat</string>
+    <string name="app_name">Let\'s talk</string>
     <string name="Welcome">Hi there</string>
     <string name="WelcomeMessage">Welcome to our community</string>
     <string name="Enter_phone">Insert your phone Number here in the format (+256*********)</string>

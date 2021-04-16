@@ -6,7 +6,7 @@ public class messageListModel implements Serializable {
     private String text,profileUrI;
     private int backgroundColor;
     private String receiver,date,time,messageStatus, imageUrI,type,userName,messageId;
-    private boolean isChecked=false;
+    private boolean checked;
 
 
 
@@ -118,11 +118,12 @@ public class messageListModel implements Serializable {
         this.backgroundColor = backgroundColor;
     }
 
+
     public boolean isChecked() {
-        return isChecked;
+        return checked;
     }
 
     public void setChecked(boolean checked) {
-        isChecked = checked;
+        this.checked = checked;
     }
 }

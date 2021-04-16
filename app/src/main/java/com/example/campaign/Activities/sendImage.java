@@ -97,15 +97,7 @@ public class sendImage extends AppCompatActivity {
             editor.putString("receiver",otherUserId);
             editor.putString("caption",caption.getText().toString());
             editor.apply();
-            DatabaseReference myRef = database.getReference();
-            messageListModel messageUser=new messageListModel();
-            messageUser.setText(caption.getText().toString());
-            messageUser.setImageUrI(selected);
-            messageUser.setTime(getTime());
-            messageUser.setDate(getDate());
-            messageUser.setType("IMAGE");
-            messageUser.setReceiver(otherUserId);
-            myRef.child("chats").child(userId).child(otherUserId).push().setValue(messageUser);
+
             Intent intent=new Intent(getApplicationContext(),ChatActivity.class);
             startActivity(intent);
 

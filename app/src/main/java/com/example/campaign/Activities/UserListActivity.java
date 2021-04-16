@@ -1,6 +1,7 @@
 package com.example.campaign.Activities;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -13,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -45,6 +47,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -86,7 +90,7 @@ public class UserListActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         database = FirebaseDatabase.getInstance();
         userListAdapter=new userListAdapter(list, UserListActivity.this);
-
+        updateStatus();
         recyclerView.setAdapter(userListAdapter);
         if (ContextCompat.checkSelfPermission(context,
                 Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
@@ -199,6 +203,35 @@ public class UserListActivity extends AppCompatActivity {
         editor.apply();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void updateStatus(){
+        DatabaseReference userDetailRef=database.getReference().child("UserDetails").child(user.getUid());
+        Map<String ,Object> onlineStatus=new HashMap<>();
+        onlineStatus.put("online",true);
+        userDetailRef.updateChildren(onlineStatus);
+
+        Map<String ,Object> lastSeenStatus=new HashMap<>();
+        lastSeenStatus.put("lastSeenDate",getDate());
+        lastSeenStatus.put("lastSeenTime",getTime());
+        lastSeenStatus.put("online",false);
+        userDetailRef.onDisconnect().updateChildren(lastSeenStatus);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private String getTime(){
+        LocalDateTime myDateObj = LocalDateTime.now();
+        DateTimeFormatter timeObj = DateTimeFormatter.ofPattern("HH:mm");
+        return myDateObj.format(timeObj);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private String getDate(){
+        LocalDateTime myDateObj = LocalDateTime.now();
+        DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        return myDateObj.format(dateObj);
+    }
+
+
     private void loadUsers(Set<String> contacts){
         DatabaseReference userDetails=database.getReference().child("UserDetails");
         handler.post(new Runnable() {
@@ -287,16 +320,30 @@ public class UserListActivity extends AppCompatActivity {
     }
 
     private void requestContactsPermission() {
-        if (ActivityCompat.shouldShowRequestPermissionRationale(UserListActivity.this,
+//        if (ActivityCompat.shouldShowRequestPermissionRationale(UserListActivity.this,
+//                Manifest.permission.READ_CONTACTS)) {
+//            ActivityCompat.requestPermissions(UserListActivity.this,
+//                    new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST);
+//        }
+
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                 Manifest.permission.READ_CONTACTS)) {
-            ActivityCompat.requestPermissions(UserListActivity.this,
+            new AlertDialog.Builder(this)
+                    .setTitle("Permission needed")
+                    .setMessage("This permission is needed because we need to access your storage")
+                    .setPositiveButton("ok", (dialog, which) -> ActivityCompat.requestPermissions(UserListActivity.this,
+                            new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST))
+                    .setNegativeButton("cancel", (dialog, which) -> dialog.dismiss())
+                    .create().show();
+        } else {
+            ActivityCompat.requestPermissions(this,
                     new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST);
         }
     }
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == CONTACTS_REQUEST)  {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && contactsList!=null) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED ) {
                 loadSharedPreferenceData();
                 if(contactsList==null){
                     System.out.println("scscdvf");
@@ -308,6 +355,7 @@ public class UserListActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "Permission DENIED", Toast.LENGTH_SHORT).show();
             }
         }
+
     }
 
     @Override

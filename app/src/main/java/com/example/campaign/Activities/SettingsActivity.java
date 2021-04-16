@@ -23,6 +23,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.widget.Toolbar;
@@ -112,7 +113,9 @@ public class SettingsActivity extends AppCompatActivity implements RecyclerViewI
         editWallpaper=findViewById(R.id.editWallpaper);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         String profileUrI="";
-        messageListAdapter=new messageListAdapter(messageList, getApplicationContext(), profileUrI,this,this,"");
+
+        TextView textView=findViewById(R.id.msgGroupDateTop);
+        messageListAdapter=new messageListAdapter(messageList, getApplicationContext(), profileUrI,this,this,"", textView);
         recyclerView.setAdapter(messageListAdapter);
         messageList.add(new messageListModel(" Hi","123","","02:00","","","TEXT","",""));
         messageList.add(new messageListModel(" Hey",firebaseUser.getUid(),"","02:00","","","TEXT","",""));

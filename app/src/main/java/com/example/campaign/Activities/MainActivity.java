@@ -9,6 +9,9 @@ import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.MenuItemCompat;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -18,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -41,9 +45,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.campaign.Interfaces.RecyclerViewInterface;
+import com.example.campaign.Model.ChatViewModel;
 import com.example.campaign.Model.chatListModel;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.Model.userModel;
+import com.example.campaign.Repository.Repo;
 import com.example.campaign.adapter.chatListAdapter;
 import com.example.campaign.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -67,7 +73,7 @@ import java.util.Set;
 
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
-public class MainActivity extends AppCompatActivity  implements RecyclerViewInterface {
+public class MainActivity extends AppCompatActivity   {
     private List<String> chatListId,arrangedChatListId;
     private RecyclerView recyclerView;
     private FloatingActionButton newChat;
@@ -78,7 +84,7 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
     private Context context;
     private FirebaseUser user;
     private FirebaseDatabase database;
-    private List<chatListModel> list;
+    private List<userModel> list=new ArrayList<>();
     private chatListAdapter chatListAdapter;
     private Handler handler;
     public  Map<String, String> namePhoneMap= new HashMap<String, String>(); ;
@@ -92,8 +98,11 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
     private HashMap <String ,messageListModel>messages=new HashMap<>();
     private int CONTACTS_REQUEST=110;
     private Set<String> contactsList=new HashSet<>();
-
-
+    private ChatViewModel chatViewModel;
+    ActionBar actionBar;
+    Activity activity=this;
+    private ViewModelStoreOwner viewModelStoreOwner;
+    private LifecycleOwner lifecycleOwner;
 
 
     @Override
@@ -103,14 +112,12 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
         InitializeControllers();
         requestContactsPermission();
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        ActionBar actionBar=getSupportActionBar();
+        actionBar=getSupportActionBar();
         actionBar.setTitle("Inbox");
-
-
-
+        chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
         recyclerView.setHasFixedSize(true);
         database = FirebaseDatabase.getInstance();
-
+        updateStatus();
         if (ContextCompat.checkSelfPermission(context,
                 Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
             handler.post(new Runnable() {
@@ -127,9 +134,13 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
         } else {
             requestContactsPermission();
         }
-        chatListAdapter=new chatListAdapter(list, MainActivity.this,this,this);
+        chatViewModel.initChatsList();
+        list=chatViewModel.getChatListData().getValue();
+        chatListAdapter=new chatListAdapter(list, MainActivity.this,this,viewModelStoreOwner,lifecycleOwner);
+        chatViewModel.getChatListData().observe(this, chatList -> chatListAdapter.notifyDataSetChanged());
+
         recyclerView.setAdapter(chatListAdapter);
-        getChatList();
+//        getChatList();
 
         newChat.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -152,6 +163,8 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
         welcomeEmoji=findViewById(R.id.welcomeEmoji);
         welcomeMsg=findViewById(R.id.startNewChatMsg);
         notificationManagerCompat=NotificationManagerCompat.from(context);
+        lifecycleOwner=this;
+        viewModelStoreOwner=this;
 
     }
 
@@ -186,142 +199,143 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
         }
     }
 
-    private void getChatList() {
-        chatListId.clear();
-        list.clear();
-        arrangedChatListId=new ArrayList<>();
-        DatabaseReference mRef=database.getReference().child("chats").child(user.getUid());
-        DatabaseReference chatListRef=database.getReference().child("chats");
-        chatListRef.child(user.getUid()).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                //list.clear();
-                chatListId.clear();
-                arrangedChatListId.clear();
-                for (DataSnapshot dataSnapshot : snapshot.getChildren()){
-                    chatListId.add(dataSnapshot.getKey());
-                    chatUIds.add(dataSnapshot.getKey());
-                    welcomeMsg.setVisibility(View.GONE);
-                    welcomeEmoji.setVisibility(View.GONE);
-                    String otherUserId=dataSnapshot.getKey();
-                    mRef.child(otherUserId).orderByKey().limitToLast(1).addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            arrangedChatListId.clear();
-                            for(DataSnapshot snapshot1:snapshot.getChildren()){
-                                messageArrange.put(snapshot.getKey(),snapshot1.getKey());
-
-                            }
-                            arrangeIdList();
-                            getUserInfo();
-
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-
-                        }
-                    });
-
-                }
-
-                if(chatListId.size()==0){
-                    welcomeMsg.setVisibility(View.VISIBLE);
-                    welcomeEmoji.setVisibility(View.VISIBLE);
-                }
-//                getUInfo();
-//                chatListAdapter.notifyDataSetChanged();
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
-//        ItemTouchHelper.SimpleCallback simpleCallback=new ItemTouchHelper.SimpleCallback(0,ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT){
-//
+//    private void getChatList() {
+//        chatListId.clear();
+//        arrangedChatListId=new ArrayList<>();
+//        DatabaseReference mRef=database.getReference().child("chats").child(user.getUid());
+//        DatabaseReference chatListRef=database.getReference().child("chats");
+//        chatListRef.child(user.getUid()).addValueEventListener(new ValueEventListener() {
 //            @Override
-//            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
-//                return false;
-//            }
+//            public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                list.clear();
+//                chatListId.clear();
+//                messageArrange.clear();
+//                arrangedChatListId.clear();
+//                for (DataSnapshot dataSnapshot : snapshot.getChildren()){
+//                    chatListId.add(dataSnapshot.getKey());
+//                    chatUIds.add(dataSnapshot.getKey());
+//                    welcomeMsg.setVisibility(View.GONE);
+//                    welcomeEmoji.setVisibility(View.GONE);
+//                    String otherUserId=dataSnapshot.getKey();
+//                    mRef.child(otherUserId).orderByKey().limitToLast(1).addValueEventListener(new ValueEventListener() {
+//                        @Override
+//                        public void onDataChange(@NonNull DataSnapshot snapshot) {
 //
-//            @RequiresApi(api = Build.VERSION_CODES.N)
-//            @Override
-//            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-//                try {
-//                    int position = viewHolder.getAdapterPosition();
+//                            arrangedChatListId.clear();
+//                            for(DataSnapshot snapshot1:snapshot.getChildren()){
+//                                messageArrange.put(snapshot.getKey(),snapshot1.getKey());
+//                            }
+//                            arrangeIdList();
+//                            getUserInfo();
 //
-//                        Vibrator vibrator = (Vibrator) context.getSystemService(VIBRATOR_SERVICE);
-//                        vibrator.vibrate(50);
-//                        String otherUserId = list.get(position).getUserId();
-//                        Toast.makeText(context, "chat deleted", Toast.LENGTH_LONG).show();
-//                        DatabaseReference chatRef = database.getReference().child("chats").child(user.getUid()).child(otherUserId);
-//                        chatListId.remove(otherUserId);
-//                        arrangedChatListId.remove(position);
-////                        list.remove(position);
-//                        chatRef.removeValue();
+//                        }
 //
+//                        @Override
+//                        public void onCancelled(@NonNull DatabaseError error) {
 //
-//                        //list.remove(position);
-//                        chatListAdapter.notifyItemRemoved(position);
+//                        }
+//                    });
 //
-//
-//                }catch (Exception e){
-//                    Log.e("Error",e.getLocalizedMessage());
 //                }
+//
+//                if(chatListId.size()==0){
+//                    welcomeMsg.setVisibility(View.VISIBLE);
+//                    welcomeEmoji.setVisibility(View.VISIBLE);
+//                }
+////                getUInfo();
+////                chatListAdapter.notifyDataSetChanged();
+//
 //            }
 //
 //            @Override
-//            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
-//                new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
-//                        .addBackgroundColor(ContextCompat.getColor(MainActivity.this,R.color.Red_200))
-//                        .addActionIcon(R.drawable.remove)
-//                        .create()
-//                        .decorate();
-//
-//                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+//            public void onCancelled(@NonNull DatabaseError error) {
 //
 //            }
-//        };
-//        ItemTouchHelper itemTouchHelper=new ItemTouchHelper(simpleCallback);
-//        itemTouchHelper.attachToRecyclerView(recyclerView);
-
-    }
-    private void getUserInfo() {
-        DatabaseReference userDetailRef=database.getReference().child("UserDetails");
-        userDetailRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                list.clear();
-                HashMap <String,chatListModel> chatListOrder=new HashMap<>();
-                for(DataSnapshot dataSnapshot:snapshot.getChildren()){
-                    if(arrangedChatListId.contains(dataSnapshot.getKey())){
-                        System.out.println(dataSnapshot);
-                        String userId=dataSnapshot.getKey();
-                        userModel user= dataSnapshot.getValue(userModel.class);
-                        userName=user.getUserName();
-                        profileUrI=user.getProfileUrI();
-                        chatListModel chat=new chatListModel();
-                        chat.setUserName(userName);
-                        chat.setUserId(userId);
-                        chat.setTyping(user.getTyping());
-                        chat.setProfileUrI(profileUrI);
-                        chat.setOnline(user.getOnline());
-                        chatListOrder.put(dataSnapshot.getKey(),chat);
-                    }
-                }
-                for (String id:arrangedChatListId){
-                    list.add(chatListOrder.get(id));
-                    chatListAdapter.notifyDataSetChanged();
-                }
-
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-            }
-        });
-    }
+//        });
+////        ItemTouchHelper.SimpleCallback simpleCallback=new ItemTouchHelper.SimpleCallback(0,ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT){
+////
+////            @Override
+////            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+////                return false;
+////            }
+////
+////            @RequiresApi(api = Build.VERSION_CODES.N)
+////            @Override
+////            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+////                try {
+////                    int position = viewHolder.getAdapterPosition();
+////
+////                        Vibrator vibrator = (Vibrator) context.getSystemService(VIBRATOR_SERVICE);
+////                        vibrator.vibrate(50);
+////                        String otherUserId = list.get(position).getUserId();
+////                        Toast.makeText(context, "chat deleted", Toast.LENGTH_LONG).show();
+////                        DatabaseReference chatRef = database.getReference().child("chats").child(user.getUid()).child(otherUserId);
+////                        chatListId.remove(otherUserId);
+////                        arrangedChatListId.remove(position);
+//////                        list.remove(position);
+////                        chatRef.removeValue();
+////
+////
+////                        //list.remove(position);
+////                        chatListAdapter.notifyItemRemoved(position);
+////
+////
+////                }catch (Exception e){
+////                    Log.e("Error",e.getLocalizedMessage());
+////                }
+////            }
+////
+////            @Override
+////            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+////                new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+////                        .addBackgroundColor(ContextCompat.getColor(MainActivity.this,R.color.Red_200))
+////                        .addActionIcon(R.drawable.remove)
+////                        .create()
+////                        .decorate();
+////
+////                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+////
+////            }
+////        };
+////        ItemTouchHelper itemTouchHelper=new ItemTouchHelper(simpleCallback);
+////        itemTouchHelper.attachToRecyclerView(recyclerView);
+//
+//    }
+//    private void getUserInfo() {
+//        DatabaseReference userDetailRef=database.getReference().child("UserDetails");
+//        userDetailRef.addValueEventListener(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                list.clear();
+//                HashMap <String,chatListModel> chatListOrder=new HashMap<>();
+//                chatListOrder.clear();
+//                for(DataSnapshot dataSnapshot:snapshot.getChildren()){
+//                    if(arrangedChatListId.contains(dataSnapshot.getKey())){
+//                        System.out.println(dataSnapshot);
+//                        String userId=dataSnapshot.getKey();
+//                        userModel user= dataSnapshot.getValue(userModel.class);
+//                        userName=user.getUserName();
+//                        profileUrI=user.getProfileUrI();
+//                        chatListModel chat=new chatListModel();
+//                        chat.setUserName(userName);
+//                        chat.setUserId(userId);
+//                        chat.setTyping(user.getTyping());
+//                        chat.setProfileUrI(profileUrI);
+//                        chat.setOnline(user.getOnline());
+//                        chatListOrder.put(dataSnapshot.getKey(),chat);
+//                    }
+//                }
+//                for (String id:arrangedChatListId){
+//                    list.add(chatListOrder.get(id));
+//                    chatListAdapter.notifyDataSetChanged();
+//                }
+//
+//            }
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError error) {
+//            }
+//        });
+//    }
 
 
 
@@ -333,8 +347,20 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
         editor.apply();
     }
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+    }
 
-
+    private ArrayList<userModel> FilterList(String newText){
+        ArrayList<userModel> newList=new ArrayList<>();
+        for(userModel user:list){
+            if(user.getUserName().contains(newText.toLowerCase())){
+                newList.add(user);
+            }
+        }
+        return newList;
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menuInflater =getMenuInflater();
@@ -342,25 +368,69 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
         MenuItem searchItem=menu.findItem(R.id.search);
         MenuItem profileDetails=menu.findItem(R.id.profileButton);
         MenuItem settings=menu.findItem(R.id.settingsButton);
+
         SearchView searchView= (SearchView) MenuItemCompat.getActionView(searchItem);
+
+        LifecycleOwner lifecycleOwner=this;
+
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String s) {
+
+                ArrayList<userModel> newList=new ArrayList<>();
+                newList.clear();
+
                 if (!TextUtils.isEmpty(s.trim())){
-                    searchUsers(s);
+
+//                    for(userModel user:list){
+//                        if(user.getUserName().contains(s.toLowerCase())){
+//                            newList.add(user);
+//                        }
+//                    }
+                    newList=FilterList(s);
+                    chatListAdapter=new chatListAdapter(newList, MainActivity.this,activity,viewModelStoreOwner,lifecycleOwner);
+                    chatListAdapter.notifyDataSetChanged();
                 }else{
-                    getChatList();
+                    chatListAdapter=new chatListAdapter(list, MainActivity.this,activity,viewModelStoreOwner,lifecycleOwner);
                 }
+
+                recyclerView.setAdapter(chatListAdapter);
+                chatListAdapter.notifyDataSetChanged();
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                if (!TextUtils.isEmpty(newText.trim())){
-                    searchUsers(newText);
+
+                ArrayList<userModel> newList=new ArrayList<>();
+                newList.clear();
+
+
+                if (newText.length()>0){
+                    newList=FilterList(newText);
+                    chatListAdapter=new chatListAdapter(newList, MainActivity.this,activity,viewModelStoreOwner,lifecycleOwner);
+                    chatListAdapter.notifyDataSetChanged();
+
+
                 }else{
-                    getChatList();
+                    chatListAdapter=new chatListAdapter(list, MainActivity.this,activity,viewModelStoreOwner,lifecycleOwner);
+
                 }
+                recyclerView.setAdapter(chatListAdapter);
+                chatListAdapter.notifyDataSetChanged();
+                return false;
+            }
+        });
+        searchView.setOnSearchClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                actionBar.setTitle("");
+            }
+        });
+        searchView.setOnCloseListener(new SearchView.OnCloseListener() {
+            @Override
+            public boolean onClose() {
+                actionBar.setTitle("Inbox");
                 return false;
             }
         });
@@ -383,6 +453,12 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
         return true;
     }
 
+    @Override
+    public void onOptionsMenuClosed(Menu menu) {
+        super.onOptionsMenuClosed(menu);
+
+    }
+
     public void presentActivity(View view) {
         ActivityOptionsCompat options = ActivityOptionsCompat.
                 makeSceneTransitionAnimation(this, view, "transition");
@@ -396,86 +472,6 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
         ActivityCompat.startActivity(this, intent, options.toBundle());
     }
 
-    private void searchUsers(String query) {
-        DatabaseReference chatListRef=database.getReference().child("chats");
-        chatListRef.child(user.getUid()).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                list.clear();
-                chatListId.clear();
-                for (DataSnapshot dataSnapshot : snapshot.getChildren()){
-                    chatListId.add(dataSnapshot.getKey());
-                }
-                getSearchUserInfo(query);
-                chatListAdapter.notifyDataSetChanged();
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
-
-    }
-
-    private void getSearchUserInfo(String query) {
-        DatabaseReference userDetailRef=database.getReference().child("UserDetails");
-
-            for (String userId : chatListId){
-                userDetailRef.child(userId).addValueEventListener(new ValueEventListener() {
-
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-
-                        userModel user= snapshot.getValue(userModel.class);
-                        Log.d(TAG,user.getUserName());
-                        userName=user.getUserName();
-                        profileUrI=user.getProfileUrI();
-                        if (userName.toLowerCase().contains(query.toLowerCase())){
-                            chatListModel chat=new chatListModel();
-                            chat.setUserName(userName);
-                            chat.setUserId(userId);
-                            chat.setProfileUrI(profileUrI);
-                            chat.setTyping(chat.getTyping());
-                            list.add(chat);
-                            chatListAdapter.notifyDataSetChanged();
-                        }
-
-                        Log.d(TAG,snapshot.toString());
-
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-
-                    }
-                });
-
-            }
-    }
-
-
-    @Override
-    public void onItemClick(int position) {
-
-    }
-
-    @Override
-    public void onLongItemClick(int position) {
-
-    }
-
-//    public void sendNotifications(){
-//        Notification notification=new NotificationCompat.Builder(context,MESSAGE_CHANNEL_ID)
-//                .setSmallIcon(R.drawable.chat_communication_svgrepo_com)
-//                .setContentTitle("Message: " + userName)
-//                .setContentText(lastMessage)
-//                .setPriority(NotificationCompat.PRIORITY_HIGH)
-//                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-//                .build();
-//        notificationManagerCompat.notify(1,notification);
-//    }
 
     public boolean isAlphanumeric2(String str) {
         for (int i=0; i<str.length(); i++) {
@@ -554,26 +550,18 @@ public class MainActivity extends AppCompatActivity  implements RecyclerViewInte
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private void status(boolean status){
+    private void updateStatus(){
         DatabaseReference userDetailRef=database.getReference().child("UserDetails").child(user.getUid());
         Map<String ,Object> onlineStatus=new HashMap<>();
-        onlineStatus.put("lastSeenDate",getDate());
-        onlineStatus.put("lastSeenTime",getTime());
-        onlineStatus.put("online",status);
+        onlineStatus.put("online",true);
         userDetailRef.updateChildren(onlineStatus);
+
+        Map<String ,Object> lastSeenStatus=new HashMap<>();
+        lastSeenStatus.put("lastSeenDate",getDate());
+        lastSeenStatus.put("lastSeenTime",getTime());
+        lastSeenStatus.put("online",false);
+        userDetailRef.onDisconnect().updateChildren(lastSeenStatus);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    @Override
-    protected void onResume() {
-        super.onResume();
-        status(true);
-    }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    @Override
-    protected void onPause() {
-        super.onPause();
-        status(false);
-    }
 }
