@@ -14,7 +14,7 @@ public class messageListModel implements Serializable {
     public messageListModel(){
 
     }
-    public messageListModel(String text, String sender, String date, String time, String messageStatus, String imageUrI, String type,String userName,String profileUrI){
+    public messageListModel(String text, String sender, String date, String time, String messageStatus, String imageUrI, String type,String userName){
 
         this.text = text;
         this.receiver = sender;
@@ -24,7 +24,7 @@ public class messageListModel implements Serializable {
         this.imageUrI=imageUrI;
         this.type = type;
         this.userName=userName;
-        this.profileUrI=profileUrI;
+
     }
     public messageListModel(String date){
         this.date=date;

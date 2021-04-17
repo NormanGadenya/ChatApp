@@ -151,6 +151,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         }
 
         setTypingStatus();
+
 //        statusCheck(otherUserId);
 
         updateStatus();
@@ -167,11 +168,18 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         chatViewModel.initChats(otherUserId);
         messageList=chatViewModel.getMessages().getValue();
         try{
-            messageListAdapter=new messageListAdapter(messageList, ChatActivity.this, profileUrI,this,this,otherUserId,msgGroupDate);
+            messageListAdapter=new messageListAdapter();
+            messageListAdapter.setMContext(ChatActivity.this);
+            messageListAdapter.setMessageList(messageList);
+            messageListAdapter.setActivity(this);
+            messageListAdapter.setRecyclerViewInterface(this);
+            messageListAdapter.setOtherUserId(otherUserId);
+
             recyclerView.setAdapter(messageListAdapter);
         }catch(Exception e){
 
         }
+
 
         getCurrentWallpaper();
 
@@ -421,6 +429,28 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         context=getApplicationContext();
         userName=findViewById(R.id.userName);
         recyclerView=findViewById(R.id.recyclerView1);
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if(messageList.size()>0){
+                    int firstElementPosition = layoutManager.findFirstVisibleItemPosition();
+
+                    try{
+
+                        if(messageList.get(firstElementPosition).getDate().equals(getDate())){
+                            msgGroupDate.setVisibility(View.GONE);
+                        }else{
+                            msgGroupDate.setVisibility(View.VISIBLE);
+                            msgGroupDate.setText(messageList.get(Math.abs(firstElementPosition)).getDate());
+                        }
+                    }catch(Exception e){
+
+                    }
+                }
+            }
+        });
     }
 
     private void getOtherUserDetails(String otherUserId) {
@@ -468,8 +498,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
 
     private void getMessages(){
-        DatabaseReference messageRef=database.getReference().child("chats").child(user.getUid()).child(otherUserId);
-        DatabaseReference otherUserMRef=database.getReference().child("chats").child(otherUserId).child(user.getUid());
         imageUrIList.clear();
         chatViewModel.getMessages().observe(this, messageListLive -> {
             messageList=messageListLive;
@@ -477,6 +505,9 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             if (messageList.size() >= 1) {
                 recyclerView.scrollToPosition(messageList.size()-1);
             }
+
+
+
         });
 //        messageRef.addValueEventListener(new ValueEventListener(){
 //            @Override

@@ -1,5 +1,6 @@
 package com.example.campaign.Model;
 
+import android.net.Uri;
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
@@ -20,6 +21,7 @@ public class ChatViewModel extends ViewModel {
     private MutableLiveData<List<messageListModel>> messageList;
     private MutableLiveData <userModel> otherUserInfo;
     private MutableLiveData <userModel> fUserInfo;
+    private MutableLiveData<Uri>selectedUri=new MutableLiveData<>();
 
     public void setText(String s){
         mutableLiveData.setValue(s);
@@ -92,4 +94,12 @@ public class ChatViewModel extends ViewModel {
         return fUserInfo;
     }
 
+    public LiveData<Uri> getSelectedUri() {
+
+        return selectedUri;
+    }
+
+    public void setSelectedUri(Uri Uri) {
+        selectedUri.setValue(Uri);
+    }
 }

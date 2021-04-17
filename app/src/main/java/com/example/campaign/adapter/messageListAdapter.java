@@ -85,6 +85,27 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         this.otherUserId=otherUserId;
         this.msgGroupDateTop=msgGroupDateTop;
     }
+    public messageListAdapter(){ }
+    public void setMessageList(List<messageListModel> list){
+        this.list=list;
+    }
+
+    public void setMContext(Context context){
+        this.context=context;
+    }
+    public void setRecyclerViewInterface(RecyclerViewInterface recyclerViewInterface){ this.recyclerViewInterface=recyclerViewInterface; }
+
+    public void setActivity(Activity activity){
+        this.activity=activity;
+    }
+
+    public void setOtherUserId(String otherUserId){
+        this.otherUserId=otherUserId;
+    }
+
+    public void setMsgGroupDateTop(TextView textView){
+        this.msgGroupDateTop=textView;
+    }
 
     @NonNull
     @Override
@@ -108,16 +129,17 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     public void onBindViewHolder(@NonNull Holder holder, int position) {
 
         holder.bind(list.get(position));
-        Log.d("Adapter",position +"ada"+ String.valueOf(holder.getAdapterPosition()));
-        if(list.get(position).getDate().equals(getDate())){
-            msgGroupDateTop.setVisibility(View.GONE);
-        }else{
-            msgGroupDateTop.setVisibility(View.VISIBLE);
-        }
-        msgGroupDateTop.setText(list.get(position).getDate());
+        Log.d("Adapter",position +"ada"+ String.valueOf(holder.getAdapterPosition() + list.get(position).getText()+ list.get(0).getDate()));
+//        if(list.get(position).getDate().equals(getDate())){
+//            msgGroupDateTop.setVisibility(View.GONE);
+//        }else{
+//            msgGroupDateTop.setVisibility(View.VISIBLE);
+//        }
+
         String previousTs=null;
         if(position>=1){
             previousTs = list.get(position-1).getDate();
+
         }
         setTimeTextVisibility(list.get(position).getDate(), previousTs, holder.msgGroupDate);
 

@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -29,9 +30,17 @@ import android.widget.Toast;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.palette.graphics.Palette;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
+import com.example.campaign.Model.ChatViewModel;
 import com.example.campaign.Model.userModel;
 import com.example.campaign.R;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -48,6 +57,8 @@ import com.google.firebase.storage.StorageReference;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import jp.wasabeef.glide.transformations.BlurTransformation;
 
 public class UserProfileActivity extends AppCompatActivity {
     private FirebaseUser firebaseUser= FirebaseAuth.getInstance().getCurrentUser();
@@ -66,13 +77,15 @@ public class UserProfileActivity extends AppCompatActivity {
     private StorageReference mStorageReference;
     private Uri selected;
     private static final int GALLERY_REQUEST = 100;
+    private ChatViewModel chatViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile_details);
         InitializeControllers();
-
+        chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
+        chatViewModel.initFUserInfo();
 
         editUserNameBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -139,25 +152,19 @@ public class UserProfileActivity extends AppCompatActivity {
         database=FirebaseDatabase.getInstance();
         imageView=findViewById(R.id.userProfilePic);
     }
+
+
     private void setupToolBar(){
-        DatabaseReference userDetailsRef=database.getReference().child("UserDetails").child(firebaseUser.getUid());
-        userDetailsRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                userModel user=snapshot.getValue(userModel.class);
-                profileUrI=user.getProfileUrI();
-                setSupportActionBar(toolbar);
-                phoneNumber.setText(user.getPhoneNumber());
-                userName.setText(user.getUserName());
-                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-                Glide.with(getApplicationContext()).load(profileUrI).into(imageView);
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
+        chatViewModel.getFUserInfo().observe(this,user->{
+            profileUrI=user.getProfileUrI();
+            setSupportActionBar(toolbar);
+            phoneNumber.setText(user.getPhoneNumber());
+            userName.setText(user.getUserName());
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            Glide.with(getApplicationContext()).load(profileUrI).into(imageView);
         });
+
     }
     private void requestStoragePermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(this,
@@ -244,27 +251,30 @@ public class UserProfileActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode==GALLERY_REQUEST && resultCode== Activity.RESULT_OK && data!=null){
             selected=data.getData();
-            try{
-                Bitmap bitmap=MediaStore.Images.Media.getBitmap(getContentResolver(),selected);
-                imageView.setImageBitmap(bitmap);
-                Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
-                    @Override
-                    public void onGenerated(@Nullable Palette palette) {
-                        if(palette!=null){
-                            Palette.Swatch vibrantSwatch = palette.getMutedSwatch();
-                            if(vibrantSwatch != null){
-                                getResources().getDrawable(R.drawable.title_background).setTint(vibrantSwatch.getRgb());
+            chatViewModel.setSelectedUri(selected);
+
+            chatViewModel.getSelectedUri().observe(this,selectedUri->{
+                try{
+                    Bitmap bitmap=MediaStore.Images.Media.getBitmap(getContentResolver(),selectedUri);
+                    imageView.setImageBitmap(bitmap);
+                    Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
+                        @Override
+                        public void onGenerated(@Nullable Palette palette) {
+                            if(palette!=null){
+                                Palette.Swatch vibrantSwatch = palette.getMutedSwatch();
+                                if(vibrantSwatch != null){
+                                    getResources().getDrawable(R.drawable.title_background).setTint(vibrantSwatch.getRgb());
+                                }
                             }
                         }
-                    }
-                });
+                    });
 
 
-            }catch(Exception e){
-                Log.d("error",e.getMessage());
+                }catch(Exception e){
+                    Log.d("error",e.getMessage());
+                }
+            });
 
-
-            }
         }
 
     }
