@@ -388,7 +388,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
             if(ts1.equals(getDate())){
                 timeText.setText("Today");
             }else{
-                timeText.setText(ts1);
+                timeText.setText(formatDate(ts1));
             }
 
 
@@ -411,8 +411,10 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                     timeText.setVisibility(View.VISIBLE);
                     if(ts1.equals(getDate())){
                         timeText.setText("Today");
+                    }else if(ts1.substring(6,10).equals(getDate().substring(6,10)) && ts1.substring(3,5).equals(getDate().substring(3,5)) && Integer.parseInt(ts1.substring(0,2))+1==Integer.parseInt(getDate().substring(0,2))){
+                        timeText.setText("Yesterday");
                     }else{
-                        timeText.setText(ts1);
+                        timeText.setText(formatDate(ts1));
                     }
 
 
@@ -422,6 +424,53 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
         }
     }
+
+    private String formatDate(String date){
+        String newDate;
+        String month=null;
+        switch(date.substring(3,5)){
+            case "01":
+                month="JAN";
+                break;
+            case "02":
+                month="FEB";
+                break;
+            case "03":
+                month="MAR";
+                break;
+            case "04":
+                month="APR";
+                break;
+            case "05":
+                month="MAY";
+                break;
+            case "06":
+                month="JUNE";
+                break;
+            case "07":
+                month="JULY";
+                break;
+            case "08":
+                month="AUG";
+                break;
+            case "09":
+                month="SEPT";
+                break;
+            case "10":
+                month="OCT";
+                break;
+            case "11":
+                month="NOV";
+                break;
+            case "12":
+                month="DEC";
+                break;
+
+        }
+        newDate=date.substring(0,2)+"-"+ month+ "-"+date.substring(6,10);
+        return newDate;
+    }
+
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private String getTime(){

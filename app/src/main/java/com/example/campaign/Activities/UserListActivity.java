@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.MenuItemCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -36,6 +37,7 @@ import android.widget.ProgressBar;
 import android.widget.SearchView;
 import android.widget.Toast;
 
+import com.example.campaign.Model.ChatViewModel;
 import com.example.campaign.Model.userModel;
 import com.example.campaign.R;
 import com.example.campaign.adapter.userListAdapter;
@@ -79,7 +81,7 @@ public class UserListActivity extends AppCompatActivity {
     public  Map<String, String> namePhoneMap ;
     private int CONTACTS_REQUEST=110;
     private Set<String> contactsList=new HashSet<>();
-
+    private ChatViewModel chatViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +92,7 @@ public class UserListActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         database = FirebaseDatabase.getInstance();
         userListAdapter=new userListAdapter(list, UserListActivity.this);
+        chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
         updateStatus();
         recyclerView.setAdapter(userListAdapter);
         if (ContextCompat.checkSelfPermission(context,
@@ -234,6 +237,7 @@ public class UserListActivity extends AppCompatActivity {
 
     private void loadUsers(Set<String> contacts){
         DatabaseReference userDetails=database.getReference().child("UserDetails");
+
         handler.post(new Runnable() {
             @Override
             public void run() {

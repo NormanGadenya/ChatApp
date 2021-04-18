@@ -51,6 +51,8 @@ public class Repo {
     private MutableLiveData <HashMap<String,messageListModel>> lastMessage=new MutableLiveData<>();
     private HashMap<String,messageListModel> messageSet=new HashMap<>();
     private ArrayList<userModel> chats_List_Model= new ArrayList<>();
+    private ArrayList<userModel> user_List_Model= new ArrayList<>();
+
     private MutableLiveData<userModel> otherUserInfo=new MutableLiveData<>();
     private MutableLiveData<userModel> fUserInfo=new MutableLiveData<>();
 
@@ -161,7 +163,7 @@ public class Repo {
                                 messageArrange.put(snapshot.getKey(),snapshot1.getKey());
                             }
                             arrangeIdList();
-                            getUserInfo();
+                            getChatUserInfo();
 
                         }
 
@@ -233,8 +235,7 @@ public class Repo {
 //        itemTouchHelper.attachToRecyclerView(recyclerView);
 
     }
-
-    private void getUserInfo() {
+    private void getChatUserInfo() {
         DatabaseReference userDetailRef=database.getReference().child("UserDetails");
         userDetailRef.addValueEventListener(new ValueEventListener() {
             @Override

@@ -72,6 +72,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
+import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.storage.FirebaseStorage;
@@ -122,6 +123,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private ArrayList<String> imageUrIList=new ArrayList<>();
     private ArrayList<messageListModel> selectedMessages = new ArrayList<>();
     boolean notify=false;
+
     ChatViewModel chatViewModel;
 
     MenuItem profileDetails;
@@ -134,6 +136,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
         setContentView(R.layout.activity_chat);
         user= FirebaseAuth.getInstance().getCurrentUser();
         InitialiseControllers();
@@ -443,7 +447,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                             msgGroupDate.setVisibility(View.GONE);
                         }else{
                             msgGroupDate.setVisibility(View.VISIBLE);
-                            msgGroupDate.setText(messageList.get(Math.abs(firstElementPosition)).getDate());
+                            msgGroupDate.setText(formatDate(messageList.get(Math.abs(firstElementPosition)).getDate()));
                         }
                     }catch(Exception e){
 
@@ -451,6 +455,52 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 }
             }
         });
+    }
+
+    private String formatDate(String date){
+        String newDate;
+        String month=null;
+        switch(date.substring(3,5)){
+            case "01":
+                month="JAN";
+                break;
+            case "02":
+                month="FEB";
+                break;
+            case "03":
+                month="MAR";
+                break;
+            case "04":
+                month="APR";
+                break;
+            case "05":
+                month="MAY";
+                break;
+            case "06":
+                month="JUNE";
+                break;
+            case "07":
+                month="JULY";
+                break;
+            case "08":
+                month="AUG";
+                break;
+            case "09":
+                month="SEPT";
+                break;
+            case "10":
+                month="OCT";
+                break;
+            case "11":
+                month="NOV";
+                break;
+            case "12":
+                month="DEC";
+                break;
+
+        }
+        newDate=date.substring(0,2)+"-"+ month+ "-"+date.substring(6,10);
+        return newDate;
     }
 
     private void getOtherUserDetails(String otherUserId) {
