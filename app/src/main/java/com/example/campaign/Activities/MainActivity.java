@@ -355,7 +355,7 @@ public class MainActivity extends AppCompatActivity   {
     private ArrayList<userModel> FilterList(String newText){
         ArrayList<userModel> newList=new ArrayList<>();
         for(userModel user:list){
-            if(user.getUserName().contains(newText.toLowerCase())){
+            if(user.getUserName().toLowerCase().contains(newText.toLowerCase())){
                 newList.add(user);
             }
         }

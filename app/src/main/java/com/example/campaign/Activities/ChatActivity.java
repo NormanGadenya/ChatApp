@@ -53,6 +53,8 @@ import com.bumptech.glide.request.target.Target;
 import com.example.campaign.Interfaces.APIService;
 import com.example.campaign.Interfaces.RecyclerViewInterface;
 import com.example.campaign.Model.ChatViewModel;
+import com.example.campaign.Model.MessageViewModel;
+import com.example.campaign.Model.UserViewModel;
 import com.example.campaign.Model.chatListModel;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.Model.userModel;
@@ -124,7 +126,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private ArrayList<messageListModel> selectedMessages = new ArrayList<>();
     boolean notify=false;
 
-    ChatViewModel chatViewModel;
+    MessageViewModel messageViewModel;
+    UserViewModel userViewModel;
 
     MenuItem profileDetails;
     MenuItem settings,delete;
@@ -145,7 +148,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         firebaseStorage= FirebaseStorage.getInstance();
 
         mStorageReference=firebaseStorage.getReference();
-        chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
+        messageViewModel = new ViewModelProvider(this).get(MessageViewModel.class);
+        userViewModel=new ViewModelProvider(this).get(UserViewModel.class);
         if(otherUserId==null){
             loadSharedPreferenceData();
             System.out.println("otherUserId"+otherUserId);
@@ -169,8 +173,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         layoutManager= new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
 
-        chatViewModel.initChats(otherUserId);
-        messageList=chatViewModel.getMessages().getValue();
+        messageViewModel.initChats(otherUserId);
+        messageList=messageViewModel.getMessages().getValue();
         try{
             messageListAdapter=new messageListAdapter();
             messageListAdapter.setMContext(ChatActivity.this);
@@ -308,8 +312,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     }
     private void getCurrentWallpaper(){
 
-        chatViewModel.initFUserInfo();
-        chatViewModel.getFUserInfo().observe(this,user ->{
+        userViewModel.initFUserInfo();
+        userViewModel.getFUserInfo().observe(this,user ->{
             String chatWallpaperUrI=user.getChatWallpaper();
             int blur=user.getChatBlur();
             if(chatWallpaperUrI!=null){
@@ -505,8 +509,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     private void getOtherUserDetails(String otherUserId) {
         DatabaseReference reference=database.getReference().child("UserDetails").child(otherUserId);
-        chatViewModel.initOtherUserInfo(otherUserId);
-        chatViewModel.getOtherUserInfo().observe(this,otherUserInfo ->{
+        userViewModel.initOtherUserInfo(otherUserId);
+        userViewModel.getOtherUserInfo().observe(this,otherUserInfo ->{
             otherUserName=otherUserInfo.getUserName();
             profileUrI=otherUserInfo.getProfileUrI();
             userName.setText(otherUserName);
@@ -549,7 +553,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     private void getMessages(){
         imageUrIList.clear();
-        chatViewModel.getMessages().observe(this, messageListLive -> {
+        messageViewModel.getMessages().observe(this, messageListLive -> {
             messageList=messageListLive;
             messageListAdapter.notifyDataSetChanged();
             if (messageList.size() >= 1) {

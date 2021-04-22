@@ -55,6 +55,8 @@ public class Repo {
 
     private MutableLiveData<userModel> otherUserInfo=new MutableLiveData<>();
     private MutableLiveData<userModel> fUserInfo=new MutableLiveData<>();
+    private MutableLiveData<ArrayList<userModel>> userList=new MutableLiveData<>();
+
 
     private HashMap<String, String> messageArrange=new HashMap<>();
     private ArrayList<String> arrangedChatListId, chatListId,chatUIds;
@@ -103,7 +105,11 @@ public class Repo {
         return fUserInfo;
     }
 
-
+    public MutableLiveData <ArrayList<userModel>> getAllUsers(Set<String> contacts){
+        loadAllUsers(contacts);
+        userList.setValue(user_List_Model);
+        return userList;
+    }
 
     Comparator comparator(){
         Comparator<Map.Entry<String, String>> valueComparator = new Comparator<Map.Entry<String,String>>() {
@@ -148,7 +154,6 @@ public class Repo {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 chats_List_Model.clear();
                 chatListId.clear();
-                Log.d("changed","changeddd");
                 messageArrange.clear();
                 arrangedChatListId.clear();
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()){
@@ -174,10 +179,6 @@ public class Repo {
                     });
 
                 }
-
-
-//                getUInfo();
-//                chatListAdapter.notifyDataSetChanged();
 
             }
 
@@ -391,6 +392,44 @@ public class Repo {
         });
     }
 
+    private void loadAllUsers(Set<String> contacts){
+        DatabaseReference userDetails=database.getReference().child("UserDetails");
+        userDetails.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List <String> phoneNumbersList=new ArrayList<>();
+                user_List_Model.clear();
+                for (DataSnapshot dataSnapshot: snapshot.getChildren()){
+                    userModel userListObj=new userModel();
+                    String id=dataSnapshot.getKey();
+                    userModel users=dataSnapshot.getValue(userModel.class);
+                    String phoneNumber=fUser.getPhoneNumber();
+                    phoneNumbersList.add(fUser.getPhoneNumber());
+
+                    int i= Collections.frequency(phoneNumbersList,users.getPhoneNumber());
+                    if (contacts!=null && !users.getPhoneNumber().equals(phoneNumber)) {
+                        if (i <=1 && contacts.contains(phoneNumber)){
+                            userListObj.setUserName(users.getUserName());
+                            userListObj.setPhoneNumber(users.getPhoneNumber());
+                            userListObj.setProfileUrI(users.getProfileUrI());
+                            userListObj.setUserId(id);
+                            userListObj.setOnline(users.getOnline());
+                            user_List_Model.add(userListObj);
+                            Collections.sort(user_List_Model,userModel::compareTo);
+                            userList.postValue(user_List_Model);
+
+                        }
+                    }
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
 
 
 

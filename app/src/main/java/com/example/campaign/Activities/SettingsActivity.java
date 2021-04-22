@@ -45,6 +45,7 @@ import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.target.ViewTarget;
 import com.example.campaign.Interfaces.RecyclerViewInterface;
 import com.example.campaign.Model.ChatViewModel;
+import com.example.campaign.Model.UserViewModel;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.Model.userModel;
 import com.example.campaign.R;
@@ -92,7 +93,7 @@ public class SettingsActivity extends AppCompatActivity {
     FirebaseDatabase database=FirebaseDatabase.getInstance();
     FirebaseUser firebaseUser= FirebaseAuth.getInstance().getCurrentUser();
     private FloatingActionButton editWallpaper;
-    ChatViewModel chatViewModel;
+    UserViewModel userViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,9 +105,9 @@ public class SettingsActivity extends AppCompatActivity {
         imageView.setClipToOutline(true);
         imageView.setBackgroundResource(R.drawable.card_background3);
         seekBar=findViewById(R.id.seekBar);
-        chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
+        userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
 
-        chatViewModel.initFUserInfo();
+        userViewModel.initFUserInfo();
         progressBar=findViewById(R.id.progressBarChatWallpaper);
         firebaseStorage=FirebaseStorage.getInstance();
         mStorageReference=firebaseStorage.getReference();
@@ -127,9 +128,9 @@ public class SettingsActivity extends AppCompatActivity {
 
         messageListAdapter.setOtherUserId("");
         recyclerView.setAdapter(messageListAdapter);
-        messageList.add(new messageListModel(" Hi","123","","02:00","","","TEXT",""));
-        messageList.add(new messageListModel(" Hey",firebaseUser.getUid(),"","02:00","","","TEXT",""));
-        messageList.add(new messageListModel(" How are you",firebaseUser.getUid(),"","02:00","","","TEXT",""));
+        messageList.add(new messageListModel(" Hi","123","17-04-2020","02:00","","","TEXT",""));
+        messageList.add(new messageListModel(" Hey",firebaseUser.getUid(),"17-04-2020","02:00","","","TEXT",""));
+        messageList.add(new messageListModel(" How are you",firebaseUser.getUid(),"17-04-2020","02:00","","","TEXT",""));
 
         messageListAdapter.notifyDataSetChanged();
         editWallpaper.setOnClickListener(new View.OnClickListener() {
@@ -158,7 +159,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void getCurrentWallpaper(){
 
-        chatViewModel.getFUserInfo().observe(this,user ->{
+        userViewModel.getFUserInfo().observe(this,user ->{
             chatWallpaperUrI=user.getChatWallpaper();
             seekBarProgress=user.getChatBlur();
             progressBar.setVisibility(View.VISIBLE);

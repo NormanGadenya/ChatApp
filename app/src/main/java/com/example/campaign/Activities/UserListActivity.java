@@ -7,7 +7,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.MenuItemCompat;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -15,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -38,8 +42,10 @@ import android.widget.SearchView;
 import android.widget.Toast;
 
 import com.example.campaign.Model.ChatViewModel;
+import com.example.campaign.Model.UserViewModel;
 import com.example.campaign.Model.userModel;
 import com.example.campaign.R;
+import com.example.campaign.adapter.chatListAdapter;
 import com.example.campaign.adapter.userListAdapter;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -81,7 +87,7 @@ public class UserListActivity extends AppCompatActivity {
     public  Map<String, String> namePhoneMap ;
     private int CONTACTS_REQUEST=110;
     private Set<String> contactsList=new HashSet<>();
-    private ChatViewModel chatViewModel;
+    private UserViewModel userViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,10 +97,11 @@ public class UserListActivity extends AppCompatActivity {
         progressBar.setVisibility(View.VISIBLE);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         database = FirebaseDatabase.getInstance();
-        userListAdapter=new userListAdapter(list, UserListActivity.this);
-        chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
+
+        userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
+
         updateStatus();
-        recyclerView.setAdapter(userListAdapter);
+
         if (ContextCompat.checkSelfPermission(context,
                 Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
             handler.post(new Runnable() {
@@ -105,7 +112,10 @@ public class UserListActivity extends AppCompatActivity {
                         contactsList=getPhoneNumbers();
                         saveSharedPreferenceData();
                     }
-
+                    userViewModel.initUserList(contactsList);
+                    list=userViewModel.getAllUsers().getValue();
+                    userListAdapter=new userListAdapter(list, UserListActivity.this);
+                    recyclerView.setAdapter(userListAdapter);
                     loadUsers(contactsList);
                 }
             });
@@ -237,49 +247,76 @@ public class UserListActivity extends AppCompatActivity {
 
     private void loadUsers(Set<String> contacts){
         DatabaseReference userDetails=database.getReference().child("UserDetails");
+        userViewModel.getAllUsers().observe(this, userModels -> {
+            userListAdapter.notifyDataSetChanged();
+            progressBar.setVisibility(View.GONE);
 
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                userDetails.addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        List <String> phoneNumbersList=new ArrayList<>();
-                        list.clear();
-                        for (DataSnapshot dataSnapshot:snapshot.getChildren()){
-
-                            userModel userListObj=new userModel();
-                            String id=dataSnapshot.getKey();
-                            userModel users=dataSnapshot.getValue(userModel.class);
-                            String phoneNumber=user.getPhoneNumber();
-                            phoneNumbersList.add(user.getPhoneNumber());
-
-                            int i= Collections.frequency(phoneNumbersList,users.getPhoneNumber());
-                            if (contacts!=null && !users.getPhoneNumber().equals(phoneNumber)) {
-                                if (i <=1 && contacts.contains(phoneNumber)){
-                                    userListObj.setUserName(users.getUserName());
-                                    userListObj.setPhoneNumber(users.getPhoneNumber());
-                                    userListObj.setProfileUrI(users.getProfileUrI());
-                                    userListObj.setUserId(id);
-                                    userListObj.setOnline(users.getOnline());
-                                    list.add(userListObj);
-                                    Collections.sort(list,userModel::compareTo);
-                                    userListAdapter.notifyDataSetChanged();
-                                    progressBar.setVisibility(View.GONE);
-                                }
-                            }
-                        }
-
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-
-                    }
-                });
-
-            }
+//            for (DataSnapshot dataSnapshot:snapshot.getChildren()){
+//
+//                userModel userListObj=new userModel();
+//                String id=dataSnapshot.getKey();
+//                userModel users=dataSnapshot.getValue(userModel.class);
+//                String phoneNumber=user.getPhoneNumber();
+//                phoneNumbersList.add(user.getPhoneNumber());
+//
+//                int i= Collections.frequency(phoneNumbersList,users.getPhoneNumber());
+//                if (contacts!=null && !users.getPhoneNumber().equals(phoneNumber)) {
+//                    if (i <=1 && contacts.contains(phoneNumber)){
+//                        userListObj.setUserName(users.getUserName());
+//                        userListObj.setPhoneNumber(users.getPhoneNumber());
+//                        userListObj.setProfileUrI(users.getProfileUrI());
+//                        userListObj.setUserId(id);
+//                        userListObj.setOnline(users.getOnline());
+//                        list.add(userListObj);
+//                        Collections.sort(list,userModel::compareTo);
+//                        userListAdapter.notifyDataSetChanged();
+//                        progressBar.setVisibility(View.GONE);
+//                    }
+//                }
+//            }
         });
+//        handler.post(new Runnable() {
+//            @Override
+//            public void run() {
+//                userDetails.addValueEventListener(new ValueEventListener() {
+//                    @Override
+//                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                        List <String> phoneNumbersList=new ArrayList<>();
+//                        list.clear();
+//                        for (DataSnapshot dataSnapshot:snapshot.getChildren()){
+//
+//                            userModel userListObj=new userModel();
+//                            String id=dataSnapshot.getKey();
+//                            userModel users=dataSnapshot.getValue(userModel.class);
+//                            String phoneNumber=user.getPhoneNumber();
+//                            phoneNumbersList.add(user.getPhoneNumber());
+//
+//                            int i= Collections.frequency(phoneNumbersList,users.getPhoneNumber());
+//                            if (contacts!=null && !users.getPhoneNumber().equals(phoneNumber)) {
+//                                if (i <=1 && contacts.contains(phoneNumber)){
+//                                    userListObj.setUserName(users.getUserName());
+//                                    userListObj.setPhoneNumber(users.getPhoneNumber());
+//                                    userListObj.setProfileUrI(users.getProfileUrI());
+//                                    userListObj.setUserId(id);
+//                                    userListObj.setOnline(users.getOnline());
+//                                    list.add(userListObj);
+//                                    Collections.sort(list,userModel::compareTo);
+//                                    userListAdapter.notifyDataSetChanged();
+//                                    progressBar.setVisibility(View.GONE);
+//                                }
+//                            }
+//                        }
+//
+//                    }
+//
+//                    @Override
+//                    public void onCancelled(@NonNull DatabaseError error) {
+//
+//                    }
+//                });
+//
+//            }
+//        });
     }
 
     public boolean isAlphanumeric2(String str) {
@@ -381,6 +418,17 @@ public class UserListActivity extends AppCompatActivity {
         finish();
     }
 
+    private ArrayList<userModel> FilterList(String newText){
+        ArrayList<userModel> newList=new ArrayList<>();
+        for(userModel user:list){
+            if(user.getUserName().toLowerCase().contains(newText.toLowerCase())){
+
+                newList.add(user);
+            }
+        }
+        return newList;
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menuInflater =getMenuInflater();
@@ -401,26 +449,37 @@ public class UserListActivity extends AppCompatActivity {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String s) {
-                if (!TextUtils.isEmpty(s.trim())){
-                    searchUsers(s);
-                }else{
-                    if (contactsList!=null){
-                        loadUsers(contactsList);
-                    }
 
+                ArrayList<userModel> newList=new ArrayList<>();
+                newList.clear();
+
+                if (!TextUtils.isEmpty(s.trim())){
+                    newList=FilterList(s);
+                    userListAdapter=new userListAdapter(newList, UserListActivity.this);
+
+                }else{
+                    userListAdapter=new userListAdapter(list, UserListActivity.this);
                 }
+                userListAdapter.notifyDataSetChanged();
+                recyclerView.setAdapter(userListAdapter);
+
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                if (!TextUtils.isEmpty(newText.trim())){
-                    searchUsers(newText);
+
+                ArrayList<userModel> newList=new ArrayList<>();
+                newList.clear();
+                if (newText.length()>0){
+                    newList=FilterList(newText);
+                    userListAdapter=new userListAdapter(newList, UserListActivity.this);
                 }else{
-                    if (contactsList!=null){
-                        loadUsers(contactsList);
-                    }
+                    userListAdapter=new userListAdapter(list, UserListActivity.this);
                 }
+                userListAdapter.notifyDataSetChanged();
+                recyclerView.setAdapter(userListAdapter);
+
                 return false;
             }
         });
@@ -433,53 +492,5 @@ public class UserListActivity extends AppCompatActivity {
             }
         });
         return true;
-    }
-
-    private void searchUsers(String query) {
-        DatabaseReference userDetails=database.getReference().child("UserDetails");
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                userDetails.addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        List <String> phoneNumbersList=new ArrayList<>();
-                        list.clear();
-                        for (DataSnapshot dataSnapshot:snapshot.getChildren()){
-
-                            userModel userListObj=new userModel();
-                            String id=dataSnapshot.getKey();
-                            userModel users=dataSnapshot.getValue(userModel.class);
-                            String phoneNumber=user.getPhoneNumber();
-                            phoneNumbersList.add(user.getPhoneNumber());
-
-                            int i= Collections.frequency(phoneNumbersList,users.getPhoneNumber());
-                            if (contactsList!=null && !users.getPhoneNumber().equals(phoneNumber)) {
-                                if (i <=1 && contactsList.contains(phoneNumber)){
-                                    userListObj.setUserName(users.getUserName());
-                                    userListObj.setPhoneNumber(users.getPhoneNumber());
-                                    userListObj.setProfileUrI(users.getProfileUrI());
-                                    userListObj.setUserId(id);
-                                    if(users.getUserName().toLowerCase().contains(query.toLowerCase())){
-                                        list.add(userListObj);
-                                        userListAdapter.notifyDataSetChanged();
-                                    }
-
-
-                                    progressBar.setVisibility(View.GONE);
-                                }
-                            }
-                        }
-
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-
-                    }
-                });
-
-            }
-        });
     }
 }

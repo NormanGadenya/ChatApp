@@ -10,6 +10,7 @@ public class chatListModel implements Comparable {
 
 
     public chatListModel() {
+
     }
 
     public chatListModel(String userId, String userName, String description, String date, String time, String profileUrI) {

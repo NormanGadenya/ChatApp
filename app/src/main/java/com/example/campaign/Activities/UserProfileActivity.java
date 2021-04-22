@@ -41,6 +41,7 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.example.campaign.Model.ChatViewModel;
+import com.example.campaign.Model.UserViewModel;
 import com.example.campaign.Model.userModel;
 import com.example.campaign.R;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -77,15 +78,15 @@ public class UserProfileActivity extends AppCompatActivity {
     private StorageReference mStorageReference;
     private Uri selected;
     private static final int GALLERY_REQUEST = 100;
-    private ChatViewModel chatViewModel;
+    private UserViewModel userViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile_details);
         InitializeControllers();
-        chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
-        chatViewModel.initFUserInfo();
+        userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
+        userViewModel.initFUserInfo();
 
         editUserNameBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -156,7 +157,7 @@ public class UserProfileActivity extends AppCompatActivity {
 
     private void setupToolBar(){
 
-        chatViewModel.getFUserInfo().observe(this,user->{
+        userViewModel.getFUserInfo().observe(this,user->{
             profileUrI=user.getProfileUrI();
             setSupportActionBar(toolbar);
             phoneNumber.setText(user.getPhoneNumber());
@@ -251,9 +252,9 @@ public class UserProfileActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode==GALLERY_REQUEST && resultCode== Activity.RESULT_OK && data!=null){
             selected=data.getData();
-            chatViewModel.setSelectedUri(selected);
+            userViewModel.setSelectedUri(selected);
 
-            chatViewModel.getSelectedUri().observe(this,selectedUri->{
+            userViewModel.getSelectedUri().observe(this,selectedUri->{
                 try{
                     Bitmap bitmap=MediaStore.Images.Media.getBitmap(getContentResolver(),selectedUri);
                     imageView.setImageBitmap(bitmap);
