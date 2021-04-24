@@ -123,12 +123,12 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
             if(chatlist.getTyping()){
                 holder.tvTyping.setVisibility(View.VISIBLE);
                 holder.tvDesc.setVisibility(View.GONE);
-                holder.tvDate.setVisibility(View.GONE);
+//                holder.tvDate.setVisibility(View.GONE);
 
             }else{
                 holder.tvTyping.setVisibility(View.GONE);
                 holder.tvDesc.setVisibility(View.VISIBLE);
-                holder.tvDate.setVisibility(View.VISIBLE);
+//                holder.tvDate.setVisibility(View.VISIBLE);
             }
         }
 

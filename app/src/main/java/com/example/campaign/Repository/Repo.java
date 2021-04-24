@@ -360,7 +360,7 @@ public class Repo {
 
     private void loadOtherUserInfo(String otherUserId) {
         DatabaseReference reference=database.getReference().child("UserDetails").child(otherUserId);
-        reference.addListenerForSingleValueEvent(new ValueEventListener() {
+        reference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 userModel user= snapshot.getValue(userModel.class);

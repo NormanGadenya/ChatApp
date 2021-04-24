@@ -367,7 +367,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             }else{
                 String lastSeenDate=user.getLastSeenDate();
                 String lastSeenTime=user.getLastSeenTime();
-                if (lastSeenDate==getDate()){
+                if (lastSeenDate.equals(getDate())){
                     lastSeen= "Last seen today at "+ lastSeenTime;
                 }else{
                     lastSeen= "Last seen on " +lastSeenDate +" at "+ lastSeenTime;

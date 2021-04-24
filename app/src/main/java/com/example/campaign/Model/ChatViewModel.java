@@ -6,9 +6,7 @@ import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
-
 import com.example.campaign.Repository.Repo;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,18 +21,6 @@ public class ChatViewModel extends ViewModel {
 
 
 
-
-
-    public void setText(String s){
-        mutableLiveData.setValue(s);
-    }
-
-    public MutableLiveData<String> getText(){
-        return mutableLiveData;
-    }
-
-
-
     public void initChatsList(){
         if (chatsList!=null){
             return;
@@ -43,23 +29,28 @@ public class ChatViewModel extends ViewModel {
     }
 
     public void initLastMessage(String userId){
-//        if(lastMessage!=null){
-//            return;
-//        }
 
         lastMessage=Repo.getInstance().getLastMessage(userId);
     }
 
 
 
+    public void setText(String s){
+        mutableLiveData.setValue(s);
+    }
 
+    public MutableLiveData<String> getText(){
 
-    public LiveData<ArrayList<userModel>> getChatListData(){
-        return chatsList;
+        return mutableLiveData;
     }
 
 
-    public LiveData<HashMap<String,messageListModel>> getLastMessage() {
+    public LiveData<ArrayList<userModel>> getChatListData(){
+
+        return chatsList;
+    }
+
+    public LiveData <HashMap<String,messageListModel>> getLastMessage() {
 
         return lastMessage;
     }
@@ -67,10 +58,6 @@ public class ChatViewModel extends ViewModel {
     public void setLastMessage(MutableLiveData<HashMap<String,messageListModel>> lastMessage) {
         this.lastMessage = lastMessage;
     }
-
-
-
-
 
 
 }
