@@ -33,7 +33,7 @@
             android:layout_weight=".5"
             android:autoSizeTextType="uniform"
             android:fontFamily="sans-serif-condensed-medium"
-            android:textColor="@color/white"
+            android:textColor="@color/black"
             android:textSize="15sp"
             android:visibility="visible" />
         <TextView

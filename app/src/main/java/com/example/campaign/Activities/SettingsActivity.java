@@ -10,6 +10,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -20,8 +21,11 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,6 +40,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.GlideBuilder;
+import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
@@ -50,6 +55,7 @@ import com.example.campaign.Model.messageListModel;
 import com.example.campaign.Model.userModel;
 import com.example.campaign.R;
 import com.example.campaign.adapter.messageListAdapter;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -94,11 +100,15 @@ public class SettingsActivity extends AppCompatActivity {
     FirebaseUser firebaseUser= FirebaseAuth.getInstance().getCurrentUser();
     private FloatingActionButton editWallpaper;
     UserViewModel userViewModel;
+    private SharedPreferences sharedPreferences ;
+    private CheckBox onlineStatus,lastSeenStatus;
+    private boolean showOnline,showLastSeen;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+        sharedPreferences=getSharedPreferences("Settings",MODE_PRIVATE);
         toolbar=findViewById(R.id.toolbar);
         applyButton=findViewById(R.id.done);
         imageView=findViewById(R.id.imageView);
@@ -106,21 +116,30 @@ public class SettingsActivity extends AppCompatActivity {
         imageView.setBackgroundResource(R.drawable.card_background3);
         seekBar=findViewById(R.id.seekBar);
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
-
+        onlineStatus=findViewById(R.id.onlineStatus);
+        lastSeenStatus=findViewById(R.id.lastSeenStatus);
         userViewModel.initFUserInfo();
         progressBar=findViewById(R.id.progressBarChatWallpaper);
         firebaseStorage=FirebaseStorage.getInstance();
         mStorageReference=firebaseStorage.getReference();
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getCurrentWallpaper();
-        getOpacity();
+        try {
+            getOpacity();
+            getCurrentWallpaper();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        boolean lastSeen=sharedPreferences.getBoolean("showLastSeen",true);
+        boolean online=sharedPreferences.getBoolean("showOnline",true);
+
+
+        onlineStatus.setChecked(online);
+        lastSeenStatus.setChecked(lastSeen);
+
         recyclerView=findViewById(R.id.recycler_view_wall);
         editWallpaper=findViewById(R.id.editWallpaper);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-
-
         messageListAdapter=new messageListAdapter();
         messageListAdapter.setMContext(getApplicationContext());
         messageListAdapter.setMessageList(messageList);
@@ -133,6 +152,7 @@ public class SettingsActivity extends AppCompatActivity {
         messageList.add(new messageListModel(" How are you",firebaseUser.getUid(),"17-04-2020","02:00","","","TEXT",""));
 
         messageListAdapter.notifyDataSetChanged();
+
         editWallpaper.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -147,133 +167,118 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             }
         });
+        onlineStatus.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    showOnline=true;
+                }else{
+                    showOnline=false;
+                }
+            }
+        });
+
+        lastSeenStatus.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    showLastSeen=true;
+
+                }else{
+                    showLastSeen=false;
+                }
+
+            }
+        });
         applyButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                uploadFile(firebaseUser.getUid());
+                setSettings(firebaseUser.getUid());
             }
         });
     }
 
 
 
-    private void getCurrentWallpaper(){
 
-        userViewModel.getFUserInfo().observe(this,user ->{
-            chatWallpaperUrI=user.getChatWallpaper();
-            seekBarProgress=user.getChatBlur();
-            progressBar.setVisibility(View.VISIBLE);
-            if (chatWallpaperUrI!=null){
+    private void getCurrentWallpaper() throws IOException {
+        chatWallpaperUrI=sharedPreferences.getString("chatWallpaper",null);
+        Log.d("chekced", String.valueOf(sharedPreferences.getAll()));
+        int blur=sharedPreferences.getInt("chatBlur",0);
+        if (chatWallpaperUrI!=null){
+            if(blur!=0) {
                 Glide.with(getApplicationContext())
                         .load(chatWallpaperUrI)
-                        .transform(new BlurTransformation(seekBarProgress))
+                        .transform(new BlurTransformation(blur))
                         .addListener(new RequestListener<Drawable>() {
                             @Override
                             public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                                progressBar.setVisibility(View.GONE);
+                                progressBar.setVisibility(GONE);
                                 return false;
                             }
 
                             @Override
                             public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                                progressBar.setVisibility(View.GONE);
-                                DatabaseReference myRef = database.getReference().child("UserDetails").child(firebaseUser.getUid());
-                                myRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                        userModel user=snapshot.getValue(userModel.class);
-                                        seekBar.setProgress(user.getChatBlur()*4);
-                                    }
-
-                                    @Override
-                                    public void onCancelled(@NonNull DatabaseError error) {
-
-                                    }
-                                });
+                                progressBar.setVisibility(GONE);
+                                seekBar.setProgress(blur * 4);
 
                                 return false;
                             }
                         })
+
                         .diskCacheStrategy(DiskCacheStrategy.NONE)
                         .skipMemoryCache(true)
-                        .into(imageView)
-                ;
+                        .into(imageView);
+
+            }else{
+                Glide.with(getApplicationContext())
+                        .load(chatWallpaperUrI)
+                        .addListener(new RequestListener<Drawable>() {
+                            @Override
+                            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                                progressBar.setVisibility(GONE);
+                                return false;
+                            }
+
+                            @Override
+                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                                progressBar.setVisibility(GONE);
+                                seekBar.setProgress(blur * 4);
+
+                                return false;
+                            }
+                        })
+
+                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+                        .skipMemoryCache(true)
+                        .into(imageView);
+
             }
-        });
+
+        }else{
+            imageView.setImageResource(R.drawable.whatsapp_wallpaper_121);
+        }
+
+
+
 
     }
 
-//    private void getCurrentWallpaper(){
-//        DatabaseReference myRef = database.getReference().child("UserDetails").child(firebaseUser.getUid());
-//        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                userModel user=snapshot.getValue(userModel.class);
-//                chatWallpaperUrI=user.getChatWallpaper();
-//                seekBarProgress=user.getChatBlur();
-//                progressBar.setVisibility(View.VISIBLE);
-//                if (chatWallpaperUrI!=null){
-//                    Glide.with(getApplicationContext())
-//                            .load(chatWallpaperUrI)
-//                            .transform(new BlurTransformation(seekBarProgress))
-//                            .addListener(new RequestListener<Drawable>() {
-//                                @Override
-//                                public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-//                                    progressBar.setVisibility(View.GONE);
-//                                    return false;
-//                                }
-//
-//                                @Override
-//                                public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-//                                    progressBar.setVisibility(View.GONE);
-//                                    DatabaseReference myRef = database.getReference().child("UserDetails").child(firebaseUser.getUid());
-//                                    myRef.addListenerForSingleValueEvent(new ValueEventListener() {
-//                                        @Override
-//                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                                            userModel user=snapshot.getValue(userModel.class);
-//                                            seekBar.setProgress(user.getChatBlur()*4);
-//                                        }
-//
-//                                        @Override
-//                                        public void onCancelled(@NonNull DatabaseError error) {
-//
-//                                        }
-//                                    });
-//
-//                                    return false;
-//                                }
-//                            })
-//                            .diskCacheStrategy(DiskCacheStrategy.NONE)
-//                            .skipMemoryCache(true)
-//                            .into(imageView)
-//                    ;
-//                }
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError error) {
-//
-//            }
-//        });
-//    }
     private void getOpacity(){
       seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
           @RequiresApi(api = Build.VERSION_CODES.O)
           @Override
           public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
               changed=true;
-              if(chatWallpaperUrI!=null || selected==null && imageView!=null){
+              if(chatWallpaperUrI!=null || selected==null){
                   seekBarProgress=progress/4;
                   try{
                       if(seekBarProgress!=1){
                           imageView.setBlur(seekBarProgress);
                       }
-
                   }catch (Exception e){
                       e.getStackTrace();
                   }
-
               }
 
           }
@@ -306,24 +311,34 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
-    private void uploadFile( String userId) {
+    private void setSettings( String userId) {
         DatabaseReference myRef = database.getReference().child("UserDetails").child(userId);
+        SharedPreferences.Editor editor=sharedPreferences.edit();
         progressBar.setVisibility(View.VISIBLE);
+
+
+
+
         Map<String ,Object> userDetail=new HashMap<>();
+        userDetail.put("showLastSeenState",showLastSeen);
+        userDetail.put("showOnlineState",showOnline);
+        myRef.updateChildren(userDetail);
+
+
+
+        editor.putBoolean("showOnline",showOnline);
+        editor.putBoolean("showLastSeen",showLastSeen);
         if (selected != null) {
             try{
-                userDetail.put("chatWallpaper",selected.toString());
-                if(changed){
-                    if(seekBarProgress<1){
-                        seekBarProgress=1;
-                    }
-                    userDetail.put("chatBlur",seekBarProgress);
-                }
+                editor.putString("chatWallpaper",selected.toString());
+                editor.putInt("chatBlur",seekBarProgress);
+                Log.e("Error",sharedPreferences.getString("chatWallpaper",null));
 
-                myRef.updateChildren(userDetail);
+
             }catch (Exception e){
                 Log.e("Error",e.getLocalizedMessage());
             }
+
 //
 //            StorageReference fileReference = mStorageReference.child(System.currentTimeMillis()
 //                    + ".jpg");
@@ -349,12 +364,15 @@ public class SettingsActivity extends AppCompatActivity {
 
             if(changed){
                 progressBar.setVisibility(View.GONE);
-                userDetail.put("chatBlur",seekBarProgress);
-                myRef.updateChildren(userDetail);
+                editor.putInt("chatBlur",seekBarProgress);
+//                userDetail.put("chatBlur",seekBarProgress);
+//
 
             }
 
         }
+        editor.commit();
+
         progressBar.setVisibility(View.GONE);
         Toast.makeText(getApplicationContext(), "Successfully updated", Toast.LENGTH_SHORT).show();
     }
@@ -371,7 +389,6 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
     }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {

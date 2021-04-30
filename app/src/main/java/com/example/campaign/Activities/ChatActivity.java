@@ -47,6 +47,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
@@ -102,12 +103,12 @@ import static android.view.View.GONE;
 
 public class ChatActivity extends AppCompatActivity implements RecyclerViewInterface {
 
-    private String otherUserId, message, profileUrI,messageStatus,messageId,otherUserName,lastSeen;
+    private String otherUserId, message, profileUrI,otherUserName,lastSeen;
     private FirebaseDatabase database;
     private List<messageListModel> messageList = new ArrayList<>();
     private RecyclerView recyclerView ;
     private ImageButton sendButton,attachButton;
-    private TextView userName,lastSeenMessage,onlineStatus,typing,msgGroupDate;
+    private TextView userName,onlineStatus,typing,msgGroupDate;
     private EditText newMessage;
     private CircularImageView profilePic;
     private FirebaseUser user ;
@@ -118,12 +119,11 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private MenuInflater menuInflater;
     private ProgressBar progressBar;
     private messageListAdapter messageListAdapter;
-    private Vibrator vibrator;
     private ImageView backgroundImageView;
-    private SharedPreferences imageSharedPreferences;
+    private SharedPreferences imageSharedPreferences,settingsSharedPreferences;
+
     private LinearLayoutManager layoutManager;
     private ArrayList<String> imageUrIList=new ArrayList<>();
-    private ArrayList<messageListModel> selectedMessages = new ArrayList<>();
     boolean notify=false;
 
     MessageViewModel messageViewModel;
@@ -206,8 +206,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             DatabaseReference sMessage_2=database.getReference().child("chats").child(user.getUid()).child(otherUserId);
 
             message=newMessage.getText().toString();
-//            updateToken(FirebaseInstanceId.getInstance().getToken());
-//            apiService= Client.getClient("https://fcm.googleapis.com/").create(APIService.class);
+            updateToken(FirebaseInstanceId.getInstance().getToken());
+            apiService= Client.getClient("https://fcm.googleapis.com").create(APIService.class);
 
             if(!message.equals(null)){
                 String formattedDate = getDate();
@@ -223,7 +223,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 sMessage_2.child(messageKey).setValue(m);
                 notify=true;
                 if(notify){
-//                    sendNotification(otherUserId,otherUserName,message);
+                    sendNotification(otherUserId,otherUserName,message);
                 }
                 newMessage.setText("");
             }
@@ -237,71 +237,65 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     }
 
-//    private void sendNotification(String otherUserId, String otherUserName, String message) {
-//        DatabaseReference tokens=database.getReference("Tokens");
-//        Query query=tokens.orderByKey().equalTo(otherUserId);
-//        query.addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                for(DataSnapshot dataSnapshot:snapshot.getChildren()){
-//                    Token token=dataSnapshot.getValue(Token.class);
-//                    Data data=new Data(user.getUid(),R.drawable.background_icon,otherUserName+ ":" +message,otherUserId,"New message");
-//                    Sender sender = new Sender(data,token.getToken());
-//                    apiService.sendNotification(sender)
-//                            .enqueue(new Callback<MyResponse>(){
-//
-//                                @Override
-//                                public void onResponse(Call<MyResponse> call, Response<MyResponse> response) {
-//                                    if(response.code()==200){
-//                                        if(response.body().success==1){
-//                                            showToast("failed");
-//                                        }
-//                                    }
-//                                }
-//
-//                                @Override
-//                                public void onFailure(Call<MyResponse> call, Throwable t) {
-//
-//                                }
-//                            });
-//                    notify=false;
-//                }
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError error) {
-//
-//            }
-//        });
-//    }
+    private void sendNotification(String otherUserId, String otherUserName, String message) {
+        DatabaseReference tokens=database.getReference("Tokens");
+        Query query=tokens.orderByKey().equalTo(otherUserId);
+        query.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for(DataSnapshot dataSnapshot:snapshot.getChildren()){
+                    Token token=dataSnapshot.getValue(Token.class);
+                    Data data=new Data(user.getUid(),R.drawable.background_icon,otherUserName+ ":" +message,otherUserId,"New message");
+                    Sender sender = new Sender(data,token.getToken());
+                    apiService.sendNotification(sender)
+                            .enqueue(new Callback<MyResponse>(){
+
+                                @Override
+                                public void onResponse(Call<MyResponse> call, Response<MyResponse> response) {
+                                    if(response.code()==200){
+                                        if(response.body().success==1){
+                                            showToast("failed");
+                                        }
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(Call<MyResponse> call, Throwable t) {
+
+                                }
+                            });
+                    notify=false;
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+    private HashMap<String,Object> updateTypingStatus(int count){
+        HashMap<String,Object> typingStatus= new HashMap<>();
+        if (count>=1){
+            typingStatus.put("Typing",true);
+        }else{
+            typingStatus.put("Typing",false);
+        }
+        return typingStatus;
+    }
 
     private void setTypingStatus(){
         DatabaseReference typingRef=database.getReference().child("UserDetails").child(user.getUid());
-        HashMap<String,Object> typingStatus= new HashMap<>();
         newMessage.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-                if (count>=1){
-                    typingStatus.put("Typing",true);
-
-                }else{
-                    typingStatus.put("Typing",false);
-
-                }
-                typingRef.updateChildren(typingStatus);
+                typingRef.updateChildren(updateTypingStatus(count));
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (count>=1){
-                    typingStatus.put("Typing",true);
-
-                }else{
-                    typingStatus.put("Typing",false);
-
-                }
-                typingRef.updateChildren(typingStatus);
+                typingRef.updateChildren(updateTypingStatus(count));
             }
 
             @Override
@@ -311,35 +305,132 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         });
     }
     private void getCurrentWallpaper(){
+        String chatWallpaperUrI=settingsSharedPreferences.getString("chatWallpaper",null);
+        int blur=settingsSharedPreferences.getInt("chatBlur",0);
 
-        userViewModel.initFUserInfo();
-        userViewModel.getFUserInfo().observe(this,user ->{
-            String chatWallpaperUrI=user.getChatWallpaper();
-            int blur=user.getChatBlur();
-            if(chatWallpaperUrI!=null){
-                progressBar.setVisibility(View.VISIBLE);
+        progressBar.setVisibility(View.VISIBLE);
+        if (chatWallpaperUrI!=null){
+            if(blur!=0) {
                 Glide.with(getApplicationContext())
                         .load(chatWallpaperUrI)
                         .transform(new BlurTransformation(blur))
                         .addListener(new RequestListener<Drawable>() {
                             @Override
                             public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                                progressBar.setVisibility(GONE);
+                                progressBar.setVisibility(View.GONE);
                                 return false;
                             }
 
                             @Override
                             public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                                progressBar.setVisibility(GONE);
+                                progressBar.setVisibility(View.GONE);
+
+
                                 return false;
                             }
                         })
-                        .into(backgroundImageView)
-                ;
+
+                        .into(backgroundImageView);
+            }else{
+                Glide.with(getApplicationContext())
+                        .load(chatWallpaperUrI)
+                        .addListener(new RequestListener<Drawable>() {
+                            @Override
+                            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                                progressBar.setVisibility(View.GONE);
+                                return false;
+                            }
+
+                            @Override
+                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                                progressBar.setVisibility(View.GONE);
+
+
+                                return false;
+                            }
+                        })
+
+                        .into(backgroundImageView);
             }
-        });
+            ;
+        }else{
+            backgroundImageView.setImageResource(R.drawable.whatsapp_wallpaper_121);
+        }
+
+
+//        userViewModel.getFUserInfo().observe(this,user ->{
+//            chatWallpaperUrI=user.getChatWallpaper();
+//            seekBarProgress=user.getChatBlur();
+//            progressBar.setVisibility(View.VISIBLE);
+//            if (chatWallpaperUrI!=null){
+//                Glide.with(getApplicationContext())
+//                        .load(chatWallpaperUrI)
+//                        .transform(new BlurTransformation(seekBarProgress))
+//                        .addListener(new RequestListener<Drawable>() {
+//                            @Override
+//                            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+//                                progressBar.setVisibility(View.GONE);
+//                                return false;
+//                            }
+//
+//                            @Override
+//                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+//                                progressBar.setVisibility(View.GONE);
+//                                DatabaseReference myRef = database.getReference().child("UserDetails").child(firebaseUser.getUid());
+//                                myRef.addListenerForSingleValueEvent(new ValueEventListener() {
+//                                    @Override
+//                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                                        userModel user=snapshot.getValue(userModel.class);
+//                                        seekBar.setProgress(user.getChatBlur()*4);
+//                                    }
+//
+//                                    @Override
+//                                    public void onCancelled(@NonNull DatabaseError error) {
+//
+//                                    }
+//                                });
+//
+//                                return false;
+//                            }
+//                        })
+//                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+//                        .skipMemoryCache(true)
+//                        .into(imageView)
+//                ;
+//            }
+//        });
 
     }
+//    private void getCurrentWallpaper(){
+//
+//        userViewModel.initFUserInfo();
+//        userViewModel.getFUserInfo().observe(this,user ->{
+//            String chatWallpaperUrI=user.getChatWallpaper();
+//            int blur=user.getChatBlur();
+//            if(chatWallpaperUrI!=null){
+//                progressBar.setVisibility(View.VISIBLE);
+//                Glide.with(getApplicationContext())
+//                        .load(chatWallpaperUrI)
+//                        .transform(new BlurTransformation(blur))
+//                        .addListener(new RequestListener<Drawable>() {
+//                            @Override
+//                            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+//                                progressBar.setVisibility(GONE);
+//                                return false;
+//                            }
+//
+//                            @Override
+//                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+//                                progressBar.setVisibility(GONE);
+//                                return false;
+//                            }
+//                        })
+//                        .into(backgroundImageView)
+//                ;
+//            }
+//        });
+//
+//    }
     private void getTypingStatus(userModel user){
         if(user.getTyping()!=null){
             if(user.getTyping()){
@@ -356,8 +447,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     }
     private void statusCheck(userModel user){
-        if(user.getOnline()!=null){
-            if(user.getOnline()){
+        if(user.getOnline()!=null && user.getShowOnline()!=null & user.getShowLastSeen()!=null){
+            if(user.getOnline() && user.getShowOnline()){
 //                            onlineStatus.setVisibility(View.VISIBLE);
                 lastSeen="online";
                 profilePic.setBorderColorStart( Color.CYAN);
@@ -376,12 +467,13 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 profilePic.setBorderColorEnd( Color.WHITE);
                 onlineStatus.setSelected(true);
 
-
-
             }
             profilePic.setBorderColorDirection(CircularImageView.GradientDirection.LEFT_TO_RIGHT);
             profilePic.setBorderWidth(10);
-            onlineStatus.setText(lastSeen);
+            if(user.getShowLastSeen()){
+                onlineStatus.setText(lastSeen);
+            }
+
         }
 
 
@@ -423,6 +515,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         attachButton= findViewById(R.id.attachButton);
         profilePic=findViewById(R.id.image_profile);
         newMessage=findViewById(R.id.message_container);
+        settingsSharedPreferences=getSharedPreferences("Settings",MODE_PRIVATE);
         imageSharedPreferences=getSharedPreferences("selectedImagePref",MODE_PRIVATE);
         progressBar=findViewById(R.id.progressBar2);
         backgroundImageView=findViewById(R.id.backgroundView);
@@ -515,6 +608,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             profileUrI=otherUserInfo.getProfileUrI();
             userName.setText(otherUserName);
             statusCheck(otherUserInfo);
+
             getTypingStatus(otherUserInfo);
             if(profileUrI!=null){
                 Glide.with(getApplicationContext()).load(profileUrI).listener(new RequestListener<Drawable>() {

@@ -9,7 +9,8 @@ public class userModel implements Comparable{
     private String lastSeenTime;
     private String chatWallpaper;
     private int chatBlur;
-    private Boolean Typing;
+    private Boolean Typing,showLastSeenState,showOnlineState;
+
 
     public userModel(){
 
@@ -107,5 +108,21 @@ public class userModel implements Comparable{
     public int compareTo(Object o) {
         userModel userModel =(userModel) o;
         return this.userName.compareTo(userModel.userName);
+    }
+
+    public Boolean getShowLastSeen() {
+        return showLastSeenState;
+    }
+
+    public void setShowLastSeen(Boolean showLastSeen) {
+        this.showLastSeenState = showLastSeen;
+    }
+
+    public Boolean getShowOnline() {
+        return showOnlineState;
+    }
+
+    public void setShowOnline(Boolean showOnline) {
+        this.showOnlineState = showOnline;
     }
 }
