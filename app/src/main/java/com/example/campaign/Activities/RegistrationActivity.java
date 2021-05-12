@@ -187,7 +187,7 @@ public class RegistrationActivity extends AppCompatActivity {
                     userModel.setLastSeenTime(getTime());
                     userModel.setOnline(true);
                     userModel.setShowLastSeen(true);
-                    userModel.setShowOnline(true);
+                    userModel.setShowOnlineState(true);
                     userModel.setPhoneNumber(phoneNumber);
                     userModel.setProfileUrI(downloadUri.toString());
 

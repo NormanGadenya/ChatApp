@@ -42,41 +42,67 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:background="#41000000"
+        android:background="#8D3A3A3E"
         android:id="@+id/constraint_layout2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
         android:padding="5dp"
         app:layout_constraintEnd_toEndOf="parent">
-
-
-        <MultiAutoCompleteTextView
-
-            android:id="@+id/message_container"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/const_message"
             android:layout_width="0dp"
             android:minHeight="40dp"
             android:maxHeight="60dp"
             android:layout_height="wrap_content"
-            android:background="@drawable/card_background2"
-            android:textColor="@color/white"
-            android:textColorHint="@color/cream"
-            android:paddingLeft="10dp"
-            android:hint="@string/TypeMessage"
             app:layout_constraintEnd_toStartOf="@+id/attachButton"
             app:layout_constraintHorizontal_bias="0.123"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            android:background="@drawable/card_background2"
+            >
+
+            <ImageButton
+                android:id="@+id/emoji_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:background="@color/transparent"
+                android:clickable="true"
+                android:src="@drawable/smiley"
+                android:tint="@color/white"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <hani.momanii.supernova_emoji_library.Helper.EmojiconEditText
+                android:id="@+id/message_container"
+                android:layout_width="250dp"
+                android:minHeight="40dp"
+                android:maxHeight="60dp"
+                android:layout_marginLeft="8dp"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textColorHint="@color/cream"
+                android:paddingLeft="10dp"
+                android:background="@android:color/transparent"
+                android:hint="@string/TypeMessage"
+                app:emojiconSize="28sp"
+                app:layout_constraintStart_toEndOf="@id/emoji_button"
+                app:layout_constraintTop_toTopOf="parent"
+                />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
 
         <ImageButton
             android:id="@+id/attachButton"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:layout_marginStart="1dp"
-            android:background="@drawable/send_image_button"
+            android:background="@drawable/ripple"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/sendButton"
-            app:layout_constraintStart_toEndOf="@+id/message_container"
+            app:layout_constraintStart_toEndOf="@+id/const_message"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_baseline_attach_file_24" />
 
@@ -86,7 +112,7 @@
             android:layout_height="40dp"
             android:layout_marginEnd="2dp"
             android:layout_marginStart="2dp"
-            android:background="@drawable/send_image_button"
+            android:background="@drawable/ripple"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -94,6 +120,94 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <androidx.cardview.widget.CardView
+        android:id="@+id/layout_actions"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:alpha="0.0"
+        android:animateLayoutChanges="true"
+        android:visibility="gone"
+        app:cardCornerRadius="15dp"
+        app:cardElevation="5dp"
+        app:layout_constraintBottom_toBottomOf="@+id/recyclerView1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <LinearLayout
+            android:id="@+id/ll1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/btn_vid"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/att_vid"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:backgroundTint="@color/purple_700"
+                    android:src="@drawable/ic_baseline_videocam_24" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Video" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btn_music_x"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/att_audio"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:backgroundTint="@color/cyan"
+                    android:src="@drawable/ic_baseline_music_note_24" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Audio" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btn_gallery"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/att_image"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/gallery" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Image" />
+
+            </LinearLayout>
+        </LinearLayout>
+
+
+    </androidx.cardview.widget.CardView>
 
 
 

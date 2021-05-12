@@ -251,6 +251,7 @@ public class Repo {
                         userModel user= dataSnapshot.getValue(userModel.class);
                         user.setUserId(userId);
                         chatListOrder.put(dataSnapshot.getKey(),user);
+
                     }
                 }
                 for (String id:arrangedChatListId){
@@ -364,6 +365,8 @@ public class Repo {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 userModel user= snapshot.getValue(userModel.class);
+
+                System.out.println("user2"+ user.getShowLastSeenState());
                 otherUserInfo.postValue(user);
 
             }

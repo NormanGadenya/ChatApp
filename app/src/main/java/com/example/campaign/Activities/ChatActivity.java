@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -68,6 +69,7 @@ import com.example.campaign.R;
 import com.example.campaign.adapter.messageListAdapter;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -94,12 +96,17 @@ import java.util.List;
 import java.util.Map;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import hani.momanii.supernova_emoji_library.Actions.EmojIconActions;
+import hani.momanii.supernova_emoji_library.Helper.EmojiconEditText;
+import io.alterac.blurkit.BlurKit;
+import io.alterac.blurkit.BlurLayout;
 import jp.wasabeef.glide.transformations.BlurTransformation;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
 
 public class ChatActivity extends AppCompatActivity implements RecyclerViewInterface {
 
@@ -107,9 +114,9 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private FirebaseDatabase database;
     private List<messageListModel> messageList = new ArrayList<>();
     private RecyclerView recyclerView ;
-    private ImageButton sendButton,attachButton;
+    private ImageButton sendButton,attachButton,emojiButton;
     private TextView userName,onlineStatus,typing,msgGroupDate;
-    private EditText newMessage;
+    private EmojiconEditText newMessage;
     private CircularImageView profilePic;
     private FirebaseUser user ;
     private FirebaseStorage firebaseStorage;
@@ -121,35 +128,43 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private messageListAdapter messageListAdapter;
     private ImageView backgroundImageView;
     private SharedPreferences imageSharedPreferences,settingsSharedPreferences;
-
     private LinearLayoutManager layoutManager;
     private ArrayList<String> imageUrIList=new ArrayList<>();
     boolean notify=false;
-
+    FloatingActionButton imageButton,videoButton,audioButton;
     MessageViewModel messageViewModel;
     UserViewModel userViewModel;
 
     MenuItem profileDetails;
     MenuItem settings,delete;
-
+    View rootView,layoutActions,textArea;
     APIService apiService;
-
     private FirebaseStorage storage= FirebaseStorage.getInstance();
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-
         setContentView(R.layout.activity_chat);
         user= FirebaseAuth.getInstance().getCurrentUser();
         InitialiseControllers();
         database = FirebaseDatabase.getInstance();
         firebaseStorage= FirebaseStorage.getInstance();
-
+        emojiButton=findViewById(R.id.emoji_button);
+        rootView=findViewById(R.id.constraint_layout2);
+        layoutActions=findViewById(R.id.layout_actions);
+        imageButton=findViewById(R.id.att_image);
+        videoButton=findViewById(R.id.att_vid);
+        audioButton=findViewById(R.id.att_audio);
+        textArea=findViewById(R.id.constraint_layout2);
         mStorageReference=firebaseStorage.getReference();
         messageViewModel = new ViewModelProvider(this).get(MessageViewModel.class);
         userViewModel=new ViewModelProvider(this).get(UserViewModel.class);
+        EmojIconActions emojIcon=new EmojIconActions(getApplicationContext(),rootView,newMessage,emojiButton,"#495C66","#DCE1E2","#0B1830");
+        emojIcon.setIconsIds(R.drawable.ic_action_keyboard,R.drawable.smiley);
+        emojIcon.ShowEmojIcon();
+
+
         if(otherUserId==null){
             loadSharedPreferenceData();
             System.out.println("otherUserId"+otherUserId);
@@ -187,7 +202,20 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         }catch(Exception e){
 
         }
+        imageButton.setOnClickListener(I->{
+            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            startActivityForResult(intent,2);
+        });
 
+        videoButton.setOnClickListener(I->{
+            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+            startActivityForResult(intent,2);
+        });
+
+        audioButton.setOnClickListener(I->{
+            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
+            startActivityForResult(intent,2);
+        });
 
         getCurrentWallpaper();
 
@@ -231,8 +259,11 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         });
 
         attachButton.setOnClickListener(view ->{
-            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            startActivityForResult(intent,2);
+//            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+//            startActivityForResult(intent,2);
+            textArea.setVisibility(GONE);
+            layoutActions.setVisibility(VISIBLE);
+            layoutActions.animate().alpha(1.0f).setDuration(1000);
         });
 
     }
@@ -308,7 +339,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         String chatWallpaperUrI=settingsSharedPreferences.getString("chatWallpaper",null);
         int blur=settingsSharedPreferences.getInt("chatBlur",0);
 
-        progressBar.setVisibility(View.VISIBLE);
+        progressBar.setVisibility(VISIBLE);
         if (chatWallpaperUrI!=null){
             if(blur!=0) {
                 Glide.with(getApplicationContext())
@@ -436,10 +467,10 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             if(user.getTyping()){
 //                            onlineStatus.setVisibility(View.VISIBLE);
                 onlineStatus.setVisibility(GONE);
-                typing.setVisibility(View.VISIBLE);
+                typing.setVisibility(VISIBLE);
 
             }else{
-                onlineStatus.setVisibility(View.VISIBLE);
+                onlineStatus.setVisibility(VISIBLE);
                 typing.setVisibility(View.GONE);
             }
 
@@ -447,12 +478,14 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     }
     private void statusCheck(userModel user){
-        if(user.getOnline()!=null && user.getShowOnline()!=null & user.getShowLastSeen()!=null){
-            if(user.getOnline() && user.getShowOnline()){
+        System.out.println("user"+ user.getShowLastSeenState());
+        if(user.getOnline()!=null && user.getShowOnlineState()!=null & user.getShowLastSeenState()!=null){
+            if(user.getOnline() && user.getShowOnlineState()){
 //                            onlineStatus.setVisibility(View.VISIBLE);
                 lastSeen="online";
                 profilePic.setBorderColorStart( Color.CYAN);
                 profilePic.setBorderColorEnd( Color.MAGENTA);
+//                profilePic.setBorderColorStart(context.getColor(R.color.teal_200));
                 onlineStatus.setSelected(false);
 
             }else{
@@ -470,7 +503,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             }
             profilePic.setBorderColorDirection(CircularImageView.GradientDirection.LEFT_TO_RIGHT);
             profilePic.setBorderWidth(10);
-            if(user.getShowLastSeen()){
+            if(user.getShowLastSeenState()){
                 onlineStatus.setText(lastSeen);
             }
 
@@ -543,7 +576,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                         if(messageList.get(firstElementPosition).getDate().equals(getDate())){
                             msgGroupDate.setVisibility(View.GONE);
                         }else{
-                            msgGroupDate.setVisibility(View.VISIBLE);
+                            msgGroupDate.setVisibility(VISIBLE);
                             msgGroupDate.setText(formatDate(messageList.get(Math.abs(firstElementPosition)).getDate()));
                         }
                     }catch(Exception e){
@@ -901,10 +934,18 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     @Override
     public void onBackPressed() {
-        Intent mainIntent = new Intent(ChatActivity.this , MainActivity.class);
-        mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(mainIntent);
-        finish();
+
+        if(layoutActions.getVisibility()==VISIBLE){
+            layoutActions.setVisibility(GONE);
+            textArea.setVisibility(VISIBLE);
+        }else{
+            Intent mainIntent = new Intent(ChatActivity.this , MainActivity.class);
+            mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(mainIntent);
+            overridePendingTransition(android.R.anim.slide_in_left,android.R.anim.slide_out_right);
+            finish();
+        }
+
     }
 
     @Override

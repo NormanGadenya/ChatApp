@@ -31,26 +31,27 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/msgGroupDate">
 
+
         <com.zolad.zoominimageview.ZoomInImageView
             android:id="@+id/imageView"
             android:layout_width="200dp"
             android:layout_height="200dp"
             android:background="@drawable/rounded_outlines"
             android:scaleType="centerCrop"
-            android:visibility="visible"
+            android:visibility="gone"
             app:layout_constraintBottom_toTopOf="@+id/show_message"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_male_avatar_svgrepo_com" />
 
 
-        <TextView
+        <hani.momanii.supernova_emoji_library.Helper.EmojiconTextView
             android:id="@+id/show_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:maxWidth="200dp"
             android:padding="5dp"
-            android:text="y"
+            app:emojiconSize="15sp"
             android:textColor="@android:color/primary_text_light"
             android:textIsSelectable="true"
             app:layout_constraintBottom_toTopOf="@id/message_status"

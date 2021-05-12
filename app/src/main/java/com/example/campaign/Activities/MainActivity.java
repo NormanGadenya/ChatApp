@@ -134,12 +134,7 @@ public class MainActivity extends AppCompatActivity   {
         } else {
             requestContactsPermission();
         }
-        chatViewModel.initChatsList();
-        list=chatViewModel.getChatListData().getValue();
-        chatListAdapter=new chatListAdapter(list, MainActivity.this,this,viewModelStoreOwner,lifecycleOwner);
-        chatViewModel.getChatListData().observe(this, chatList -> chatListAdapter.notifyDataSetChanged());
 
-        recyclerView.setAdapter(chatListAdapter);
 //        getChatList();
 
         newChat.setOnClickListener(new View.OnClickListener() {
@@ -150,7 +145,16 @@ public class MainActivity extends AppCompatActivity   {
         });
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        chatViewModel.initChatsList();
+        list=chatViewModel.getChatListData().getValue();
+        chatListAdapter=new chatListAdapter(list, MainActivity.this,this,viewModelStoreOwner,lifecycleOwner);
+        chatViewModel.getChatListData().observe(this, chatList -> chatListAdapter.notifyDataSetChanged());
+        recyclerView.setAdapter(chatListAdapter);
 
+    }
 
     private void InitializeControllers() {
         user= FirebaseAuth.getInstance().getCurrentUser();

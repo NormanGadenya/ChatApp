@@ -109,12 +109,14 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
         }
 
         if(chatlist.getOnline()){
-            holder.profile.setBorderColorStart( Color.CYAN);
+
+//            holder.profile.setBorderColor( context.getColor(R.color.teal_200));
+//            holder.profile.setBorderColorEnd( Color.WHITE);
+            holder.profile.setBorderColorStart(Color.CYAN);
             holder.profile.setBorderColorEnd( Color.MAGENTA);
 
         }else{
-            holder.profile.setBorderColorStart(context.getColor(R.color.white));
-            holder.profile.setBorderColorEnd( Color.WHITE);
+            holder.profile.setBorderColor(Color.WHITE);
 
         }
         holder.profile.setBorderColorDirection(CircularImageView.GradientDirection.LEFT_TO_RIGHT);
@@ -146,6 +148,8 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                             .putExtra("profileUrI",list.get(position).getProfileUrI());
 
                     activity.startActivity(intent);
+                    activity.overridePendingTransition(android.R.anim.slide_in_left,android.R.anim.slide_out_right);
+
 
                 }
             }

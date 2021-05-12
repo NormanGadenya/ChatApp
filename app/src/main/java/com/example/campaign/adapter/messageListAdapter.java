@@ -56,6 +56,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import hani.momanii.supernova_emoji_library.Helper.EmojiconTextView;
+
 
 public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.Holder> {
     private List<messageListModel> list;
@@ -272,8 +274,8 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     }
 
     public class Holder extends RecyclerView.ViewHolder {
-        private TextView message,time,msgGroupDate;
-
+        private TextView time,msgGroupDate;
+        private EmojiconTextView message;
         private ImageView messageStatus;
         private ZoomInImageView imageView;
         private ProgressBar progressBar;
@@ -287,7 +289,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
             super(itemView);
             delete=itemView.findViewById(R.id.delete);
             imageView=itemView.findViewById(R.id.imageView);
-
             message = itemView.findViewById(R.id.show_message);
             messageStatus=itemView.findViewById(R.id.message_status);
             time=itemView.findViewById(R.id.time);

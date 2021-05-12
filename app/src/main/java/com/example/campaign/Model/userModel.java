@@ -110,7 +110,7 @@ public class userModel implements Comparable{
         return this.userName.compareTo(userModel.userName);
     }
 
-    public Boolean getShowLastSeen() {
+    public Boolean getShowLastSeenState() {
         return showLastSeenState;
     }
 
@@ -118,11 +118,11 @@ public class userModel implements Comparable{
         this.showLastSeenState = showLastSeen;
     }
 
-    public Boolean getShowOnline() {
+    public Boolean getShowOnlineState() {
         return showOnlineState;
     }
 
-    public void setShowOnline(Boolean showOnline) {
+    public void setShowOnlineState(Boolean showOnline) {
         this.showOnlineState = showOnline;
     }
 }
