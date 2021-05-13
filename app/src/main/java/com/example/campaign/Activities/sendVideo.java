@@ -1,14 +1,10 @@
 package com.example.campaign.Activities;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.palette.graphics.Palette;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
@@ -16,24 +12,17 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
+import android.widget.MediaController;
 import android.widget.Toast;
+import android.widget.VideoView;
 
-import com.example.campaign.Model.messageListModel;
 import com.example.campaign.R;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 import com.zolad.zoominimageview.ZoomInImageView;
 
 import java.io.IOException;
@@ -43,7 +32,7 @@ import java.time.format.DateTimeFormatter;
 import hani.momanii.supernova_emoji_library.Actions.EmojIconActions;
 import hani.momanii.supernova_emoji_library.Helper.EmojiconEditText;
 
-public class sendImage extends AppCompatActivity {
+public class sendVideo extends AppCompatActivity {
 
     private ImageButton sendButton;
 
@@ -55,22 +44,22 @@ public class sendImage extends AppCompatActivity {
     private EmojiconEditText caption;
     private String otherUserId;
     private FirebaseUser firebaseUser;
-    private ZoomInImageView imageView;
+    private VideoView videoView;
     private ImageButton emojiButton;
     View rootView,layoutActions,textArea;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_send_image);
+        setContentView(R.layout.activity_send_video);
         sendButton=findViewById(R.id.sendButton);
-        firebaseStorage=FirebaseStorage.getInstance();
-        database=FirebaseDatabase.getInstance();
-        imageView=findViewById(R.id.attachedImage);
+        firebaseStorage= FirebaseStorage.getInstance();
+        database= FirebaseDatabase.getInstance();
         firebaseUser= FirebaseAuth.getInstance().getCurrentUser();
         mStorageReference=firebaseStorage.getReference();
         emojiButton=findViewById(R.id.emoji_button);
+        videoView=findViewById(R.id.attachedVideo);
         rootView=findViewById(R.id.constraint_layout2);
-        selected=getIntent().getStringExtra("imageUrI");
+        selected=getIntent().getStringExtra("videoUrI");
         otherUserId=getIntent().getStringExtra("otherUserId");
         otherUserName=getIntent().getStringExtra("otherUserName");
         caption=findViewById(R.id.caption);
@@ -81,14 +70,12 @@ public class sendImage extends AppCompatActivity {
         actionBar.setTitle("Send to "+otherUserName);
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowCustomEnabled(true);
-
-        Bitmap bitmap;
-        try {
-            bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), Uri.parse(selected));
-            imageView.setImageBitmap(bitmap);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Log.d("selectedUri",selected);
+       videoView.setVideoURI(Uri.parse(selected));
+       videoView.start();
+        MediaController mediaController=new MediaController(this);
+        mediaController.setAnchorView(videoView);
+        videoView.setMediaController(mediaController);
 
         sendButton.setOnClickListener(new View.OnClickListener() {
             @RequiresApi(api = Build.VERSION_CODES.O)
@@ -113,7 +100,7 @@ public class sendImage extends AppCompatActivity {
 //            editor.apply();
 
             Intent intent=new Intent(getApplicationContext(),ChatActivity.class)
-                    .putExtra("imageUrI",selected)
+                    .putExtra("videoUrI",selected)
                     .putExtra("receiver",otherUserId)
                     .putExtra("caption",caption.getText().toString())
                     ;

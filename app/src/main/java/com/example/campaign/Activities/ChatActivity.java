@@ -134,6 +134,9 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     FloatingActionButton imageButton,videoButton,audioButton;
     MessageViewModel messageViewModel;
     UserViewModel userViewModel;
+    final int IMAGEREQUEST =2;
+    final int AUDIOREQUEST=3;
+    final int VIDEOREQUEST=4;
 
     MenuItem profileDetails;
     MenuItem settings,delete;
@@ -204,17 +207,17 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         }
         imageButton.setOnClickListener(I->{
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            startActivityForResult(intent,2);
+            startActivityForResult(intent,IMAGEREQUEST);
         });
 
         videoButton.setOnClickListener(I->{
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
-            startActivityForResult(intent,2);
+            startActivityForResult(intent,VIDEOREQUEST);
         });
 
         audioButton.setOnClickListener(I->{
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
-            startActivityForResult(intent,2);
+            startActivityForResult(intent,AUDIOREQUEST);
         });
 
         getCurrentWallpaper();
@@ -226,8 +229,17 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         }catch (Exception e){
             Log.d("Error" ,e.getLocalizedMessage());
         }
-
-
+        String imageUrI=getIntent().getStringExtra("imageUrI");
+        String caption=getIntent().getStringExtra("caption");
+        String videoUrI=getIntent().getStringExtra("videoUrI");
+        String audioUrI=getIntent().getStringExtra("audioUrI");
+        if(imageUrI!=null){
+            uploadFile(user.getUid(),otherUserId,Uri.parse(imageUrI),caption,"IMAGE");
+        }else if(videoUrI!=null){
+            uploadFile(user.getUid(),otherUserId,Uri.parse(videoUrI),caption,"VIDEO");
+        }else if(audioUrI!=null){
+            uploadFile(user.getUid(),otherUserId,Uri.parse(audioUrI),caption,"AUDIO");
+        }
         sendButton.setOnClickListener(view -> {
             Log.d("userId",user.getUid()+ otherUserId);
             DatabaseReference sMessage_1=database.getReference().child("chats").child(otherUserId).child(user.getUid()).push();
@@ -496,7 +508,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 }else{
                     lastSeen= "Last seen on " +lastSeenDate +" at "+ lastSeenTime;
                 }
-                profilePic.setBorderColorStart(context.getColor(R.color.white));
+                profilePic.setBorderColorStart(Color.WHITE);
                 profilePic.setBorderColorEnd( Color.WHITE);
                 onlineStatus.setSelected(true);
 
@@ -761,44 +773,71 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     @RequiresApi(api = Build.VERSION_CODES.O)
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode==2 && resultCode== Activity.RESULT_OK && data!=null){
+
+        if(resultCode== Activity.RESULT_OK && data!=null) {
             selected=data.getData();
-            Intent intent=new Intent(getApplicationContext(),sendImage.class)
-                    .putExtra("imageUrI",selected.toString())
-                    .putExtra("otherUserId",otherUserId)
-                    .putExtra("otherUserName",otherUserName);
-            startActivity(intent);
-            try{
-                uploadFile(user.getUid(),otherUserId);
-            }catch(Exception e){
-                Log.d("error",e.getLocalizedMessage());
+
+            if (requestCode == IMAGEREQUEST) {
+
+                Intent intent = new Intent(getApplicationContext(), sendImage.class)
+                        .putExtra("imageUrI", selected.toString())
+                        .putExtra("otherUserId", otherUserId)
+                        .putExtra("otherUserName", otherUserName);
+                startActivity(intent);
+//            try{
+//                uploadFile(user.getUid(),otherUserId);
+//            }catch(Exception e){
+//                Log.d("error",e.getLocalizedMessage());
+//            }
+
+            } else if (requestCode == VIDEOREQUEST) {
+                Intent intent = new Intent(getApplicationContext(), sendVideo.class)
+                        .putExtra("videoUrI", selected.toString())
+                        .putExtra("otherUserId", otherUserId)
+                        .putExtra("otherUserName", otherUserName);
+                startActivity(intent);
+            } else if (requestCode == AUDIOREQUEST) {
+                Intent intent = new Intent(getApplicationContext(), sendAudio.class)
+                        .putExtra("audioUrI", selected.toString())
+                        .putExtra("otherUserId", otherUserId)
+                        .putExtra("otherUserName", otherUserName);
+                startActivity(intent);
             }
-
         }
-
     }
 
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private void uploadFile(String userId, String otherUserId) {
-        ProgressBar progressBar=findViewById(R.id.progressBar);
-        selected=Uri.parse(imageSharedPreferences.getString("imageUrI",null));
-        String caption=imageSharedPreferences.getString("caption",null);
-        Log.d("HSCSHCD","done");
-        if (selected != null) {
+    private void uploadFile(String userId, String otherUserId,Uri UrI,String caption,String type) {
+        if (UrI != null) {
             DatabaseReference myRef = database.getReference();
+            DatabaseReference fUserChatRef= myRef.child("chats").child(userId).child(otherUserId).push();
             messageListModel message=new messageListModel();
             message.setText(caption);
-            message.setImageUrI(selected.toString());
+            if(type.equals("IMAGE")){
+                message.setImageUrI(UrI.toString());
+            }else if(type.equals("VIDEO")){
+                message.setVideoUrI(UrI.toString());
+            }else{
+                message.setAudioUrI(UrI.toString());
+            }
             message.setTime(getTime());
             message.setDate(getDate());
-            message.setType("IMAGE");
+            message.setType(type);
             message.setReceiver(otherUserId);
-            DatabaseReference messageRef= myRef.child("chats").child(userId).child(otherUserId).push();
-            String messageKey=messageRef.getKey();
-            messageRef.setValue(message);
-            StorageReference fileReference = mStorageReference.child(System.currentTimeMillis()
-                    + ".jpg");
+            String messageKey=fUserChatRef.getKey();
+            fUserChatRef.setValue(message);
+            StorageReference fileReference;
+            if(type.equals("IMAGE")){
+                fileReference = mStorageReference.child(System.currentTimeMillis()
+                        + ".jpg");
+            }else if(type.equals("VIDEO")){
+                fileReference = mStorageReference.child(System.currentTimeMillis()
+                        + ".mp4");
+            }else {
+                 fileReference = mStorageReference.child(System.currentTimeMillis()
+                        + ".mp3");
+            }
             UploadTask uploadTask =fileReference.putFile(selected);
             uploadTask.continueWithTask(task -> {
                 if (!task.isSuccessful()) {
@@ -808,66 +847,49 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             }).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     Uri downloadUri = task.getResult();
-
-                    Bitmap bitmap = null;
-                    try {
-                        bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selected);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    messageListModel messageOtherUser=new messageListModel();
+                    messageOtherUser.setImageUrI(downloadUri.toString());
+                    if(type.equals("IMAGE")){
+                        messageOtherUser.setImageUrI(downloadUri.toString());
+                    }else if(type.equals("VIDEO")){
+                        messageOtherUser.setVideoUrI(downloadUri.toString());
+                    }else{
+                        messageOtherUser.setAudioUrI(downloadUri.toString());
                     }
-                    Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
-                            @Override
-                            public void onGenerated(@Nullable Palette palette) {
-                                if(palette!=null){
-                                    Palette.Swatch vibrantSwatch = palette.getMutedSwatch();
-                                    if(vibrantSwatch != null){
-                                        int backgroundColor= vibrantSwatch.getRgb();
-                                        DatabaseReference myRef = database.getReference();
-                                        messageListModel message=new messageListModel();
+                    messageOtherUser.setTime(getTime());
+                    messageOtherUser.setText(caption);
+                    messageOtherUser.setDate(getDate());
+                    messageOtherUser.setType(type);
+                    messageOtherUser.setReceiver(otherUserId);
 
-                                        assert downloadUri != null;
-                                        message.setBackgroundColor(backgroundColor);
-                                        message.setImageUrI(downloadUri.toString());
-                                        message.setTime(getTime());
-                                        if(caption!=null){
-                                            message.setText(caption);
-                                        }
-                                        message.setDate(getDate());
-                                        message.setType("IMAGE");
-                                        message.setReceiver(otherUserId);
+                    try{
+                        DatabaseReference messageRef= myRef.child("chats").child(otherUserId).child(userId);
+                        messageRef.child(messageKey).setValue(message);
 
-                                        try{
-                                            myRef.child("chats").child(userId).child(otherUserId).push().setValue(message);
-                                           DatabaseReference messageRef= myRef.child("chats").child(otherUserId).child(userId);
-                                           messageRef.child(messageKey).setValue(message);
+                    }catch(Exception e){
+                        Log.d("error",e.getLocalizedMessage());
 
-                                        }catch(Exception e){
-                                            Log.d("error",e.getLocalizedMessage());
-                                            progressBar.setVisibility(GONE);
-                                        }
-                                    }
-                                }
-                            }
-                        });
                     }
-                imageSharedPreferences.edit().clear();
-                SharedPreferences.Editor editor = imageSharedPreferences.edit();
-                editor.clear();
-                editor.commit();
-
-
-
-
+//                    try {
+//                        bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selected);
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                    Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
+//                            @Override
+//                            public void onGenerated(@Nullable Palette palette) {
+//                                if(palette!=null){
+//                                    Palette.Swatch vibrantSwatch = palette.getMutedSwatch();
+//                                    if(vibrantSwatch != null){
+//                                        int backgroundColor= vibrantSwatch.getRgb();
+//
+//                                    }
+//                                }
+//                            }
+//                        });
+//
+            }
             });
-            uploadTask.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onProgress(@NonNull UploadTask.TaskSnapshot snapshot) {
-                    double progress=(100*snapshot.getBytesTransferred()/snapshot.getTotalByteCount());
-
-                }
-            });
-//        selected=null;
-        imageSharedPreferences.edit().clear();
         } else {
             Toast.makeText(this, "No file selected", Toast.LENGTH_SHORT).show();
         }

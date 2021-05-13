@@ -3,7 +3,7 @@
     package="com.example.campaign">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
@@ -19,10 +19,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Campaign">
+        <activity android:name=".Activities.sendAudio"></activity>
+        <activity android:name=".Activities.sendVideo" />
         <activity
             android:name=".Activities.sendImage"
-            android:parentActivityName=".Activities.ChatActivity"
-            ></activity>
+            android:parentActivityName=".Activities.ChatActivity" />
         <activity
             android:name=".Activities.SettingsActivity"
             android:parentActivityName=".Activities.MainActivity"
@@ -45,7 +46,7 @@
             android:theme="@style/Theme.Campaign" />
         <activity
             android:name=".Activities.RegistrationActivity"
-            android:theme="@style/Theme.Campaign.NoActionBar"></activity>
+            android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity
             android:name=".Activities.OtpActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
@@ -62,21 +63,17 @@
         <service
             android:name=".Notifications.MyFirebaseIdService"
             android:enabled="true"
-            android:exported="true"
-            >
+            android:exported="true">
             <intent-filter>
-                <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
-
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
             </intent-filter>
         </service>
         <service
             android:name=".Notifications.MyFirebaseMessaging"
             android:enabled="true"
-            android:exported="true"
-            >
+            android:exported="true">
             <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
-
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
     </application>

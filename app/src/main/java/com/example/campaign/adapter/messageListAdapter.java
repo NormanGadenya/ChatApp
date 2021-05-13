@@ -2,10 +2,14 @@ package com.example.campaign.adapter;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.media.MediaMetadataRetriever;
 import android.os.Build;
+import android.provider.MediaStore;
 import android.text.Layout;
 import android.util.Log;
 import android.view.ActionMode;
@@ -54,6 +58,7 @@ import com.zolad.zoominimageview.ZoomInImageView;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import hani.momanii.supernova_emoji_library.Helper.EmojiconTextView;
@@ -279,7 +284,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         private ImageView messageStatus;
         private ZoomInImageView imageView;
         private ProgressBar progressBar;
-        private ImageButton delete;
+        private ImageButton delete,playButton;
         private TextView date;
         private ImageView checkBox;
         private View layout;
@@ -287,6 +292,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
         public Holder(@NonNull View itemView) {
             super(itemView);
+            playButton=itemView.findViewById(R.id.playButton);
             delete=itemView.findViewById(R.id.delete);
             imageView=itemView.findViewById(R.id.imageView);
             message = itemView.findViewById(R.id.show_message);
@@ -307,6 +313,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
                 switch(messageList.getType()){
                     case "TEXT":
+                        playButton.setVisibility(View.GONE);
                         message.setText(messageList.getText());
                         imageView.setVisibility(itemView.GONE);
                         message.setVisibility(itemView.VISIBLE);
@@ -322,6 +329,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         });
                         break;
                     case "IMAGE":
+                        playButton.setVisibility(View.GONE);
                         progressBar.setVisibility(itemView.VISIBLE);
                         imageView.setVisibility(itemView.VISIBLE);
                         if(messageList.getText()==null){
@@ -356,11 +364,47 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                                 return false;
                             }
                         }).into(imageView);
+                        break;
 
+                    case "VIDEO":
+                        progressBar.setVisibility(itemView.VISIBLE);
+                        imageView.setVisibility(itemView.VISIBLE);
+                        if(messageList.getText()==null){
+                            message.setVisibility(itemView.GONE);
+                        }else{
+                            message.setText(messageList.getText());
+                            message.setVisibility(itemView.VISIBLE);
+                        }
 
+//                    imageView.setBackgroundColor(messageList.getBackgroundColor());
+                        imageView.setClipToOutline(true);
+                        imageView.setOnLongClickListener(new View.OnLongClickListener() {
+                            @SuppressLint("MissingPermission")
+                            @Override
+                            public boolean onLongClick(View v) {
+                                recyclerViewInterface.onItemClick(getAdapterPosition());
+                                return true;
+                            }
+                        });
+                        time.setText(messageList.getTime());
+                        String videoUrl=messageList.getVideoUrI();
 
+                       Glide.with(context).load("https://coolbackgrounds.io/images/backgrounds/black/pure-black-background-f82588d3.jpg").listener(new RequestListener<Drawable>() {
+                            @Override
+                            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                                progressBar.setVisibility(View.GONE);
+                                return false;
+                            }
 
+                            @Override
+                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                                progressBar.setVisibility(View.GONE);
 
+                                return false;
+                            }
+                        }).into(imageView);
+                        progressBar.setVisibility(View.GONE);
+                        playButton.setVisibility(View.VISIBLE);
                         break;
 
                 }

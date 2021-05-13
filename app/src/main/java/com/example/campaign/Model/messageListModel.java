@@ -3,7 +3,7 @@ package com.example.campaign.Model;
 import java.io.Serializable;
 
 public class messageListModel implements Serializable {
-    private String text,profileUrI;
+    private String text,profileUrI,videoUrI,audioUrI;
     private int backgroundColor;
     private String receiver,date,time,messageStatus, imageUrI,type,userName,messageId;
     private boolean checked;
@@ -125,5 +125,21 @@ public class messageListModel implements Serializable {
 
     public void setChecked(boolean checked) {
         this.checked = checked;
+    }
+
+    public String getVideoUrI() {
+        return videoUrI;
+    }
+
+    public void setVideoUrI(String videoUrI) {
+        this.videoUrI = videoUrI;
+    }
+
+    public String getAudioUrI() {
+        return audioUrI;
+    }
+
+    public void setAudioUrI(String audioUrI) {
+        this.audioUrI = audioUrI;
     }
 }

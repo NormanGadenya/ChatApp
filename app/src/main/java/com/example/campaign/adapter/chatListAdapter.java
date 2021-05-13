@@ -116,7 +116,8 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
             holder.profile.setBorderColorEnd( Color.MAGENTA);
 
         }else{
-            holder.profile.setBorderColor(Color.WHITE);
+            holder.profile.setBorderColorStart(Color.WHITE);
+            holder.profile.setBorderColorEnd( Color.WHITE);
 
         }
         holder.profile.setBorderColorDirection(CircularImageView.GradientDirection.LEFT_TO_RIGHT);
@@ -364,6 +365,8 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
             if(lastMessage.containsKey(userId)){
                 String textMessage=lastMessage.get(userId).getText();
                 String imageUrI=lastMessage.get(userId).getImageUrI();
+                String videoUrI=lastMessage.get(userId).getVideoUrI();
+                String audioUrI=lastMessage.get(userId).getAudioUrI();
                 String time=lastMessage.get(userId).getTime();
                 String date=lastMessage.get(userId).getDate();
                 if (getDate().equals(date)){
@@ -373,13 +376,20 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                 }else{
                     dateTime.setText(date);
                 }
-                if(imageUrI==null){
+                if(imageUrI==null|| videoUrI ==null || audioUrI==null){
                     textMessage=formatLastMessage(textMessage);
                     description.setText(textMessage);
                     imageView.setVisibility(View.GONE);
-                }else{
+                }else {
                     description.setVisibility(View.GONE);
                     imageView.setVisibility(View.VISIBLE);
+                    if(imageUrI!=null){
+                        imageView.setImageResource(R.drawable.gallery);
+                    }else if(videoUrI!=null){
+                        imageView.setImageResource(R.drawable.ic_baseline_videocam_24);
+                    }else{
+                        imageView.setImageResource(R.drawable.ic_baseline_music_note_24);
+                    }
                 }
                 chatViewModel.setLastMessage(null);
             }
