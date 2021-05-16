@@ -7,7 +7,11 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
 import android.text.Layout;
@@ -24,7 +28,9 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -55,6 +61,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.zolad.zoominimageview.ZoomInImageView;
 
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -76,10 +83,12 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     private Activity activity;
     private ChatViewModel chatViewModel;
     private TextView msgGroupDateTop;
+    private MediaPlayer mediaPlayer;
     boolean isSelected,isEnabled=false;
     FirebaseDatabase database=FirebaseDatabase.getInstance();
     ArrayList<messageListModel> selected=new ArrayList<>();
     private FirebaseUser firebaseUser=FirebaseAuth.getInstance().getCurrentUser();
+    boolean isPlaying=false;
 
 
 
@@ -284,10 +293,12 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         private ImageView messageStatus;
         private ZoomInImageView imageView;
         private ProgressBar progressBar;
-        private ImageButton delete,playButton;
+        private ImageButton delete,playButton,playPauseButton;
         private TextView date;
         private ImageView checkBox;
         private View layout;
+        private SeekBar musicController;
+
 
 
         public Holder(@NonNull View itemView) {
@@ -303,7 +314,8 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
             msgGroupDate=itemView.findViewById(R.id.msgGroupDate);
             checkBox=itemView.findViewById(R.id.checkBox);
             layout=itemView.findViewById(R.id.const2);
-
+            playPauseButton=itemView.findViewById(R.id.playPause);
+            musicController=itemView.findViewById(R.id.music_controller);
 
         }
         void bind(final messageListModel messageList){
@@ -317,6 +329,8 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         message.setText(messageList.getText());
                         imageView.setVisibility(itemView.GONE);
                         message.setVisibility(itemView.VISIBLE);
+                        musicController.setVisibility(View.GONE);
+                        playPauseButton.setVisibility(View.GONE);
                         time.setText(messageList.getTime());
                         progressBar.setVisibility(itemView.GONE);
                         message.setOnLongClickListener(new View.OnLongClickListener() {
@@ -330,6 +344,8 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         break;
                     case "IMAGE":
                         playButton.setVisibility(View.GONE);
+                        musicController.setVisibility(View.GONE);
+                        playPauseButton.setVisibility(View.GONE);
                         progressBar.setVisibility(itemView.VISIBLE);
                         imageView.setVisibility(itemView.VISIBLE);
                         if(messageList.getText()==null){
@@ -369,6 +385,8 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                     case "VIDEO":
                         progressBar.setVisibility(itemView.VISIBLE);
                         imageView.setVisibility(itemView.VISIBLE);
+                        musicController.setVisibility(View.GONE);
+                        playPauseButton.setVisibility(View.GONE);
                         if(messageList.getText()==null){
                             message.setVisibility(itemView.GONE);
                         }else{
@@ -407,6 +425,66 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         playButton.setVisibility(View.VISIBLE);
                         break;
 
+                    case "AUDIO":
+
+                        imageView.setVisibility(View.GONE);
+                        message.setVisibility(View.GONE);
+                        musicController.setVisibility(View.VISIBLE);
+                        playPauseButton.setVisibility(View.VISIBLE);
+                        progressBar.setVisibility(View.GONE);
+                        String audioUrI=messageList.getAudioUrI();
+                        String receiver=messageList.getReceiver();
+                        playButton.setVisibility(View.GONE);
+//                        mediaPlayer = new MediaPlayer();
+                        playPauseButton.setOnClickListener(V->{
+                            mediaPlayer = new MediaPlayer();
+                            if(receiver.equals(firebaseUser.getUid())){
+                                mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                                try {
+
+                                    mediaPlayer.setDataSource(audioUrI);
+                                    mediaPlayer.prepareAsync();
+                                    mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                                        @Override
+                                        public void onPrepared(MediaPlayer mp) {
+
+                                            mp.start();
+                                        }
+                                    });
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }else{
+                                MediaPlayer mediaPlayer = new MediaPlayer();
+                                mediaPlayer.setAudioAttributes(
+                                        new AudioAttributes.Builder()
+                                                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                                .setUsage(AudioAttributes.USAGE_MEDIA)
+                                                .build()
+                                );
+                                try {
+                                    mediaPlayer.setDataSource(context, Uri.parse(audioUrI));
+                                    mediaPlayer.prepare();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+
+                                mediaPlayer.start();
+                            }
+
+
+//                            if(!mediaPlayer.isPlaying()){
+//                                isPlaying=true;
+//                                playPauseButton.setBackgroundResource(R.drawable.ic_baseline_pause_circle_outline_24);
+//                                playAudio(audioUrI);
+//                            }else{
+//                                mediaPlayer.stop();
+//                                mediaPlayer.reset();
+//                                mediaPlayer.release();
+//                                isPlaying=false;
+//                                playPauseButton.setBackgroundResource(R.drawable.ic_baseline_play_circle_outline_24);
+//                            }
+                        });
                 }
                 if (messageList.isChecked()){
                     messageStatus.setImageResource(R.drawable.ic_baseline_done_all_24);
@@ -425,6 +503,31 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
 
     }
+    private void playAudio(String audioUrI) {
+
+        // initializing media player
+
+
+        // below line is use to set the audio
+        // stream type for our media player.
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+
+        // below line is use to set our
+        // url to our media player.
+        try {
+            mediaPlayer.setDataSource(audioUrI);
+            // below line is use to prepare
+            // and start our media player.
+            mediaPlayer.prepare();
+            mediaPlayer.start();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        // below line is use to display a toast message.
+        Toast.makeText(context, "Audio started playing..", Toast.LENGTH_SHORT).show();
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void setTimeTextVisibility(String ts1, String ts2, TextView timeText){
 

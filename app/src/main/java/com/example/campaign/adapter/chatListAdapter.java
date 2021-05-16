@@ -376,19 +376,25 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                 }else{
                     dateTime.setText(date);
                 }
-                if(imageUrI==null|| videoUrI ==null || audioUrI==null){
+                if(imageUrI==null && videoUrI ==null && audioUrI==null){
                     textMessage=formatLastMessage(textMessage);
                     description.setText(textMessage);
                     imageView.setVisibility(View.GONE);
+
                 }else {
                     description.setVisibility(View.GONE);
                     imageView.setVisibility(View.VISIBLE);
+                    Log.d("img222","img23");
                     if(imageUrI!=null){
-                        imageView.setImageResource(R.drawable.gallery);
+
+                        imageView.setImageDrawable(context.getDrawable(R.drawable.gallery));
+                        Log.d("img222","img");
                     }else if(videoUrI!=null){
-                        imageView.setImageResource(R.drawable.ic_baseline_videocam_24);
+                        imageView.setImageDrawable(context.getDrawable(R.drawable.ic_baseline_videocam_24));
+                        Log.d("img222","vid");
                     }else{
-                        imageView.setImageResource(R.drawable.ic_baseline_music_note_24);
+                        imageView.setImageDrawable(context.getDrawable(R.drawable.ic_baseline_music_note_24));
+                        Log.d("img222","aud");
                     }
                 }
                 chatViewModel.setLastMessage(null);

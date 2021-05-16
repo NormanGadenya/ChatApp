@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -37,6 +38,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.view.MenuInflater;
@@ -87,6 +89,7 @@ import com.google.firebase.storage.UploadTask;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
 
+import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -232,13 +235,12 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         String imageUrI=getIntent().getStringExtra("imageUrI");
         String caption=getIntent().getStringExtra("caption");
         String videoUrI=getIntent().getStringExtra("videoUrI");
-        String audioUrI=getIntent().getStringExtra("audioUrI");
+//        String audioUrI=getIntent().getStringExtra("audioUrI");
         if(imageUrI!=null){
-            uploadFile(user.getUid(),otherUserId,Uri.parse(imageUrI),caption,"IMAGE");
+            uploadImage(user.getUid(),otherUserId,Uri.parse(imageUrI),caption);
+
         }else if(videoUrI!=null){
-            uploadFile(user.getUid(),otherUserId,Uri.parse(videoUrI),caption,"VIDEO");
-        }else if(audioUrI!=null){
-            uploadFile(user.getUid(),otherUserId,Uri.parse(audioUrI),caption,"AUDIO");
+            uploadVideo(user.getUid(),otherUserId,Uri.parse(videoUrI),caption);
         }
         sendButton.setOnClickListener(view -> {
             Log.d("userId",user.getUid()+ otherUserId);
@@ -797,15 +799,164 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                         .putExtra("otherUserName", otherUserName);
                 startActivity(intent);
             } else if (requestCode == AUDIOREQUEST) {
-                Intent intent = new Intent(getApplicationContext(), sendAudio.class)
-                        .putExtra("audioUrI", selected.toString())
-                        .putExtra("otherUserId", otherUserId)
-                        .putExtra("otherUserName", otherUserName);
-                startActivity(intent);
+                uploadAudio(user.getUid(),otherUserId,selected);
+//                Intent intent = new Intent(getApplicationContext(), sendAudio.class)
+//                        .putExtra("audioUrI", selected.toString())
+//                        .putExtra("otherUserId", otherUserId)
+//                        .putExtra("otherUserName", otherUserName);
+//                startActivity(intent);
             }
         }
     }
 
+    public static String getMimeType(Context context, Uri uri) {
+        String extension;
+
+        //Check uri format to avoid null
+        if (uri.getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
+            //If scheme is a content
+            final MimeTypeMap mime = MimeTypeMap.getSingleton();
+            extension = mime.getExtensionFromMimeType(context.getContentResolver().getType(uri));
+        } else {
+            //If scheme is a File
+            //This will replace white spaces with %20 and also other special characters. This will avoid returning null values on file name with spaces and special characters.
+            extension = MimeTypeMap.getFileExtensionFromUrl(Uri.fromFile(new File(uri.getPath())).toString());
+
+        }
+
+        return extension;
+    }
+
+    private void uploadAudio(String userId,String otherUserId,Uri uri){
+        if(uri!=null){
+            DatabaseReference myRef = database.getReference();
+            DatabaseReference fUserChatRef= myRef.child("chats").child(userId).child(otherUserId).push();
+            messageListModel message=new messageListModel();
+            message.setAudioUrI(uri.toString());
+            message.setTime(getTime());
+            message.setDate(getDate());
+            message.setType("AUDIO");
+            message.setReceiver(otherUserId);
+            String messageKey=fUserChatRef.getKey();
+            fUserChatRef.setValue(message);
+            StorageReference fileReference;
+            fileReference = mStorageReference.child(System.currentTimeMillis()
+                    + getMimeType(context,uri));
+            UploadTask uploadTask =fileReference.putFile(selected);
+            uploadTask.continueWithTask(task -> {
+                if (!task.isSuccessful()) {
+                    throw task.getException();
+                }
+                return fileReference.getDownloadUrl();
+            }).addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    Uri downloadUri = task.getResult();
+                    messageListModel messageOtherUser=new messageListModel();
+                    messageOtherUser.setAudioUrI(downloadUri.toString());
+                    messageOtherUser.setTime(getTime());
+                    messageOtherUser.setDate(getDate());
+                    messageOtherUser.setType("AUDIO");
+                    messageOtherUser.setReceiver(otherUserId);
+                    DatabaseReference messageRef= myRef.child("chats").child(otherUserId).child(userId);
+                    messageRef.child(messageKey).setValue(messageOtherUser);
+                }
+            });
+        }
+
+    }
+
+    private void uploadVideo(String userId,String otherUserId,Uri uri,String caption){
+        if (uri != null) {
+            DatabaseReference myRef = database.getReference();
+            DatabaseReference fUserChatRef= myRef.child("chats").child(userId).child(otherUserId).push();
+            messageListModel message=new messageListModel();
+            message.setText(caption);
+            message.setVideoUrI(uri.toString());
+            message.setTime(getTime());
+            message.setDate(getDate());
+            message.setType("VIDEO");
+            message.setReceiver(otherUserId);
+            String messageKey=fUserChatRef.getKey();
+            fUserChatRef.setValue(message);
+            StorageReference fileReference;
+            fileReference = mStorageReference.child(System.currentTimeMillis() + getMimeType(context,uri));
+            UploadTask uploadTask =fileReference.putFile(selected);
+            uploadTask.continueWithTask(task -> {
+                if (!task.isSuccessful()) {
+                    throw task.getException();
+                }
+                return fileReference.getDownloadUrl();
+            }).addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    Uri downloadUri = task.getResult();
+                    messageListModel messageOtherUser=new messageListModel();
+                    messageOtherUser.setVideoUrI(downloadUri.toString());
+                    messageOtherUser.setTime(getTime());
+                    messageOtherUser.setText(caption);
+                    messageOtherUser.setDate(getDate());
+                    messageOtherUser.setType("VIDEO");
+                    messageOtherUser.setReceiver(otherUserId);
+
+                    try{
+                        DatabaseReference messageRef= myRef.child("chats").child(otherUserId).child(userId);
+                        messageRef.child(messageKey).setValue(messageOtherUser);
+
+
+                    }catch(Exception e){
+                        Log.d("error",e.getLocalizedMessage());
+
+                    }
+                }
+            });
+        } else {
+            Toast.makeText(this, "No file selected", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void uploadImage(String userId, String otherUserId,Uri uri,String caption){
+        if (uri != null) {
+            DatabaseReference myRef = database.getReference();
+            DatabaseReference fUserChatRef= myRef.child("chats").child(userId).child(otherUserId).push();
+            messageListModel message=new messageListModel();
+            message.setText(caption);
+            message.setImageUrI(uri.toString());
+            message.setTime(getTime());
+            message.setDate(getDate());
+            message.setType("IMAGE");
+            message.setReceiver(otherUserId);
+            String messageKey=fUserChatRef.getKey();
+            fUserChatRef.setValue(message);
+            StorageReference fileReference;
+            fileReference = mStorageReference.child(System.currentTimeMillis() +  getMimeType(context,uri));
+            UploadTask uploadTask =fileReference.putFile(selected);
+            uploadTask.continueWithTask(task -> {
+                if (!task.isSuccessful()) {
+                    throw task.getException();
+                }
+                return fileReference.getDownloadUrl();
+            }).addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    Uri downloadUri = task.getResult();
+                    messageListModel messageOtherUser=new messageListModel();
+                    messageOtherUser.setImageUrI(downloadUri.toString());
+                    messageOtherUser.setTime(getTime());
+                    messageOtherUser.setText(caption);
+                    messageOtherUser.setDate(getDate());
+                    messageOtherUser.setType("IMAGE");
+                    messageOtherUser.setReceiver(otherUserId);
+                    try{
+                        DatabaseReference messageRef= myRef.child("chats").child(otherUserId).child(userId);
+                        messageRef.child(messageKey).setValue(messageOtherUser);
+                    }catch(Exception e){
+                        Log.d("error",e.getLocalizedMessage());
+
+                    }
+                }
+            });
+        } else {
+            Toast.makeText(this, "No file selected", Toast.LENGTH_SHORT).show();
+        }
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void uploadFile(String userId, String otherUserId,Uri UrI,String caption,String type) {
@@ -853,7 +1004,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                         messageOtherUser.setImageUrI(downloadUri.toString());
                     }else if(type.equals("VIDEO")){
                         messageOtherUser.setVideoUrI(downloadUri.toString());
-                    }else{
+                    }else if(type.equals("AUDIO")){
                         messageOtherUser.setAudioUrI(downloadUri.toString());
                     }
                     messageOtherUser.setTime(getTime());
@@ -864,7 +1015,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
                     try{
                         DatabaseReference messageRef= myRef.child("chats").child(otherUserId).child(userId);
-                        messageRef.child(messageKey).setValue(message);
+                        messageRef.child(messageKey).setValue(messageOtherUser);
+
 
                     }catch(Exception e){
                         Log.d("error",e.getLocalizedMessage());

@@ -32,13 +32,32 @@
         app:layout_constraintTop_toBottomOf="@+id/msgGroupDate">
 
 
+        <SeekBar
+            android:id="@+id/music_controller"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toTopOf="@+id/time"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/playPause"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageButton
+            android:id="@+id/playPause"
+            android:background="@color/transparent"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_baseline_play_circle_outline_24"
+             />
+
         <com.zolad.zoominimageview.ZoomInImageView
             android:id="@+id/imageView"
             android:layout_width="200dp"
             android:layout_height="200dp"
             android:background="@drawable/rounded_outlines"
             android:scaleType="centerCrop"
-            android:visibility="visible"
+            android:visibility="gone"
             app:layout_constraintBottom_toTopOf="@+id/show_message"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -51,9 +70,10 @@
             android:layout_height="wrap_content"
             android:maxWidth="200dp"
             android:padding="5dp"
-            app:emojiconSize="15sp"
             android:textColor="@android:color/primary_text_light"
             android:textIsSelectable="true"
+            android:visibility="gone"
+            app:emojiconSize="15sp"
             app:layout_constraintBottom_toTopOf="@id/message_status"
             app:layout_constraintStart_toStartOf="parent" />
 
@@ -98,6 +118,7 @@
             android:id="@+id/playButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@+id/imageView"
             app:layout_constraintEnd_toEndOf="@+id/imageView"
             app:layout_constraintStart_toStartOf="@+id/imageView"
