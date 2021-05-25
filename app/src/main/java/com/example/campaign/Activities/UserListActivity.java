@@ -335,7 +335,6 @@ public class UserListActivity extends AppCompatActivity {
         while (phones.moveToNext()) {
             String name = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
             String phoneNumber = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-
             // Cleanup the phone number
             phoneNumber = phoneNumber.replaceAll("[()\\s-]+", "");
 
@@ -349,10 +348,15 @@ public class UserListActivity extends AppCompatActivity {
             if (key.contains("+")){
                 phoneNumbers.add(key);
             }else{
-                if(isAlphanumeric2(key)){
-                    Long i=Long.parseLong(key);
-                    String j="+256"+i;
-                    phoneNumbers.add(j);
+                if(isAlphanumeric2(key) ){
+
+                        Long i=Long.parseLong(key);
+                        System.out.println(key);
+                        String j="+256"+i;
+
+                        phoneNumbers.add(j);
+
+
                 }
             }
         }

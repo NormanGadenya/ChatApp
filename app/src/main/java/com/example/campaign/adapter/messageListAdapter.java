@@ -13,6 +13,7 @@ import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.text.Layout;
 import android.util.Log;
@@ -48,11 +49,13 @@ import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
+import com.example.campaign.Activities.ChatActivity;
 import com.example.campaign.Interfaces.RecyclerViewInterface;
 import com.example.campaign.Model.ChatViewModel;
 import com.example.campaign.Model.chatListModel;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.R;
+import com.example.campaign.tools.AudioService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
@@ -67,6 +70,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import hani.momanii.supernova_emoji_library.Helper.EmojiconTextView;
 
@@ -89,6 +93,8 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     ArrayList<messageListModel> selected=new ArrayList<>();
     private FirebaseUser firebaseUser=FirebaseAuth.getInstance().getCurrentUser();
     boolean isPlaying=false;
+    private Handler mHandler = new Handler();
+    private AudioService audioService;
 
 
 
@@ -100,6 +106,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         this.activity=activity;
         this.otherUserId=otherUserId;
         this.msgGroupDateTop=msgGroupDateTop;
+        this.audioService = new AudioService(context);
     }
     public messageListAdapter(){ }
     public void setMessageList(List<messageListModel> list){
@@ -144,7 +151,11 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
 
-        holder.bind(list.get(position));
+        try {
+            holder.bind(list.get(position));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         Log.d("Adapter",position +"ada"+ String.valueOf(holder.getAdapterPosition() + list.get(position).getText()+ list.get(0).getDate()));
 //        if(list.get(position).getDate().equals(getDate())){
 //            msgGroupDateTop.setVisibility(View.GONE);
@@ -288,7 +299,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     }
 
     public class Holder extends RecyclerView.ViewHolder {
-        private TextView time,msgGroupDate;
+        private TextView time,msgGroupDate,songLength;
         private EmojiconTextView message;
         private ImageView messageStatus;
         private ZoomInImageView imageView;
@@ -301,8 +312,10 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
 
 
+
         public Holder(@NonNull View itemView) {
             super(itemView);
+            songLength=itemView.findViewById(R.id.songLength);
             playButton=itemView.findViewById(R.id.playButton);
             delete=itemView.findViewById(R.id.delete);
             imageView=itemView.findViewById(R.id.imageView);
@@ -318,13 +331,19 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
             musicController=itemView.findViewById(R.id.music_controller);
 
         }
-        void bind(final messageListModel messageList){
+
+//Make sure you update Seekbar on UI thread
+
+
+
+        void bind(final messageListModel messageList) throws IOException {
             Log.d("addPos",String.valueOf(getAdapterPosition()));
 
             if(messageList.getReceiver()!=null){
 
                 switch(messageList.getType()){
                     case "TEXT":
+                        songLength.setVisibility(View.GONE);
                         playButton.setVisibility(View.GONE);
                         message.setText(messageList.getText());
                         imageView.setVisibility(itemView.GONE);
@@ -343,6 +362,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         });
                         break;
                     case "IMAGE":
+                        songLength.setVisibility(itemView.GONE);
                         playButton.setVisibility(View.GONE);
                         musicController.setVisibility(View.GONE);
                         playPauseButton.setVisibility(View.GONE);
@@ -383,6 +403,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         break;
 
                     case "VIDEO":
+                        songLength.setVisibility(itemView.GONE);
                         progressBar.setVisibility(itemView.VISIBLE);
                         imageView.setVisibility(itemView.VISIBLE);
                         musicController.setVisibility(View.GONE);
@@ -426,64 +447,92 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         break;
 
                     case "AUDIO":
-
+                        songLength.setVisibility(itemView.VISIBLE);
                         imageView.setVisibility(View.GONE);
                         message.setVisibility(View.GONE);
                         musicController.setVisibility(View.VISIBLE);
                         playPauseButton.setVisibility(View.VISIBLE);
+                        playPauseButton.setBackgroundResource(R.drawable.ic_baseline_play_circle_outline_24);
                         progressBar.setVisibility(View.GONE);
+                        mediaPlayer = new MediaPlayer();
+
                         String audioUrI=messageList.getAudioUrI();
                         String receiver=messageList.getReceiver();
+
+
+                        if(receiver.equals(firebaseUser.getUid())){
+                            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                            mediaPlayer.setDataSource(audioUrI);
+                            mediaPlayer.prepareAsync();
+                        }else{
+                            mediaPlayer.setAudioAttributes(
+                                    new AudioAttributes.Builder()
+                                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                            .setUsage(AudioAttributes.USAGE_MEDIA)
+                                            .build()
+                            );
+                            mediaPlayer.setDataSource(context, Uri.parse(audioUrI));
+                            mediaPlayer.prepare();
+                        }
+                        musicController.setMax(mediaPlayer.getDuration()/1000);
+                        String duration=format(mediaPlayer.getDuration());
+                        songLength.setText(duration);
+                        time.setText(messageList.getTime());
                         playButton.setVisibility(View.GONE);
 //                        mediaPlayer = new MediaPlayer();
                         playPauseButton.setOnClickListener(V->{
-                            mediaPlayer = new MediaPlayer();
-                            if(receiver.equals(firebaseUser.getUid())){
-                                mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                                try {
 
-                                    mediaPlayer.setDataSource(audioUrI);
-                                    mediaPlayer.prepareAsync();
-                                    mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                                        @Override
-                                        public void onPrepared(MediaPlayer mp) {
 
-                                            mp.start();
-                                        }
-                                    });
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
+
+                                activity.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+
+                                            if(mediaPlayer != null ){
+                                                mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                                                    @Override
+                                                    public void onPrepared(MediaPlayer mp) {
+                                                        int mCurrentPosition = mediaPlayer.getCurrentPosition()/1000;
+
+                                                        Log.d("progress", String.valueOf(mCurrentPosition));
+                                                        musicController.setProgress(mCurrentPosition);
+                                                    }
+                                                });
+
+
+                                            }
+
+
+                                        mHandler.postDelayed(this, 1000);
+                                    }
+                                });
+
+                            playPauseButton.setBackgroundResource(R.drawable.ic_baseline_pause_circle_outline_24);
+                            if(receiver.equals(firebaseUser.getUid())) {
+                                mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                                    @Override
+                                    public void onPrepared(MediaPlayer mp) {
+                                        Log.d("scsc", "scdcd");
+
+                                        mp.start();
+
+                                    }
+                                });
                             }else{
-                                MediaPlayer mediaPlayer = new MediaPlayer();
-                                mediaPlayer.setAudioAttributes(
-                                        new AudioAttributes.Builder()
-                                                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                                                .setUsage(AudioAttributes.USAGE_MEDIA)
-                                                .build()
-                                );
-                                try {
-                                    mediaPlayer.setDataSource(context, Uri.parse(audioUrI));
-                                    mediaPlayer.prepare();
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-
                                 mediaPlayer.start();
                             }
 
 
-//                            if(!mediaPlayer.isPlaying()){
-//                                isPlaying=true;
-//                                playPauseButton.setBackgroundResource(R.drawable.ic_baseline_pause_circle_outline_24);
-//                                playAudio(audioUrI);
-//                            }else{
-//                                mediaPlayer.stop();
-//                                mediaPlayer.reset();
-//                                mediaPlayer.release();
-//                                isPlaying=false;
-//                                playPauseButton.setBackgroundResource(R.drawable.ic_baseline_play_circle_outline_24);
-//                            }
+
+
+                        });
+                        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                            @Override
+                            public void onCompletion(MediaPlayer mp) {
+                                playPauseButton.setBackgroundResource(R.drawable.ic_baseline_play_circle_outline_24);
+                                mp.release();
+//                                musicController.setProgress(0);
+                            }
                         });
                 }
                 if (messageList.isChecked()){
@@ -503,13 +552,15 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
 
     }
+    private String format(long duration){
+        return String.format("%d min, %d sec",
+                TimeUnit.MILLISECONDS.toMinutes(duration),
+                TimeUnit.MILLISECONDS.toSeconds(duration) -
+                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(duration))
+        );
+    }
     private void playAudio(String audioUrI) {
 
-        // initializing media player
-
-
-        // below line is use to set the audio
-        // stream type for our media player.
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
         // below line is use to set our

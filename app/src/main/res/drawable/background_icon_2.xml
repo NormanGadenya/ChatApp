@@ -6,8 +6,11 @@
     >
 
     <gradient
-        android:startColor="@color/dark_purple"
-        android:endColor="@color/deepBlue"
+
+
+        android:startColor="@color/purple_500"
+        android:endColor="@color/BLUE_NCS"
+
         ></gradient>
     <corners
         android:topRightRadius="50dp"

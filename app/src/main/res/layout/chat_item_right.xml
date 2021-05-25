@@ -31,6 +31,14 @@
         app:layout_constraintTop_toBottomOf="@+id/msgGroupDate"
         app:layout_constraintEnd_toEndOf="parent">
 
+        <TextView
+            android:id="@+id/songLength"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TextView"
+            app:layout_constraintStart_toEndOf="@+id/playPause"
+            app:layout_constraintTop_toBottomOf="@+id/music_controller" />
+
         <ImageButton
 
             android:id="@+id/playPause"
@@ -40,7 +48,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             android:background="@color/transparent"
-            app:srcCompat="@drawable/ic_baseline_play_circle_outline_24" />
+         />
 
         <SeekBar
             android:id="@+id/music_controller"

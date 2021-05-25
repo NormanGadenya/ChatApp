@@ -170,7 +170,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         emojIcon.setIconsIds(R.drawable.ic_action_keyboard,R.drawable.smiley);
         emojIcon.ShowEmojIcon();
 
-
         if(otherUserId==null){
             loadSharedPreferenceData();
             System.out.println("otherUserId"+otherUserId);
@@ -178,11 +177,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         if(otherUserId!=null){
             getOtherUserDetails(otherUserId);
         }
-
         setTypingStatus();
-
 //        statusCheck(otherUserId);
-
         updateStatus();
         if(imageSharedPreferences.getString("imageUrI",null)!=null && imageSharedPreferences.getString("receiver",null)!=null){
             if(otherUserId!=null && imageSharedPreferences.getString("receiver",null).equals(otherUserId)){
@@ -279,6 +275,13 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             layoutActions.setVisibility(VISIBLE);
             layoutActions.animate().alpha(1.0f).setDuration(1000);
         });
+
+    }
+
+    @Override
+    protected void onStop() {
+
+        super.onStop();
 
     }
 

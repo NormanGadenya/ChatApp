@@ -103,6 +103,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="160dp"
+            android:textColor="@color/white"
+
             android:layout_marginTop="28dp"
             android:text="@string/next"
             app:layout_constraintStart_toStartOf="parent"

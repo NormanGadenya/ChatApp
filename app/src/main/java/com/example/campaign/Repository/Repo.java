@@ -410,18 +410,20 @@ public class Repo {
                     phoneNumbersList.add(fUser.getPhoneNumber());
 
                     int i= Collections.frequency(phoneNumbersList,users.getPhoneNumber());
-                    if (contacts!=null && !users.getPhoneNumber().equals(phoneNumber)) {
-                        if (i <=1 && contacts.contains(phoneNumber)){
-                            userListObj.setUserName(users.getUserName());
-                            userListObj.setPhoneNumber(users.getPhoneNumber());
-                            userListObj.setProfileUrI(users.getProfileUrI());
-                            userListObj.setUserId(id);
-                            userListObj.setOnline(users.getOnline());
-                            user_List_Model.add(userListObj);
-                            Collections.sort(user_List_Model,userModel::compareTo);
-                            userList.postValue(user_List_Model);
-
+                    if(contacts!=null && users!= null){
+                        if ( !users.getPhoneNumber().equals(phoneNumber)) {
+                            if (i <=1 && contacts.contains(phoneNumber)){
+                                userListObj.setUserName(users.getUserName());
+                                userListObj.setPhoneNumber(users.getPhoneNumber());
+                                userListObj.setProfileUrI(users.getProfileUrI());
+                                userListObj.setUserId(id);
+                                userListObj.setOnline(users.getOnline());
+                                user_List_Model.add(userListObj);
+                                Collections.sort(user_List_Model,userModel::compareTo);
+                                userList.postValue(user_List_Model);
+                            }
                         }
+
                     }
 
                 }
