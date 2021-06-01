@@ -14,6 +14,8 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.broooapps.otpedittext2.OnCompleteListener;
+import com.broooapps.otpedittext2.OtpEditText;
 import com.example.campaign.R;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.FirebaseAuth;
@@ -29,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 public class SignUpActivity extends AppCompatActivity {
     private FirebaseAuth Auth;
-    private EditText phoneNumberEdit;
+    private OtpEditText phoneNumberEdit;
     private PhoneAuthProvider.OnVerificationStateChangedCallbacks mCallBacks;
     private ProgressBar progressBar;
 
@@ -42,14 +44,19 @@ public class SignUpActivity extends AppCompatActivity {
         progressBar=findViewById(R.id.progressBar1);
         sendOTPBtn=findViewById(R.id.button);
         phoneNumberEdit=findViewById(R.id.editTextPhone);
+        phoneNumberEdit.setOnCompleteListener(new OnCompleteListener() {
+            @Override
+            public void onComplete(String value) {
 
+            }
+        });
+        progressBar.setVisibility(View.GONE);
         Auth = FirebaseAuth.getInstance();
         sendOTPBtn.setOnClickListener(v -> {
             String phone="+256"+Integer.parseInt(phoneNumberEdit.getText().toString());
-            Log.d("phoneNumber",phone);
             progressBar.setVisibility(View.VISIBLE);
 
-            if (!phone.isEmpty()){
+            if (!phone.isEmpty() || phone.length()==10){
                 Intent otpIntent = new Intent(SignUpActivity.this , OtpActivity.class);
                 otpIntent.putExtra("phoneNumber",phone);
                 startActivity(otpIntent);
@@ -60,7 +67,6 @@ public class SignUpActivity extends AppCompatActivity {
 //                        .setCallbacks(mCallBacks)
 //                        .build();
 //                PhoneAuthProvider.verifyPhoneNumber(options);
-
             }else{
                 Toast.makeText(SignUpActivity.this,"please enter valid phone Number",Toast.LENGTH_LONG).show();
             }
@@ -71,7 +77,7 @@ public class SignUpActivity extends AppCompatActivity {
                 // If the event is a key-down event on the "enter" button
                 if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
                         (keyCode == KeyEvent.KEYCODE_ENTER)) {
-                    String phone="+256"+Integer.parseInt(phoneNumberEdit.getText().toString());
+                    String phone="+256"+Integer.parseInt(phoneNumberEdit.getOtpValue());
                     Log.d("phoneNumber",phone);
                     progressBar.setVisibility(View.VISIBLE);
 

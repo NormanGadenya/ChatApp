@@ -46,7 +46,9 @@
             android:theme="@style/Theme.Campaign" />
         <activity
             android:name=".Activities.RegistrationActivity"
-            android:theme="@style/Theme.Campaign.NoActionBar" />
+            android:theme="@style/Theme.Campaign.NoActionBar" >
+
+        </activity>
         <activity
             android:name=".Activities.OtpActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />

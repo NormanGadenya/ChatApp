@@ -62,25 +62,22 @@
                 android:textAlignment="center"
                 android:layout_marginTop="5dp"
                 />
-            <com.google.android.material.textfield.TextInputLayout
+
+            <com.broooapps.otpedittext2.OtpEditText
+                android:id="@+id/editOtpNumber"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
-                android:layout_margin="8dp"
-                >
-
-                <com.google.android.material.textfield.TextInputEditText
-
-                    android:id="@+id/editOtpNumber"
-                    android:inputType="number"
-                    android:maxLength="6"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@color/white"
-                    android:singleLine="true"
-                    android:imeOptions="actionNext"
-                    android:hint="@string/verification" />
-            </com.google.android.material.textfield.TextInputLayout>
+                android:clickable="false"
+                android:hint="******"
+                android:cursorVisible="false"
+                android:digits="0123456789"
+                android:inputType="number"
+                android:maxLength="6"
+                android:padding="8dp"
+                android:textSize="30sp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:oev_primary_color="@color/teal_200"
+                app:oev_secondary_color="@color/light_gray" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
@@ -92,6 +89,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/next"
+                    android:textColor="@color/white"
                     app:layout_constraintEnd_toStartOf="@+id/progressBar1"
                     app:layout_constraintHorizontal_bias="0.5"
                     app:layout_constraintStart_toStartOf="parent"

@@ -10,6 +10,8 @@ import android.content.ContextWrapper;
 import android.net.Uri;
 import android.os.Build;
 
+import androidx.core.app.NotificationCompat;
+
 public class OreoNotification extends ContextWrapper {
     public static final String CHANNEL_ID ="com.example.campaign";
     public static final String CHANNEL_NAME="chatApp";
@@ -24,9 +26,10 @@ public class OreoNotification extends ContextWrapper {
 
     @TargetApi(Build.VERSION_CODES.O)
     private void createChannel() {
-        NotificationChannel channel= new NotificationChannel(CHANNEL_ID,CHANNEL_NAME,NotificationManager.IMPORTANCE_DEFAULT);
+        NotificationChannel channel= new NotificationChannel(CHANNEL_ID,CHANNEL_NAME,NotificationManager.IMPORTANCE_HIGH);
+
         channel.enableVibration(true);
-        channel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+        channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
 
         getNotificationManager().createNotificationChannel(channel);
     }
@@ -45,7 +48,9 @@ public class OreoNotification extends ContextWrapper {
                 .setSmallIcon(Integer.parseInt(icon))
                 .setContentIntent(pendingIntent)
                 .setSound(soundUri)
+
                 .setAutoCancel(true);
+
 
     }
 }

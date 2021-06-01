@@ -127,7 +127,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private Uri selected;
     private Context context;
     private MenuInflater menuInflater;
-    private ProgressBar progressBar;
+    private ProgressBar progressBar,imageUploadProgress;
     private messageListAdapter messageListAdapter;
     private ImageView backgroundImageView;
     private SharedPreferences imageSharedPreferences,settingsSharedPreferences;
@@ -216,7 +216,13 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
         audioButton.setOnClickListener(I->{
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
-            startActivityForResult(intent,AUDIOREQUEST);
+            try{
+
+            }catch(Exception e){
+                startActivityForResult(intent,AUDIOREQUEST);
+
+            }
+
         });
 
         getCurrentWallpaper();
@@ -261,6 +267,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 sMessage_2.child(messageKey).setValue(m);
                 notify=true;
                 if(notify){
+
                     sendNotification(otherUserId,otherUserName,message);
                 }
                 newMessage.setText("");
@@ -293,7 +300,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for(DataSnapshot dataSnapshot:snapshot.getChildren()){
                     Token token=dataSnapshot.getValue(Token.class);
-                    Data data=new Data(user.getUid(),R.drawable.background_icon,otherUserName+ ":" +message,otherUserId,"New message");
+                    Data data=new Data(user.getUid(),R.mipmap.ic_launcher2,otherUserName+ ":" +message,otherUserId,"New message");
                     Sender sender = new Sender(data,token.getToken());
                     apiService.sendNotification(sender)
                             .enqueue(new Callback<MyResponse>(){
@@ -303,13 +310,15 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                                     if(response.code()==200){
                                         if(response.body().success==1){
                                             showToast("failed");
+                                        }else{
+                                            showToast("achieved");
                                         }
                                     }
                                 }
 
                                 @Override
                                 public void onFailure(Call<MyResponse> call, Throwable t) {
-
+                                    showToast("failed2");
                                 }
                             });
                     notify=false;

@@ -12,6 +12,8 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.broooapps.otpedittext2.OnCompleteListener;
+import com.broooapps.otpedittext2.OtpEditText;
 import com.example.campaign.R;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.FirebaseAuth;
@@ -23,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 public class OtpActivity extends AppCompatActivity {
     private Button mVerifyCodeBtn;
-    private EditText otpEdit;
+    private OtpEditText otpEdit;
     private FirebaseAuth firebaseAuth;
     private String OTP,phoneNumber,verificationId;
     private ProgressBar progressBar;
@@ -39,7 +41,7 @@ public class OtpActivity extends AppCompatActivity {
 //        OTP = getIntent().getStringExtra("auth");
         otpEdit=findViewById(R.id.editOtpNumber);
 
-        OTP=otpEdit.getText().toString();
+        OTP=otpEdit.getOtpValue();
         phoneNumber=getIntent().getStringExtra("phoneNumber");
         firebaseAuth = FirebaseAuth.getInstance();
         InitializeControllers();
@@ -55,26 +57,37 @@ public class OtpActivity extends AppCompatActivity {
         }catch(Exception e){
             Log.d(TAG,"ERROR"+ e.getMessage());
         }
+        otpEdit.setOnCompleteListener(new OnCompleteListener() {
+            @Override
+            public void onComplete(String value) {
+                String verificationCode = otpEdit.getText().toString();
+                verifyOtp(verificationCode);
+            }
+        });
 
 
         mVerifyCodeBtn.setOnClickListener(v -> {
 
             String verificationCode = otpEdit.getText().toString();
-            progressBar.setVisibility(View.VISIBLE);
-            if(!verificationCode.isEmpty() && verificationId!=null ){
-                try{
-                    verifyPhoneNumberWithCode(verificationId,verificationCode);
-                    signIn(credential);
-                }catch(Exception e){
-                    Log.d(TAG,"ERROR"+ e.getMessage());
-                }
-
-            }else{
-                Toast.makeText(OtpActivity.this, "Please Enter OTP", Toast.LENGTH_SHORT).show();
-            }
+            verifyOtp(verificationCode);
         });
 
 
+    }
+
+    private void verifyOtp(String verificationCode){
+        progressBar.setVisibility(View.VISIBLE);
+        if(!verificationCode.isEmpty() && verificationId!=null ){
+            try{
+                verifyPhoneNumberWithCode(verificationId,verificationCode);
+                signIn(credential);
+            }catch(Exception e){
+                Log.d(TAG,"ERROR"+ e.getMessage());
+            }
+
+        }else{
+            Toast.makeText(OtpActivity.this, "Please Enter OTP", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void InitializeControllers() {
@@ -85,6 +98,8 @@ public class OtpActivity extends AppCompatActivity {
         mCallBacks = new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
             @Override
             public void onVerificationCompleted(@NonNull PhoneAuthCredential phoneAuthCredential) {
+                final String code = phoneAuthCredential.getSmsCode();
+                otpEdit.setText(code);
                 signIn(phoneAuthCredential);
 
             }

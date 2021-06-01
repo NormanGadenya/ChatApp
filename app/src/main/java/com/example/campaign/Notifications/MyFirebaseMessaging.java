@@ -49,7 +49,6 @@ public class MyFirebaseMessaging extends FirebaseMessagingService {
         Uri RingingSound= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         OreoNotification oreoNotification=new OreoNotification(this);
         Notification.Builder builder= oreoNotification.getOreoNotification(title,body,pendingIntent,RingingSound,icon);
-        System.out.println("scscd"+ j + "scsc +"+ user);
         int i=0;
         if(j>0){
             i=j;
