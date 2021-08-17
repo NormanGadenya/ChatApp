@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -35,6 +36,7 @@ import android.os.Vibrator;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -105,17 +107,29 @@ public class MainActivity extends AppCompatActivity   {
     private LifecycleOwner lifecycleOwner;
 
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         InitializeControllers();
+
         requestContactsPermission();
+
+//        ActionBar actionBar=getSupportActionBar();
+//        actionBar.setTitle("");
+////        actionBar.setDisplayHomeAsUpEnabled(true);
+//        actionBar.setDisplayShowCustomEnabled(true);
+//        LayoutInflater LayoutInflater=(LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+//        @SuppressLint("InflateParams") View actionBarView=LayoutInflater.inflate(R.layout.main_custom_bar,null);
+//        actionBar.setCustomView(actionBarView);
+
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         actionBar=getSupportActionBar();
-        actionBar.setTitle("Inbox");
+        actionBar.setTitle("Messages");
         chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
-        recyclerView.setHasFixedSize(true);
+        chatViewModel.initChatsList();
+//        recyclerView.setHasFixedSize(true);
         database = FirebaseDatabase.getInstance();
         updateStatus();
         if (ContextCompat.checkSelfPermission(context,
@@ -148,7 +162,6 @@ public class MainActivity extends AppCompatActivity   {
     @Override
     protected void onStart() {
         super.onStart();
-        chatViewModel.initChatsList();
         list=chatViewModel.getChatListData().getValue();
         chatListAdapter=new chatListAdapter(list, MainActivity.this,this,viewModelStoreOwner,lifecycleOwner);
         chatViewModel.getChatListData().observe(this, chatList -> chatListAdapter.notifyDataSetChanged());
@@ -203,143 +216,7 @@ public class MainActivity extends AppCompatActivity   {
         }
     }
 
-//    private void getChatList() {
-//        chatListId.clear();
-//        arrangedChatListId=new ArrayList<>();
-//        DatabaseReference mRef=database.getReference().child("chats").child(user.getUid());
-//        DatabaseReference chatListRef=database.getReference().child("chats");
-//        chatListRef.child(user.getUid()).addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                list.clear();
-//                chatListId.clear();
-//                messageArrange.clear();
-//                arrangedChatListId.clear();
-//                for (DataSnapshot dataSnapshot : snapshot.getChildren()){
-//                    chatListId.add(dataSnapshot.getKey());
-//                    chatUIds.add(dataSnapshot.getKey());
-//                    welcomeMsg.setVisibility(View.GONE);
-//                    welcomeEmoji.setVisibility(View.GONE);
-//                    String otherUserId=dataSnapshot.getKey();
-//                    mRef.child(otherUserId).orderByKey().limitToLast(1).addValueEventListener(new ValueEventListener() {
-//                        @Override
-//                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-//
-//                            arrangedChatListId.clear();
-//                            for(DataSnapshot snapshot1:snapshot.getChildren()){
-//                                messageArrange.put(snapshot.getKey(),snapshot1.getKey());
-//                            }
-//                            arrangeIdList();
-//                            getUserInfo();
-//
-//                        }
-//
-//                        @Override
-//                        public void onCancelled(@NonNull DatabaseError error) {
-//
-//                        }
-//                    });
-//
-//                }
-//
-//                if(chatListId.size()==0){
-//                    welcomeMsg.setVisibility(View.VISIBLE);
-//                    welcomeEmoji.setVisibility(View.VISIBLE);
-//                }
-////                getUInfo();
-////                chatListAdapter.notifyDataSetChanged();
-//
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError error) {
-//
-//            }
-//        });
-////        ItemTouchHelper.SimpleCallback simpleCallback=new ItemTouchHelper.SimpleCallback(0,ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT){
-////
-////            @Override
-////            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
-////                return false;
-////            }
-////
-////            @RequiresApi(api = Build.VERSION_CODES.N)
-////            @Override
-////            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-////                try {
-////                    int position = viewHolder.getAdapterPosition();
-////
-////                        Vibrator vibrator = (Vibrator) context.getSystemService(VIBRATOR_SERVICE);
-////                        vibrator.vibrate(50);
-////                        String otherUserId = list.get(position).getUserId();
-////                        Toast.makeText(context, "chat deleted", Toast.LENGTH_LONG).show();
-////                        DatabaseReference chatRef = database.getReference().child("chats").child(user.getUid()).child(otherUserId);
-////                        chatListId.remove(otherUserId);
-////                        arrangedChatListId.remove(position);
-//////                        list.remove(position);
-////                        chatRef.removeValue();
-////
-////
-////                        //list.remove(position);
-////                        chatListAdapter.notifyItemRemoved(position);
-////
-////
-////                }catch (Exception e){
-////                    Log.e("Error",e.getLocalizedMessage());
-////                }
-////            }
-////
-////            @Override
-////            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
-////                new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
-////                        .addBackgroundColor(ContextCompat.getColor(MainActivity.this,R.color.Red_200))
-////                        .addActionIcon(R.drawable.remove)
-////                        .create()
-////                        .decorate();
-////
-////                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
-////
-////            }
-////        };
-////        ItemTouchHelper itemTouchHelper=new ItemTouchHelper(simpleCallback);
-////        itemTouchHelper.attachToRecyclerView(recyclerView);
-//
-//    }
-//    private void getUserInfo() {
-//        DatabaseReference userDetailRef=database.getReference().child("UserDetails");
-//        userDetailRef.addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                list.clear();
-//                HashMap <String,chatListModel> chatListOrder=new HashMap<>();
-//                chatListOrder.clear();
-//                for(DataSnapshot dataSnapshot:snapshot.getChildren()){
-//                    if(arrangedChatListId.contains(dataSnapshot.getKey())){
-//                        System.out.println(dataSnapshot);
-//                        String userId=dataSnapshot.getKey();
-//                        userModel user= dataSnapshot.getValue(userModel.class);
-//                        userName=user.getUserName();
-//                        profileUrI=user.getProfileUrI();
-//                        chatListModel chat=new chatListModel();
-//                        chat.setUserName(userName);
-//                        chat.setUserId(userId);
-//                        chat.setTyping(user.getTyping());
-//                        chat.setProfileUrI(profileUrI);
-//                        chat.setOnline(user.getOnline());
-//                        chatListOrder.put(dataSnapshot.getKey(),chat);
-//                    }
-//                }
-//                for (String id:arrangedChatListId){
-//                    list.add(chatListOrder.get(id));
-//                    chatListAdapter.notifyDataSetChanged();
-//                }
-//
-//            }
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError error) {
-//            }
-//        });
-//    }
+
 
 
 
@@ -351,10 +228,11 @@ public class MainActivity extends AppCompatActivity   {
         editor.apply();
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-    }
+//    @Override
+//    public void onBackPressed() {
+//        super.onBackPressed();
+//
+//    }
 
     private ArrayList<userModel> FilterList(String newText){
         ArrayList<userModel> newList=new ArrayList<>();
@@ -434,7 +312,7 @@ public class MainActivity extends AppCompatActivity   {
         searchView.setOnCloseListener(new SearchView.OnCloseListener() {
             @Override
             public boolean onClose() {
-                actionBar.setTitle("Inbox");
+                actionBar.setTitle("Messages");
                 return false;
             }
         });
@@ -528,9 +406,11 @@ public class MainActivity extends AppCompatActivity   {
     }
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == CONTACTS_REQUEST)  {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && contactsList!=null) {
-                contactsList=getPhoneNumbers();
+
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == CONTACTS_REQUEST) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && contactsList != null) {
+                contactsList = getPhoneNumbers();
                 saveSharedPreferenceData();
 
             } else {

@@ -113,7 +113,7 @@ import static android.view.View.VISIBLE;
 
 public class ChatActivity extends AppCompatActivity implements RecyclerViewInterface {
 
-    private String otherUserId, message, profileUrI,otherUserName,lastSeen;
+    private String otherUserId, message, profileUrI,otherUserName,lastSeen,fUserName;
     private FirebaseDatabase database;
     private List<messageListModel> messageList = new ArrayList<>();
     private RecyclerView recyclerView ;
@@ -185,12 +185,15 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 //                uploadFile(user.getUid(),otherUserId);
             }
         }
-
-
         layoutManager= new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
 
         messageViewModel.initChats(otherUserId);
+        userViewModel.initFUserInfo();
+
+        userViewModel.getFUserInfo().observe(this,user->{
+            fUserName=user.getUserName();
+        });
         messageList=messageViewModel.getMessages().getValue();
         try{
             messageListAdapter=new messageListAdapter();
@@ -224,7 +227,27 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             }
 
         });
+        newMessage.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if(count > 0){
+                    attachButton.setVisibility(GONE);
+                }else{
+                    attachButton.setVisibility(VISIBLE);
+
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
         getCurrentWallpaper();
 
 
@@ -238,6 +261,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         String caption=getIntent().getStringExtra("caption");
         String videoUrI=getIntent().getStringExtra("videoUrI");
 //        String audioUrI=getIntent().getStringExtra("audioUrI");
+        Log.d("imageUrI","img"+imageUrI);
         if(imageUrI!=null){
             uploadImage(user.getUid(),otherUserId,Uri.parse(imageUrI),caption);
 
@@ -267,8 +291,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 sMessage_2.child(messageKey).setValue(m);
                 notify=true;
                 if(notify){
-
-                    sendNotification(otherUserId,otherUserName,message);
+                    sendNotification(otherUserId,fUserName,message);
                 }
                 newMessage.setText("");
             }
@@ -285,12 +308,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     }
 
-    @Override
-    protected void onStop() {
 
-        super.onStop();
-
-    }
 
     private void sendNotification(String otherUserId, String otherUserName, String message) {
         DatabaseReference tokens=database.getReference("Tokens");
@@ -458,36 +476,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 //        });
 
     }
-//    private void getCurrentWallpaper(){
-//
-//        userViewModel.initFUserInfo();
-//        userViewModel.getFUserInfo().observe(this,user ->{
-//            String chatWallpaperUrI=user.getChatWallpaper();
-//            int blur=user.getChatBlur();
-//            if(chatWallpaperUrI!=null){
-//                progressBar.setVisibility(View.VISIBLE);
-//                Glide.with(getApplicationContext())
-//                        .load(chatWallpaperUrI)
-//                        .transform(new BlurTransformation(blur))
-//                        .addListener(new RequestListener<Drawable>() {
-//                            @Override
-//                            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-//                                progressBar.setVisibility(GONE);
-//                                return false;
-//                            }
-//
-//                            @Override
-//                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-//                                progressBar.setVisibility(GONE);
-//                                return false;
-//                            }
-//                        })
-//                        .into(backgroundImageView)
-//                ;
-//            }
-//        });
-//
-//    }
+
     private void getTypingStatus(userModel user){
         if(user.getTyping()!=null){
             if(user.getTyping()){
@@ -843,6 +832,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         if(uri!=null){
             DatabaseReference myRef = database.getReference();
             DatabaseReference fUserChatRef= myRef.child("chats").child(userId).child(otherUserId).push();
+            updateToken(FirebaseInstanceId.getInstance().getToken());
+            apiService= Client.getClient("https://fcm.googleapis.com").create(APIService.class);
             messageListModel message=new messageListModel();
             message.setAudioUrI(uri.toString());
             message.setTime(getTime());
@@ -854,7 +845,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             StorageReference fileReference;
             fileReference = mStorageReference.child(System.currentTimeMillis()
                     + getMimeType(context,uri));
-            UploadTask uploadTask =fileReference.putFile(selected);
+            UploadTask uploadTask =fileReference.putFile(uri);
             uploadTask.continueWithTask(task -> {
                 if (!task.isSuccessful()) {
                     throw task.getException();
@@ -871,6 +862,10 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                     messageOtherUser.setReceiver(otherUserId);
                     DatabaseReference messageRef= myRef.child("chats").child(otherUserId).child(userId);
                     messageRef.child(messageKey).setValue(messageOtherUser);
+                    notify=true;
+                    if(notify){
+                        sendNotification(otherUserId,fUserName,"AUDIO");
+                    }
                 }
             });
         }
@@ -881,6 +876,10 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         if (uri != null) {
             DatabaseReference myRef = database.getReference();
             DatabaseReference fUserChatRef= myRef.child("chats").child(userId).child(otherUserId).push();
+
+            updateToken(FirebaseInstanceId.getInstance().getToken());
+            apiService= Client.getClient("https://fcm.googleapis.com").create(APIService.class);
+
             messageListModel message=new messageListModel();
             message.setText(caption);
             message.setVideoUrI(uri.toString());
@@ -892,7 +891,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             fUserChatRef.setValue(message);
             StorageReference fileReference;
             fileReference = mStorageReference.child(System.currentTimeMillis() + getMimeType(context,uri));
-            UploadTask uploadTask =fileReference.putFile(selected);
+            UploadTask uploadTask =fileReference.putFile(uri);
             uploadTask.continueWithTask(task -> {
                 if (!task.isSuccessful()) {
                     throw task.getException();
@@ -912,6 +911,10 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                     try{
                         DatabaseReference messageRef= myRef.child("chats").child(otherUserId).child(userId);
                         messageRef.child(messageKey).setValue(messageOtherUser);
+                        notify=true;
+                        if(notify){
+                            sendNotification(otherUserId,fUserName,"VIDEO");
+                        }
 
 
                     }catch(Exception e){
@@ -929,18 +932,21 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         if (uri != null) {
             DatabaseReference myRef = database.getReference();
             DatabaseReference fUserChatRef= myRef.child("chats").child(userId).child(otherUserId).push();
+            updateToken(FirebaseInstanceId.getInstance().getToken());
+            apiService= Client.getClient("https://fcm.googleapis.com").create(APIService.class);
             messageListModel message=new messageListModel();
             message.setText(caption);
             message.setImageUrI(uri.toString());
             message.setTime(getTime());
             message.setDate(getDate());
             message.setType("IMAGE");
+            Log.d("imggg","imgsc0"+ uri);
             message.setReceiver(otherUserId);
             String messageKey=fUserChatRef.getKey();
             fUserChatRef.setValue(message);
             StorageReference fileReference;
             fileReference = mStorageReference.child(System.currentTimeMillis() +  getMimeType(context,uri));
-            UploadTask uploadTask =fileReference.putFile(selected);
+            UploadTask uploadTask =fileReference.putFile(uri);
             uploadTask.continueWithTask(task -> {
                 if (!task.isSuccessful()) {
                     throw task.getException();
@@ -957,12 +963,17 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                     messageOtherUser.setType("IMAGE");
                     messageOtherUser.setReceiver(otherUserId);
                     try{
+                        notify=true;
+                        if(notify){
+                            sendNotification(otherUserId,fUserName,"IMAGE");
+                        }
                         DatabaseReference messageRef= myRef.child("chats").child(otherUserId).child(userId);
                         messageRef.child(messageKey).setValue(messageOtherUser);
                     }catch(Exception e){
                         Log.d("error",e.getLocalizedMessage());
 
                     }
+
                 }
             });
         } else {

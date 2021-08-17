@@ -3,6 +3,7 @@ package com.example.campaign.adapter;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Vibrator;
@@ -89,6 +90,10 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
         View view = LayoutInflater.from(context).inflate(R.layout.layout_chat_list,parent,false);
         chatViewModel= ViewModelProviders.of((FragmentActivity)activity).get(ChatViewModel.class);
 
+        int[] attrs = new int[]{R.attr.selectableItemBackground};
+        TypedArray typedArray = activity.obtainStyledAttributes(attrs);
+        int backgroundResource = typedArray.getResourceId(0, 0);
+        view.setBackgroundResource(backgroundResource);
         return new Holder(view);
 
     }

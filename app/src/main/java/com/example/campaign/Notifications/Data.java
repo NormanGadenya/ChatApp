@@ -4,13 +4,13 @@ public class Data {
     private String user;
     private int icon;
     private String body;
-    private String sented;
+    private String sender;
     private String title;
-    public Data(String user, int icon, String body, String sented,String title) {
+    public Data(String user, int icon, String body, String sender,String title) {
         this.user = user;
         this.icon = icon;
         this.body = body;
-        this.sented = sented;
+        this.sender = sender;
         this.title=title;
     }
 
@@ -38,11 +38,11 @@ public class Data {
         this.body = body;
     }
 
-    public String getSented() {
-        return sented;
+    public String getSender() {
+        return sender;
     }
 
-    public void setSented(String sented) {
-        this.sented = sented;
+    public void setSender(String sender) {
+        this.sender = sender;
     }
 }

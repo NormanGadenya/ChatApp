@@ -75,6 +75,7 @@ public class RegistrationActivity extends AppCompatActivity {
     private ZoomInImageView profilePic;
     private static final int CAMERA_REQUEST = 1888;
     private static final int GALLERY_REQUEST = 100;
+    private static final int CONTACTS_REQUEST=200;
     private StorageReference mStorageReference;
     private boolean btnSelected=false;
     private View layout_act_drag;
@@ -129,6 +130,14 @@ public class RegistrationActivity extends AppCompatActivity {
                         userId=profileData.getUid();
                         phoneNumber=profileData.getPhoneNumber();
                         uploadFile(name,phoneNumber,userId);
+                        if (ContextCompat.checkSelfPermission(RegistrationActivity.this,
+                                Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+                            Intent chatList=new Intent(RegistrationActivity.this, MainActivity.class);
+                            startActivity(chatList);
+                            userName.setEnabled(false);
+                        } else {
+                            requestContactsPermission();
+                        }
                     }
                 }
             }
@@ -252,8 +261,7 @@ public class RegistrationActivity extends AppCompatActivity {
                         System.out.println(e.getLocalizedMessage());
                     }
                     progressBar.setVisibility(View.GONE);
-                    Intent chatList=new Intent(RegistrationActivity.this, SignUpActivity.class);
-                    startActivity(chatList);
+
 
                 }
             });
@@ -313,6 +321,21 @@ public class RegistrationActivity extends AppCompatActivity {
                     new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, GALLERY_REQUEST);
         }
     }
+    private void requestContactsPermission() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.READ_CONTACTS)) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Permission needed")
+                    .setMessage("This permission is needed because we need to access your contacts")
+                    .setPositiveButton("ok", (dialog, which) -> ActivityCompat.requestPermissions(RegistrationActivity.this,
+                            new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST))
+                    .setNegativeButton("cancel", (dialog, which) -> dialog.dismiss())
+                    .create().show();
+        } else {
+            ActivityCompat.requestPermissions(this,
+                    new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST);
+        }
+    }
     private void closeKeyboard(){
         View view=this.getCurrentFocus();
         if (view!=null){
@@ -361,6 +384,12 @@ public class RegistrationActivity extends AppCompatActivity {
                 startActivityForResult(cameraIntent,  CAMERA_REQUEST);
             } else {
                 Toast.makeText(this, "Permission DENIED", Toast.LENGTH_SHORT).show();
+            }
+        }
+        else if(requestCode== CONTACTS_REQUEST){
+            if(grantResults.length >0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
+                Intent chatList=new Intent(RegistrationActivity.this, MainActivity.class);
+                startActivity(chatList);
             }
         }
     }

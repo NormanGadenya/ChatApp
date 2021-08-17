@@ -84,6 +84,8 @@ public class userListAdapter extends RecyclerView.Adapter<userListAdapter.Holder
         return list.size();
     }
 
+
+
     public class Holder extends RecyclerView.ViewHolder {
         private TextView userName, phoneNumber;
         private CircularImageView profile;

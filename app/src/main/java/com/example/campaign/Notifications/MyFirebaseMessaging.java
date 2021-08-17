@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 
@@ -22,9 +23,9 @@ public class MyFirebaseMessaging extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
-        String sented=remoteMessage.getData().get("sented");
+        String sender=remoteMessage.getData().get("sender");
         FirebaseUser fUser= FirebaseAuth.getInstance().getCurrentUser();
-        if(fUser != null && sented.equals(fUser.getUid())){
+        if(fUser != null && sender.equals(fUser.getUid())){
             if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O){
                 sendOreoNotification(remoteMessage);
             }else{
@@ -41,7 +42,8 @@ public class MyFirebaseMessaging extends FirebaseMessagingService {
         String body=remoteMessage.getData().get("body");
 
         RemoteMessage.Notification notification=remoteMessage.getNotification();
-        int j=Integer.parseInt(user.replaceAll("[\\D]", ""));
+
+        int j=Integer.parseInt(user.replaceAll("[\\D]", "")); // generates the notification id's
         Intent intent=new Intent(this, ChatActivity.class);
         intent.putExtra("userId",user);
 //        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);

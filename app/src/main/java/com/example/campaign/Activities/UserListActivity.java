@@ -65,6 +65,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import xyz.danoz.recyclerviewfastscroller.vertical.VerticalRecyclerViewFastScroller;
+
 public class UserListActivity extends AppCompatActivity {
     public static final String EXTRA_CIRCULAR_REVEAL_X="EXTRA_CIRCULAR_REVEAL_X" ;
     public static final String EXTRA_CIRCULAR_REVEAL_Y = "EXTRA_CIRCULAR_REVEAL_Y";
@@ -88,7 +90,9 @@ public class UserListActivity extends AppCompatActivity {
     private int CONTACTS_REQUEST=110;
     private Set<String> contactsList=new HashSet<>();
     private UserViewModel userViewModel;
+    private VerticalRecyclerViewFastScroller fastScroller;
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -145,6 +149,8 @@ public class UserListActivity extends AppCompatActivity {
         } else {
             rootLayout.setVisibility(View.VISIBLE);
         }
+        fastScroller.setRecyclerView(recyclerView);
+        recyclerView.setOnScrollListener(fastScroller.getOnScrollListener());
 
 
     }
@@ -163,6 +169,7 @@ public class UserListActivity extends AppCompatActivity {
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowCustomEnabled(true);
         rootLayout = findViewById(R.id.root_layout);
+        fastScroller=findViewById(R.id.fastScrollerContacts);
 
     }
 

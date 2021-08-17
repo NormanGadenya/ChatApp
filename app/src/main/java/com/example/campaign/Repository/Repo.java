@@ -56,8 +56,6 @@ public class Repo {
     private MutableLiveData<userModel> otherUserInfo=new MutableLiveData<>();
     private MutableLiveData<userModel> fUserInfo=new MutableLiveData<>();
     private MutableLiveData<ArrayList<userModel>> userList=new MutableLiveData<>();
-
-
     private HashMap<String, String> messageArrange=new HashMap<>();
     private ArrayList<String> arrangedChatListId, chatListId,chatUIds;
     private MutableLiveData<List<messageListModel>> messageList=new MutableLiveData<>();
@@ -86,7 +84,6 @@ public class Repo {
 
     public MutableLiveData<HashMap<String , messageListModel>> getLastMessage(String userId){
         loadLastMessage(userId);
-
         return  lastMessage;
     }
 
@@ -316,28 +313,8 @@ public class Repo {
                         messageList.postValue(messageListModel);
 
                         mKeys.add(snapshot.getKey());
-                        if(message.getReceiver()!=null){
-//                            otherUserMRef.addValueEventListener(new ValueEventListener() {
-//                                @Override
-//                                public void onDataChange(@NonNull DataSnapshot otherSnapshot) {
-//                                    for(DataSnapshot s:otherSnapshot.getChildren()){
-//
-//                                        if(mKeys.contains(s.getKey())){
-//                                            HashMap<String,Object> messageStatus=new HashMap<>();
-//                                            messageStatus.put("checked",true);
-//                                            otherUserMRef.child(s.getKey()).updateChildren(messageStatus);
-//                                        }
-//                                    }
-//
-//                                }
-//
-//                                @Override
-//                                public void onCancelled(@NonNull DatabaseError error) {
-//
-//                                }
-//                            });
 
-                        }
+
 
 
 
@@ -346,6 +323,28 @@ public class Repo {
                     }
 
                 }
+
+                otherUserMRef.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot otherSnapshot) {
+                        for(DataSnapshot s:otherSnapshot.getChildren()){
+
+                            if(mKeys.contains(s.getKey())){
+                                HashMap<String,Object> messageStatus=new HashMap<>();
+                                messageStatus.put("checked",true);
+                                otherUserMRef.child(s.getKey()).updateChildren(messageStatus);
+                            }
+                        }
+
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
+
+
 
 
             }
@@ -401,6 +400,7 @@ public class Repo {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 List <String> phoneNumbersList=new ArrayList<>();
+                Log.d("snapshot",snapshot.toString());
                 user_List_Model.clear();
                 for (DataSnapshot dataSnapshot: snapshot.getChildren()){
                     userModel userListObj=new userModel();
