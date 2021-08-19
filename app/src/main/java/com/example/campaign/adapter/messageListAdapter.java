@@ -14,6 +14,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.text.Layout;
 import android.util.Log;
@@ -73,6 +74,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import hani.momanii.supernova_emoji_library.Helper.EmojiconTextView;
+import me.jagar.chatvoiceplayerlibrary.VoicePlayerView;
 
 
 public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.Holder> {
@@ -94,7 +96,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     private FirebaseUser firebaseUser=FirebaseAuth.getInstance().getCurrentUser();
     boolean isPlaying=false;
     private Handler mHandler = new Handler();
-    private AudioService audioService;
 
 
 
@@ -106,7 +107,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         this.activity=activity;
         this.otherUserId=otherUserId;
         this.msgGroupDateTop=msgGroupDateTop;
-        this.audioService = new AudioService(context);
+
     }
     public messageListAdapter(){ }
     public void setMessageList(List<messageListModel> list){
@@ -299,23 +300,22 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     }
 
     public class Holder extends RecyclerView.ViewHolder {
-        private TextView time,msgGroupDate,songLength;
+        private TextView time,msgGroupDate;
         private EmojiconTextView message;
         private ImageView messageStatus;
         private ZoomInImageView imageView;
         private ProgressBar progressBar;
-        private ImageButton delete,playButton,playPauseButton;
+        private ImageButton delete,playButton;
         private TextView date;
         private ImageView checkBox;
         private View layout;
-        private SeekBar musicController;
+        private VoicePlayerView voicePlayerView;
 
 
 
 
         public Holder(@NonNull View itemView) {
             super(itemView);
-            songLength=itemView.findViewById(R.id.songLength);
             playButton=itemView.findViewById(R.id.playButton);
             delete=itemView.findViewById(R.id.delete);
             imageView=itemView.findViewById(R.id.imageView);
@@ -327,8 +327,8 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
             msgGroupDate=itemView.findViewById(R.id.msgGroupDate);
             checkBox=itemView.findViewById(R.id.checkBox);
             layout=itemView.findViewById(R.id.const2);
-            playPauseButton=itemView.findViewById(R.id.playPause);
-            musicController=itemView.findViewById(R.id.music_controller);
+//            voicePlayerView=itemView.findViewById(R.id.voicePlayerView);
+
 
         }
 
@@ -343,13 +343,11 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
                 switch(messageList.getType()){
                     case "TEXT":
-                        songLength.setVisibility(View.GONE);
+                        voicePlayerView.setVisibility(itemView.GONE);
                         playButton.setVisibility(View.GONE);
                         message.setText(messageList.getText());
                         imageView.setVisibility(itemView.GONE);
                         message.setVisibility(itemView.VISIBLE);
-                        musicController.setVisibility(View.GONE);
-                        playPauseButton.setVisibility(View.GONE);
                         time.setText(messageList.getTime());
                         progressBar.setVisibility(itemView.GONE);
                         message.setOnLongClickListener(new View.OnLongClickListener() {
@@ -362,10 +360,8 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         });
                         break;
                     case "IMAGE":
-                        songLength.setVisibility(itemView.GONE);
+                        voicePlayerView.setVisibility(itemView.GONE);
                         playButton.setVisibility(View.GONE);
-                        musicController.setVisibility(View.GONE);
-                        playPauseButton.setVisibility(View.GONE);
                         progressBar.setVisibility(itemView.VISIBLE);
                         imageView.setVisibility(itemView.VISIBLE);
                         if(messageList.getText()==null){
@@ -403,11 +399,10 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         break;
 
                     case "VIDEO":
-                        songLength.setVisibility(itemView.GONE);
+                        voicePlayerView.setVisibility(itemView.GONE);
                         progressBar.setVisibility(itemView.VISIBLE);
                         imageView.setVisibility(itemView.VISIBLE);
-                        musicController.setVisibility(View.GONE);
-                        playPauseButton.setVisibility(View.GONE);
+
                         if(messageList.getText()==null){
                             message.setVisibility(itemView.GONE);
                         }else{
@@ -447,93 +442,29 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         break;
 
                     case "AUDIO":
-                        songLength.setVisibility(itemView.VISIBLE);
-                        imageView.setVisibility(View.GONE);
-                        message.setVisibility(View.GONE);
-                        musicController.setVisibility(View.VISIBLE);
-                        playPauseButton.setVisibility(View.VISIBLE);
-                        playPauseButton.setBackgroundResource(R.drawable.ic_baseline_play_circle_outline_24);
-                        progressBar.setVisibility(View.GONE);
-                        mediaPlayer = new MediaPlayer();
+//                        voicePlayerView.setVisibility(View.VISIBLE);
+//                        message.setVisibility(View.GONE);
+//                        playButton.setVisibility(View.GONE);
+//                        message.setText(messageList.getText());
+//                        imageView.setVisibility(itemView.GONE);
+//                        message.setVisibility(itemView.VISIBLE);
+//                        time.setText(messageList.getTime());
+//                        progressBar.setVisibility(itemView.GONE);
+//                        try{
+//                            Handler handler = new Handler(Looper.getMainLooper());
+//                            handler.post(new Runnable() {
+//                                public void run() {
+//                                    voicePlayerView.setAudio(messageList.getAudioUrI());
+//                                }
+//                            });
+//
+//                        }catch
+//                        (Exception e){
+//                            Log.d("Error messageListAdapter",e.getLocalizedMessage());
+//                        }
 
-                        String audioUrI=messageList.getAudioUrI();
-                        String receiver=messageList.getReceiver();
-
-
-                        if(receiver.equals(firebaseUser.getUid())){
-                            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                            mediaPlayer.setDataSource(audioUrI);
-                            mediaPlayer.prepareAsync();
-                        }else{
-                            mediaPlayer.setAudioAttributes(
-                                    new AudioAttributes.Builder()
-                                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                                            .setUsage(AudioAttributes.USAGE_MEDIA)
-                                            .build()
-                            );
-                            mediaPlayer.setDataSource(context, Uri.parse(audioUrI));
-                            mediaPlayer.prepare();
-                        }
-                        musicController.setMax(mediaPlayer.getDuration()/1000);
-                        String duration=format(mediaPlayer.getDuration());
-                        songLength.setText(duration);
-                        time.setText(messageList.getTime());
-                        playButton.setVisibility(View.GONE);
-//                        mediaPlayer = new MediaPlayer();
-                        playPauseButton.setOnClickListener(V->{
-
-
-
-                                activity.runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-
-                                            if(mediaPlayer != null ){
-                                                mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                                                    @Override
-                                                    public void onPrepared(MediaPlayer mp) {
-                                                        int mCurrentPosition = mediaPlayer.getCurrentPosition()/1000;
-
-                                                        Log.d("progress", String.valueOf(mCurrentPosition));
-                                                        musicController.setProgress(mCurrentPosition);
-                                                    }
-                                                });
-
-
-                                            }
-
-
-                                        mHandler.postDelayed(this, 1000);
-                                    }
-                                });
-
-                            playPauseButton.setBackgroundResource(R.drawable.ic_baseline_pause_circle_outline_24);
-                            if(receiver.equals(firebaseUser.getUid())) {
-                                mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                                    @Override
-                                    public void onPrepared(MediaPlayer mp) {
-                                        Log.d("scsc", "scdcd");
-
-                                        mp.start();
-
-                                    }
-                                });
-                            }else{
-                                mediaPlayer.start();
-                            }
-
-
-
-
-                        });
-                        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                            @Override
-                            public void onCompletion(MediaPlayer mp) {
-                                playPauseButton.setBackgroundResource(R.drawable.ic_baseline_play_circle_outline_24);
-                                mp.release();
-//                                musicController.setProgress(0);
-                            }
-                        });
+//                        if(voicePlayerView.getMediaPlayer().)
+                        break;
                 }
                 if (messageList.isChecked()){
                     messageStatus.setImageResource(R.drawable.ic_baseline_done_all_24);
@@ -551,6 +482,32 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         }
 
 
+    }
+
+    private void playAudio() {
+
+        mediaPlayer = new MediaPlayer();
+        String audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+
+        // initializing media player
+        // below line is use to set the audio
+        // stream type for our media player.
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+
+        // below line is use to set our
+        // url to our media player.
+        try {
+            mediaPlayer.setDataSource(audioUrl);
+            // below line is use to prepare
+            // and start our media player.
+            mediaPlayer.prepare();
+            mediaPlayer.start();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        // below line is use to display a toast message.
+        Toast.makeText(context, "Audio started playing..", Toast.LENGTH_SHORT).show();
     }
     private String format(long duration){
         return String.format("%d min, %d sec",

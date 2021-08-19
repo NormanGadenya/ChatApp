@@ -68,6 +68,7 @@ import com.example.campaign.Notifications.MyResponse;
 import com.example.campaign.Notifications.Sender;
 import com.example.campaign.Notifications.Token;
 import com.example.campaign.R;
+import com.example.campaign.Services.AudioService;
 import com.example.campaign.adapter.messageListAdapter;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -219,12 +220,9 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
         audioButton.setOnClickListener(I->{
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
-            try{
 
-            }catch(Exception e){
-                startActivityForResult(intent,AUDIOREQUEST);
+            startActivityForResult(intent,AUDIOREQUEST);
 
-            }
 
         });
         newMessage.addTextChangedListener(new TextWatcher() {
@@ -253,7 +251,13 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
 
         try{
-            getMessages();
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.post(new Runnable() {
+                public void run() {
+                    getMessages();
+                }
+            });
+
         }catch (Exception e){
             Log.d("Error" ,e.getLocalizedMessage());
         }
@@ -800,12 +804,16 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                         .putExtra("otherUserName", otherUserName);
                 startActivity(intent);
             } else if (requestCode == AUDIOREQUEST) {
-                uploadAudio(user.getUid(),otherUserId,selected);
-//                Intent intent = new Intent(getApplicationContext(), sendAudio.class)
-//                        .putExtra("audioUrI", selected.toString())
-//                        .putExtra("otherUserId", otherUserId)
-//                        .putExtra("otherUserName", otherUserName);
-//                startActivity(intent);
+                Intent intent =new Intent(this, AudioService.class);
+
+                String uri=selected.toString();
+                intent.putExtra("fUserName",fUserName)
+                        .putExtra("uri",uri)
+                        .putExtra("userId",user.getUid())
+                        .putExtra("otherUserId",otherUserId);
+                startService(intent);
+//                uploadAudio(user.getUid(),otherUserId,selected);
+
             }
         }
     }
@@ -835,13 +843,12 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             updateToken(FirebaseInstanceId.getInstance().getToken());
             apiService= Client.getClient("https://fcm.googleapis.com").create(APIService.class);
             messageListModel message=new messageListModel();
-            message.setAudioUrI(uri.toString());
             message.setTime(getTime());
             message.setDate(getDate());
             message.setType("AUDIO");
             message.setReceiver(otherUserId);
             String messageKey=fUserChatRef.getKey();
-            fUserChatRef.setValue(message);
+
             StorageReference fileReference;
             fileReference = mStorageReference.child(System.currentTimeMillis()
                     + getMimeType(context,uri));
@@ -859,9 +866,12 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                     messageOtherUser.setTime(getTime());
                     messageOtherUser.setDate(getDate());
                     messageOtherUser.setType("AUDIO");
+                    message.setAudioUrI(downloadUri.toString());
                     messageOtherUser.setReceiver(otherUserId);
                     DatabaseReference messageRef= myRef.child("chats").child(otherUserId).child(userId);
+                    fUserChatRef.setValue(message);
                     messageRef.child(messageKey).setValue(messageOtherUser);
+
                     notify=true;
                     if(notify){
                         sendNotification(otherUserId,fUserName,"AUDIO");

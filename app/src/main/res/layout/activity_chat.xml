@@ -70,7 +70,7 @@
                 android:background="@color/transparent"
                 android:clickable="true"
                 android:src="@drawable/smiley"
-                android:tint="@color/white"
+                app:tint="@color/white"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -99,7 +99,6 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:layout_marginStart="1dp"
-
             android:background="@drawable/ripple"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/sendButton"
@@ -113,7 +112,7 @@
             android:layout_height="40dp"
             android:layout_marginEnd="2dp"
             android:layout_marginStart="2dp"
-            android:foreground="@drawable/ripple"
+            android:background="@drawable/ripple"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"

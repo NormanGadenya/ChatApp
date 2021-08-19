@@ -74,7 +74,9 @@ public class Repo {
 
     public MutableLiveData<ArrayList<userModel>> getChatList(){
         if (chats_List_Model!=null) {
-            loadChatList();
+            GetChatList getChatList=new GetChatList();
+            new Thread(getChatList).start();
+//            loadChatList();
             chatList.setValue(chats_List_Model);
             chats_List_Model.clear();
         }
@@ -83,27 +85,36 @@ public class Repo {
     }
 
     public MutableLiveData<HashMap<String , messageListModel>> getLastMessage(String userId){
-        loadLastMessage(userId);
+//        loadLastMessage(userId);
+        GetLastMessage getLastMessage=new GetLastMessage(userId);
+        new Thread(getLastMessage).start();
         return  lastMessage;
     }
 
     public MutableLiveData<List<messageListModel>> getMessages(String otherUserId){
-        loadMessages(otherUserId);
+        GetMessages getMessages =new GetMessages(otherUserId);
+        new Thread(getMessages).start();
         messageList.setValue(messageListModel);
         return messageList;
     }
 
     public MutableLiveData<userModel> getOtherUserInfo(String otherUserId){
-        loadOtherUserInfo(otherUserId);
+        GetOtherUserInfo getOtherUserInfo =new GetOtherUserInfo(otherUserId);
+        new Thread(getOtherUserInfo).start();
+//        loadOtherUserInfo(otherUserId);
         return otherUserInfo;
     }
     public MutableLiveData<userModel> getFUserInfo(){
-        loadCurrentUserInfo();
+        GetFUserInfo getFUserInfo= new GetFUserInfo();
+        new Thread(getFUserInfo).start();
+//        loadCurrentUserInfo();
         return fUserInfo;
     }
 
     public MutableLiveData <ArrayList<userModel>> getAllUsers(Set<String> contacts){
-        loadAllUsers(contacts);
+        GetAllUsers getAllUsers = new GetAllUsers(contacts);
+        new Thread(getAllUsers).start();
+//        loadAllUsers(contacts);
         userList.setValue(user_List_Model);
         return userList;
     }
@@ -435,6 +446,68 @@ public class Repo {
             }
         });
     }
+
+    class GetChatList implements Runnable {
+        @Override
+        public void run() {
+            loadChatList();
+        }
+    }
+
+    class GetLastMessage implements Runnable {
+        String userId;
+
+        GetLastMessage(String userId){
+            this.userId=userId;
+        }
+
+        @Override
+        public void run() {
+            loadLastMessage(userId);
+        }
+    }
+
+    class GetMessages implements Runnable {
+        String otherUserId;
+         GetMessages(String otherUserId){
+             this.otherUserId=otherUserId;
+         }
+        @Override
+        public void run() {
+            loadMessages(otherUserId);
+        }
+    }
+
+    class GetOtherUserInfo implements Runnable {
+        String otherUserId;
+        GetOtherUserInfo(String otherUserId){
+             this.otherUserId=otherUserId;
+         }
+        @Override
+        public void run() {
+            loadOtherUserInfo(otherUserId);
+        }
+    }
+
+    class GetFUserInfo implements Runnable {
+
+        @Override
+        public void run() {
+            loadCurrentUserInfo();
+        }
+    }
+
+    class GetAllUsers implements Runnable {
+        Set <String> contacts;
+        GetAllUsers(Set <String> contacts){
+            this.contacts=contacts;
+        }
+        @Override
+        public void run() {
+            loadAllUsers(contacts);
+        }
+    }
+
 
 
 

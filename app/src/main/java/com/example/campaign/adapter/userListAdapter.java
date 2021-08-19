@@ -16,10 +16,11 @@ import com.example.campaign.Model.userModel;
 import com.example.campaign.R;
 import com.example.campaign.Activities.ChatActivity;
 import com.mikhaellopez.circularimageview.CircularImageView;
+import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
 
 import java.util.List;
 
-public class userListAdapter extends RecyclerView.Adapter<userListAdapter.Holder> {
+public class userListAdapter extends RecyclerView.Adapter<userListAdapter.Holder> implements FastScrollRecyclerView.SectionedAdapter {
     private List<userModel> list;
     private Context context;
 
@@ -82,6 +83,15 @@ public class userListAdapter extends RecyclerView.Adapter<userListAdapter.Holder
     @Override
     public int getItemCount() {
         return list.size();
+    }
+
+    @NonNull
+    @Override
+    public String getSectionName(int position) {
+        final userModel userList=list.get(position);
+        char firstChar=userList.getUserName().charAt(0);
+        String Letter=Character.toString(firstChar).toUpperCase();
+        return Letter ;
     }
 
 

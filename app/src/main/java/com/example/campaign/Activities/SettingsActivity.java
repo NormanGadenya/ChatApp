@@ -144,12 +144,11 @@ public class SettingsActivity extends AppCompatActivity {
         messageListAdapter.setMContext(getApplicationContext());
         messageListAdapter.setMessageList(messageList);
         messageListAdapter.setActivity(this);
-
         messageListAdapter.setOtherUserId("");
         recyclerView.setAdapter(messageListAdapter);
         messageList.add(new messageListModel(" Hi","123","17-04-2020","02:00","","","TEXT",""));
-        messageList.add(new messageListModel(" Hey",firebaseUser.getUid(),"17-04-2020","02:00","","","TEXT",""));
-        messageList.add(new messageListModel(" How are you",firebaseUser.getUid(),"17-04-2020","02:00","","","TEXT",""));
+        messageList.add(new messageListModel(" Hey","firebaseUser.getUid()","17-04-2020","02:00","","","TEXT",""));
+        messageList.add(new messageListModel(" How are you","firebaseUser.getUid()","17-04-2020","02:00","","","TEXT",""));
 
         messageListAdapter.notifyDataSetChanged();
 
@@ -379,10 +378,11 @@ public class SettingsActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == GALLERY_REQUEST)  {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == GALLERY_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(intent,GALLERY_REQUEST);
+                startActivityForResult(intent, GALLERY_REQUEST);
             } else {
                 Toast.makeText(this, "Permission DENIED", Toast.LENGTH_SHORT).show();
             }

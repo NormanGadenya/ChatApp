@@ -54,6 +54,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -75,7 +76,7 @@ public class UserListActivity extends AppCompatActivity {
     private int revealX;
     private int revealY;
     private List<String> chatListId;
-    private RecyclerView recyclerView;
+    private FastScrollRecyclerView recyclerView;
 
     private FirebaseUser user;
     private FirebaseDatabase database;
@@ -149,8 +150,8 @@ public class UserListActivity extends AppCompatActivity {
         } else {
             rootLayout.setVisibility(View.VISIBLE);
         }
-        fastScroller.setRecyclerView(recyclerView);
-        recyclerView.setOnScrollListener(fastScroller.getOnScrollListener());
+//        fastScroller.setRecyclerView(recyclerView);
+//        recyclerView.setOnScrollListener(fastScroller.getOnScrollListener());
 
 
     }
@@ -169,7 +170,7 @@ public class UserListActivity extends AppCompatActivity {
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowCustomEnabled(true);
         rootLayout = findViewById(R.id.root_layout);
-        fastScroller=findViewById(R.id.fastScrollerContacts);
+//        fastScroller=findViewById(R.id.fastScrollerContacts);
 
     }
 
@@ -394,12 +395,13 @@ public class UserListActivity extends AppCompatActivity {
     }
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == CONTACTS_REQUEST)  {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == CONTACTS_REQUEST) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 loadSharedPreferenceData();
-                if(contactsList==null){
+                if (contactsList == null) {
                     System.out.println("scscdvf");
-                    contactsList=getPhoneNumbers();
+                    contactsList = getPhoneNumbers();
                 }
                 loadUsers(contactsList);
 
