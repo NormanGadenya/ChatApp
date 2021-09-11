@@ -19,6 +19,7 @@ import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -41,10 +42,12 @@ import android.widget.ProgressBar;
 import android.widget.SearchView;
 import android.widget.Toast;
 
+import com.example.campaign.Common.ServiceCheck;
 import com.example.campaign.Model.ChatViewModel;
 import com.example.campaign.Model.UserViewModel;
 import com.example.campaign.Model.userModel;
 import com.example.campaign.R;
+import com.example.campaign.Services.updateStatusService;
 import com.example.campaign.adapter.chatListAdapter;
 import com.example.campaign.adapter.userListAdapter;
 import com.google.firebase.auth.FirebaseAuth;
@@ -104,8 +107,10 @@ public class UserListActivity extends AppCompatActivity {
         database = FirebaseDatabase.getInstance();
 
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        ServiceCheck serviceCheck=new ServiceCheck(updateStatusService.class,this,manager);
+        serviceCheck.checkServiceRunning();
 
-        updateStatus();
 
         if (ContextCompat.checkSelfPermission(context,
                 Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
@@ -119,9 +124,12 @@ public class UserListActivity extends AppCompatActivity {
                     }
                     userViewModel.initUserList(contactsList);
                     list=userViewModel.getAllUsers().getValue();
+                    System.out.println(contactsList);
                     userListAdapter=new userListAdapter(list, UserListActivity.this);
                     recyclerView.setAdapter(userListAdapter);
                     loadUsers(contactsList);
+
+
                 }
             });
 
@@ -224,107 +232,18 @@ public class UserListActivity extends AppCompatActivity {
         editor.apply();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private void updateStatus(){
-        DatabaseReference userDetailRef=database.getReference().child("UserDetails").child(user.getUid());
-        Map<String ,Object> onlineStatus=new HashMap<>();
-        onlineStatus.put("online",true);
-        userDetailRef.updateChildren(onlineStatus);
 
-        Map<String ,Object> lastSeenStatus=new HashMap<>();
-        lastSeenStatus.put("lastSeenDate",getDate());
-        lastSeenStatus.put("lastSeenTime",getTime());
-        lastSeenStatus.put("online",false);
-        userDetailRef.onDisconnect().updateChildren(lastSeenStatus);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private String getTime(){
-        LocalDateTime myDateObj = LocalDateTime.now();
-        DateTimeFormatter timeObj = DateTimeFormatter.ofPattern("HH:mm");
-        return myDateObj.format(timeObj);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private String getDate(){
-        LocalDateTime myDateObj = LocalDateTime.now();
-        DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        return myDateObj.format(dateObj);
-    }
 
 
     private void loadUsers(Set<String> contacts){
-        DatabaseReference userDetails=database.getReference().child("UserDetails");
+
         userViewModel.getAllUsers().observe(this, userModels -> {
             userListAdapter.notifyDataSetChanged();
             progressBar.setVisibility(View.GONE);
 
-//            for (DataSnapshot dataSnapshot:snapshot.getChildren()){
-//
-//                userModel userListObj=new userModel();
-//                String id=dataSnapshot.getKey();
-//                userModel users=dataSnapshot.getValue(userModel.class);
-//                String phoneNumber=user.getPhoneNumber();
-//                phoneNumbersList.add(user.getPhoneNumber());
-//
-//                int i= Collections.frequency(phoneNumbersList,users.getPhoneNumber());
-//                if (contacts!=null && !users.getPhoneNumber().equals(phoneNumber)) {
-//                    if (i <=1 && contacts.contains(phoneNumber)){
-//                        userListObj.setUserName(users.getUserName());
-//                        userListObj.setPhoneNumber(users.getPhoneNumber());
-//                        userListObj.setProfileUrI(users.getProfileUrI());
-//                        userListObj.setUserId(id);
-//                        userListObj.setOnline(users.getOnline());
-//                        list.add(userListObj);
-//                        Collections.sort(list,userModel::compareTo);
-//                        userListAdapter.notifyDataSetChanged();
-//                        progressBar.setVisibility(View.GONE);
-//                    }
-//                }
-//            }
+
         });
-//        handler.post(new Runnable() {
-//            @Override
-//            public void run() {
-//                userDetails.addValueEventListener(new ValueEventListener() {
-//                    @Override
-//                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                        List <String> phoneNumbersList=new ArrayList<>();
-//                        list.clear();
-//                        for (DataSnapshot dataSnapshot:snapshot.getChildren()){
-//
-//                            userModel userListObj=new userModel();
-//                            String id=dataSnapshot.getKey();
-//                            userModel users=dataSnapshot.getValue(userModel.class);
-//                            String phoneNumber=user.getPhoneNumber();
-//                            phoneNumbersList.add(user.getPhoneNumber());
-//
-//                            int i= Collections.frequency(phoneNumbersList,users.getPhoneNumber());
-//                            if (contacts!=null && !users.getPhoneNumber().equals(phoneNumber)) {
-//                                if (i <=1 && contacts.contains(phoneNumber)){
-//                                    userListObj.setUserName(users.getUserName());
-//                                    userListObj.setPhoneNumber(users.getPhoneNumber());
-//                                    userListObj.setProfileUrI(users.getProfileUrI());
-//                                    userListObj.setUserId(id);
-//                                    userListObj.setOnline(users.getOnline());
-//                                    list.add(userListObj);
-//                                    Collections.sort(list,userModel::compareTo);
-//                                    userListAdapter.notifyDataSetChanged();
-//                                    progressBar.setVisibility(View.GONE);
-//                                }
-//                            }
-//                        }
-//
-//                    }
-//
-//                    @Override
-//                    public void onCancelled(@NonNull DatabaseError error) {
-//
-//                    }
-//                });
-//
-//            }
-//        });
+
     }
 
     public boolean isAlphanumeric2(String str) {

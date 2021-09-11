@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="5dp"
@@ -30,32 +31,64 @@
         android:layout_marginTop="10dp"
         app:layout_constraintTop_toBottomOf="@+id/msgGroupDate"
         app:layout_constraintEnd_toEndOf="parent">
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/audioLoadingP"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            />
+        <ImageButton
+            android:id="@+id/playButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/background_icon"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="4dp"
+            android:visibility="gone"
+            android:foreground="@drawable/ic_play_arrow_white_24dp"
+            android:foregroundTint="@color/white"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-<!--        <me.jagar.chatvoiceplayerlibrary.VoicePlayerView-->
-<!--            android:id="@+id/voicePlayerView"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            app:enableVisualizer="false"-->
-<!--            android:visibility="gone"-->
-<!--            android:layout_marginStart="0dp"-->
-<!--            app:layout_constraintBottom_toTopOf="@+id/time"-->
-<!--            app:layout_constraintStart_toStartOf="parent"-->
-<!--            app:playPauseBackgroundColor="?attr/colorPrimary"-->
-<!--            app:playPauseCornerRadius="100"-->
-<!--            app:playProgressbarColor="?attr/colorPrimary"-->
-<!--            app:progressTimeColor="@color/white"-->
-<!--            app:seekBarProgressColor="#000"-->
-<!--            app:seekBarThumbColor="?attr/colorPrimary"-->
-<!--            app:shareBackgroundColor="#ff7700"-->
-<!--            app:shareCornerRadius="100"-->
-<!--            app:shareText="SHARE ME"-->
-<!--            app:showShareButton="false"-->
-<!--            app:showTiming="true"-->
-<!--            app:timingBackgroundColor="?attr/colorPrimary"-->
-<!--            app:viewBackground="#C6C4CF"-->
-<!--            app:viewCornerRadius="100"-->
-<!--            app:visualizationNotPlayedColor="?attr/colorPrimary"-->
-<!--            app:visualizationPlayedColor="?attr/colorSecondary" />-->
+
+        <ImageButton
+            android:id="@+id/pauseButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:visibility="gone"
+            android:background="@drawable/background_icon"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="4dp"
+            android:foreground="@drawable/ic_pause_white_24dp"
+            android:foregroundTint="@color/white"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+        <androidx.appcompat.widget.AppCompatSeekBar
+            android:id="@+id/music_progress"
+            android:layout_width="200dp"
+            android:visibility="gone"
+            android:layout_marginTop="4dp"
+            android:layout_marginStart="50dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:visibility="gone"
+            android:id="@+id/duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/background_icon"
+            android:text="00:00 / 00:00"
+            android:textColor="@color/white"
+            android:textSize="12dp"
+            android:padding="2dp"
+            android:layout_marginBottom="2dp"
+            android:layout_marginStart="50dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
 
         <com.zolad.zoominimageview.ZoomInImageView
             android:id="@+id/imageView"
@@ -67,7 +100,6 @@
             app:layout_constraintBottom_toTopOf="@+id/show_message"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-
             app:srcCompat="@drawable/ic_male_avatar_svgrepo_com" />
 
 
@@ -80,10 +112,11 @@
             android:textColor="@android:color/primary_text_light"
             android:textIsSelectable="true"
             android:visibility="gone"
-            app:emojiconSize="15sp"
+            android:textSize="18sp"
+            app:emojiconSize="18sp"
             app:layout_constraintBottom_toTopOf="@+id/message_status"
             app:layout_constraintEnd_toEndOf="parent"
-            tools:visibility="visible" />
+             />
 
         <TextView
             android:id="@+id/time"
@@ -122,11 +155,11 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageButton
-            android:id="@+id/playButton"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:id="@+id/vidPlayButton"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
             android:background="@color/transparent"
-            android:tint="@color/white"
+            app:tint="@color/white"
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@+id/imageView"
             app:layout_constraintEnd_toEndOf="@+id/imageView"

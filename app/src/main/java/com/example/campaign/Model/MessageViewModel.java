@@ -6,10 +6,11 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.campaign.Repository.Repo;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MessageViewModel extends ViewModel {
-    private MutableLiveData<List<messageListModel>> messageList;
+    private MutableLiveData<ArrayList<messageListModel>> messageList;
 
     public void initChats(String otherUserId){
         if(messageList!=null){
@@ -18,7 +19,7 @@ public class MessageViewModel extends ViewModel {
         messageList= Repo.getInstance().getMessages(otherUserId);
     }
 
-    public LiveData<List<messageListModel>> getMessages(){
+    public LiveData<ArrayList<messageListModel>> getMessages(){
         return messageList;
     }
 }

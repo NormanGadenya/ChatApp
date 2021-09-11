@@ -2,21 +2,15 @@ package com.example.campaign.adapter;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.ContentResolver;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.media.AudioAttributes;
-import android.media.AudioManager;
-import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.MediaStore;
-import android.text.Layout;
 import android.util.Log;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
@@ -25,14 +19,11 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -51,12 +42,12 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.example.campaign.Activities.ChatActivity;
+
+import com.example.campaign.Common.Tools;
 import com.example.campaign.Interfaces.RecyclerViewInterface;
 import com.example.campaign.Model.ChatViewModel;
-import com.example.campaign.Model.chatListModel;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.R;
-import com.example.campaign.tools.AudioService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
@@ -66,20 +57,20 @@ import com.zolad.zoominimageview.ZoomInImageView;
 
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
 
 import hani.momanii.supernova_emoji_library.Helper.EmojiconTextView;
-import me.jagar.chatvoiceplayerlibrary.VoicePlayerView;
+import jp.wasabeef.glide.transformations.BlurTransformation;
 
 
-public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.Holder> {
+public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.Holder>  {
     private List<messageListModel> list;
     public Context context;
+    public Map<String,Integer> uploadImageTask=new HashMap<>();
+    public Map<String,Integer> uploadVideoTask=new HashMap<>();
     private RecyclerViewInterface recyclerViewInterface;
     private static final int MESSAGE_LEFT=0;
     private static final int MESSAGE_RIGHT=1;
@@ -94,12 +85,11 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     FirebaseDatabase database=FirebaseDatabase.getInstance();
     ArrayList<messageListModel> selected=new ArrayList<>();
     private FirebaseUser firebaseUser=FirebaseAuth.getInstance().getCurrentUser();
-    boolean isPlaying=false;
     private Handler mHandler = new Handler();
 
 
 
-    public messageListAdapter(List<messageListModel> list, Context context, String profileUrI, RecyclerViewInterface recyclerViewInterface,Activity activity,String otherUserId,TextView msgGroupDateTop) {
+    public messageListAdapter(List<messageListModel> list, Context context, String profileUrI, RecyclerViewInterface recyclerViewInterface,Activity activity,String otherUserId,TextView msgGroupDateTop)  {
         this.list = list;
         this.context = context;
         this.profileUrI=profileUrI;
@@ -109,6 +99,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         this.msgGroupDateTop=msgGroupDateTop;
 
     }
+    public void setUploadImageTask(Map<String,Integer> uploadImageTask){this.uploadImageTask=uploadImageTask;}
     public messageListAdapter(){ }
     public void setMessageList(List<messageListModel> list){
         this.list=list;
@@ -127,6 +118,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         this.otherUserId=otherUserId;
     }
 
+
     public void setMsgGroupDateTop(TextView textView){
         this.msgGroupDateTop=textView;
     }
@@ -135,6 +127,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     @Override
     public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view;
+
         if(viewType ==MESSAGE_LEFT){
             view =LayoutInflater.from(context).inflate(R.layout.chat_item_left,parent,false);
 
@@ -157,12 +150,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Log.d("Adapter",position +"ada"+ String.valueOf(holder.getAdapterPosition() + list.get(position).getText()+ list.get(0).getDate()));
-//        if(list.get(position).getDate().equals(getDate())){
-//            msgGroupDateTop.setVisibility(View.GONE);
-//        }else{
-//            msgGroupDateTop.setVisibility(View.VISIBLE);
-//        }
 
         String previousTs=null;
         if(position>=1){
@@ -184,6 +171,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                 if(isEnabled){
                     clickedItem(holder);
                 }
+
             }
         });
 
@@ -299,57 +287,54 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
     }
 
-    public class Holder extends RecyclerView.ViewHolder {
+    public class Holder extends RecyclerView.ViewHolder  {
         private TextView time,msgGroupDate;
         private EmojiconTextView message;
         private ImageView messageStatus;
         private ZoomInImageView imageView;
-        private ProgressBar progressBar;
-        private ImageButton delete,playButton;
-        private TextView date;
+        private ProgressBar progressBar,audioLoadProgress;
+        private ImageButton videoPlayButton,playButton,pauseButton;
+        private TextView duration;
+        private SeekBar audioSeekBar;
         private ImageView checkBox;
-        private View layout;
-        private VoicePlayerView voicePlayerView;
-
-
-
 
         public Holder(@NonNull View itemView) {
             super(itemView);
-            playButton=itemView.findViewById(R.id.playButton);
-            delete=itemView.findViewById(R.id.delete);
+            videoPlayButton=itemView.findViewById(R.id.vidPlayButton);
             imageView=itemView.findViewById(R.id.imageView);
             message = itemView.findViewById(R.id.show_message);
             messageStatus=itemView.findViewById(R.id.message_status);
             time=itemView.findViewById(R.id.time);
+            audioLoadProgress=itemView.findViewById(R.id.audioLoadingP);
             progressBar=itemView.findViewById(R.id.progressBar);
-            date=itemView.findViewById(R.id.date);
             msgGroupDate=itemView.findViewById(R.id.msgGroupDate);
             checkBox=itemView.findViewById(R.id.checkBox);
-            layout=itemView.findViewById(R.id.const2);
-//            voicePlayerView=itemView.findViewById(R.id.voicePlayerView);
 
-
+            audioSeekBar=itemView.findViewById(R.id.music_progress);
+            playButton=itemView.findViewById(R.id.playButton);
+            pauseButton=itemView.findViewById(R.id.pauseButton);
+            duration=itemView.findViewById(R.id.duration);
         }
-
-//Make sure you update Seekbar on UI thread
-
-
 
         void bind(final messageListModel messageList) throws IOException {
             Log.d("addPos",String.valueOf(getAdapterPosition()));
-
+            ArrayList<messageListModel> imageList=new ArrayList<>();
             if(messageList.getReceiver()!=null){
 
                 switch(messageList.getType()){
                     case "TEXT":
-                        voicePlayerView.setVisibility(itemView.GONE);
-                        playButton.setVisibility(View.GONE);
+//                        voicePlayerView.setVisibility(itemView.GONE);
+                        videoPlayButton.setVisibility(View.GONE);
                         message.setText(messageList.getText());
                         imageView.setVisibility(itemView.GONE);
+                        audioLoadProgress.setVisibility(itemView.GONE);
                         message.setVisibility(itemView.VISIBLE);
                         time.setText(messageList.getTime());
+                        playButton.setVisibility(itemView.GONE);
+                        pauseButton.setVisibility(itemView.GONE);
+                        audioSeekBar.setVisibility(itemView.GONE);
                         progressBar.setVisibility(itemView.GONE);
+                        duration.setVisibility(itemView.GONE);
                         message.setOnLongClickListener(new View.OnLongClickListener() {
                             @SuppressLint("MissingPermission")
                             @Override
@@ -360,10 +345,20 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         });
                         break;
                     case "IMAGE":
-                        voicePlayerView.setVisibility(itemView.GONE);
-                        playButton.setVisibility(View.GONE);
+
+                        Map<String,Integer> uploadImageData;
+                        uploadImageData=((ChatActivity)context).getUploadImageTaskData();
+                        videoPlayButton.setVisibility(View.GONE);
                         progressBar.setVisibility(itemView.VISIBLE);
+                        playButton.setVisibility(itemView.GONE);
+                        audioLoadProgress.setVisibility(itemView.GONE);
+                        pauseButton.setVisibility(itemView.GONE);
+                        audioSeekBar.setVisibility(itemView.GONE);
                         imageView.setVisibility(itemView.VISIBLE);
+                        imageView.setOnClickListener(I->{
+                            recyclerViewInterface.onItemClick(getAdapterPosition());
+                        });
+                        duration.setVisibility(itemView.GONE);
                         if(messageList.getText()==null){
                             message.setVisibility(itemView.GONE);
                         }else{
@@ -371,99 +366,183 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                             message.setVisibility(itemView.VISIBLE);
                         }
 
-//                    imageView.setBackgroundColor(messageList.getBackgroundColor());
                         imageView.setClipToOutline(true);
-                        imageView.setOnLongClickListener(new View.OnLongClickListener() {
-                            @SuppressLint("MissingPermission")
-                            @Override
-                            public boolean onLongClick(View v) {
-                              recyclerViewInterface.onItemClick(getAdapterPosition());
-                              return true;
-                            }
-                        });
+
                         time.setText(messageList.getTime());
-                        Glide.with(context).load(messageList.getImageUrI()).listener(new RequestListener<Drawable>() {
-                            @Override
-                            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                                progressBar.setVisibility(View.GONE);
-                                return false;
+                        if(uploadImageData.containsKey(messageList.getMessageId()) && uploadImageData!=null){
+                            progressBar.setVisibility(itemView.VISIBLE);
+                            if(uploadImageData.get(messageList.getMessageId())==1){
+                                progressBar.setVisibility(itemView.GONE);
                             }
 
-                            @Override
-                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                                progressBar.setVisibility(View.GONE);
+                            Glide.with(context).load(messageList.getImageUrI()).transform(new BlurTransformation(uploadImageData.get(messageList.getMessageId()))).listener(new RequestListener<Drawable>() {
+                                @Override
+                                public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+//                                    progressBar.setVisibility(View.GONE);
+                                    return false;
+                                }
 
-                                return false;
-                            }
-                        }).into(imageView);
+                                @Override
+                                public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+
+
+                                    return false;
+                                }
+                            }).into(imageView);
+//                            progressBar.setVisibility(View.GONE);
+                        }else{
+                            Glide.with(context).load(messageList.getImageUrI()).listener(new RequestListener<Drawable>() {
+                                @Override
+                                public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                                    progressBar.setVisibility(View.GONE);
+                                    return false;
+                                }
+
+                                @Override
+                                public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                                    progressBar.setVisibility(View.GONE);
+
+                                    return false;
+                                }
+                            }).into(imageView);
+                        }
                         break;
 
                     case "VIDEO":
-                        voicePlayerView.setVisibility(itemView.GONE);
+                        Map<String,Integer> uploadVideoData;
+                        uploadVideoData=((ChatActivity)context).getUploadVideoTaskData();
                         progressBar.setVisibility(itemView.VISIBLE);
                         imageView.setVisibility(itemView.VISIBLE);
-
+                        playButton.setVisibility(itemView.GONE);
+                        pauseButton.setVisibility(itemView.GONE);
+                        audioSeekBar.setVisibility(itemView.GONE);
+                        duration.setVisibility(itemView.GONE);
                         if(messageList.getText()==null){
                             message.setVisibility(itemView.GONE);
                         }else{
                             message.setText(messageList.getText());
                             message.setVisibility(itemView.VISIBLE);
                         }
-
-//                    imageView.setBackgroundColor(messageList.getBackgroundColor());
                         imageView.setClipToOutline(true);
-                        imageView.setOnLongClickListener(new View.OnLongClickListener() {
-                            @SuppressLint("MissingPermission")
-                            @Override
-                            public boolean onLongClick(View v) {
-                                recyclerViewInterface.onItemClick(getAdapterPosition());
-                                return true;
-                            }
+                        videoPlayButton.setVisibility(View.VISIBLE);
+                        videoPlayButton.setOnClickListener(V->{
+                            recyclerViewInterface.onItemClick(getAdapterPosition());
                         });
                         time.setText(messageList.getTime());
-                        String videoUrl=messageList.getVideoUrI();
+                        String videoUrI=messageList.getVideoUrI();
+                        if(videoUrI!=null){
+                            Glide.with(context)
+                                    .load(videoUrI)
+                                    .placeholder(R.drawable.black)
+                                    .into(imageView);
+                            if(uploadVideoData.containsKey(messageList.getMessageId()) && uploadVideoData!=null){
+                                progressBar.setVisibility(itemView.VISIBLE);
+                                if(uploadVideoData.get(messageList.getMessageId())==100){
+                                    progressBar.setVisibility(itemView.GONE);
+                                }
 
-                       Glide.with(context).load("https://coolbackgrounds.io/images/backgrounds/black/pure-black-background-f82588d3.jpg").listener(new RequestListener<Drawable>() {
-                            @Override
-                            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                                progressBar.setVisibility(View.GONE);
-                                return false;
+                            }else{
+                                progressBar.setVisibility(itemView.GONE);
                             }
-
-                            @Override
-                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                                progressBar.setVisibility(View.GONE);
-
-                                return false;
-                            }
-                        }).into(imageView);
-                        progressBar.setVisibility(View.GONE);
-                        playButton.setVisibility(View.VISIBLE);
+                        }
                         break;
 
                     case "AUDIO":
-//                        voicePlayerView.setVisibility(View.VISIBLE);
-//                        message.setVisibility(View.GONE);
-//                        playButton.setVisibility(View.GONE);
-//                        message.setText(messageList.getText());
-//                        imageView.setVisibility(itemView.GONE);
-//                        message.setVisibility(itemView.VISIBLE);
-//                        time.setText(messageList.getTime());
-//                        progressBar.setVisibility(itemView.GONE);
-//                        try{
-//                            Handler handler = new Handler(Looper.getMainLooper());
-//                            handler.post(new Runnable() {
-//                                public void run() {
-//                                    voicePlayerView.setAudio(messageList.getAudioUrI());
-//                                }
-//                            });
-//
-//                        }catch
-//                        (Exception e){
-//                            Log.d("Error messageListAdapter",e.getLocalizedMessage());
-//                        }
+                        Map<String,Integer> uploadAudioData;
+                        uploadAudioData=((ChatActivity)context).getUploadAudioTaskData();
+                        playButton.setVisibility(itemView.VISIBLE);
+                        pauseButton.setVisibility(itemView.GONE);
+                        audioSeekBar.setVisibility(itemView.VISIBLE);
+                        duration.setVisibility(View.VISIBLE);
+                        message.setVisibility(View.GONE);
+                        videoPlayButton.setVisibility(View.GONE);
+                        message.setText(messageList.getText());
+                        imageView.setVisibility(itemView.GONE);
+                        message.setVisibility(itemView.VISIBLE);
+                        time.setText(messageList.getTime());
+                        progressBar.setVisibility(itemView.GONE);
+                        if(uploadAudioData.containsKey(messageList.getMessageId()) && uploadAudioData!=null){
+                            audioLoadProgress.setVisibility(itemView.VISIBLE);
+                            playButton.setVisibility(itemView.GONE);
+                            audioSeekBar.setEnabled(false);
+                            if(uploadAudioData.get(messageList.getMessageId())==100){
+                                audioLoadProgress.setVisibility(itemView.GONE);
+                                playButton.setVisibility(itemView.VISIBLE);
+                                audioSeekBar.setEnabled(true);
+                            }
 
-//                        if(voicePlayerView.getMediaPlayer().)
+                        }else{
+                            progressBar.setVisibility(itemView.GONE);
+                        }
+                        audioSeekBar.setMax(100);
+                        duration.setText(millisecondsToText(Long.valueOf(messageList.getAudioDuration())));
+                        mediaPlayer=new MediaPlayer();
+                        recyclerViewInterface.getMediaPlayer(mediaPlayer);
+                        playButton.setOnClickListener(I->{
+                            if(mediaPlayer!=null){
+                                if(!mediaPlayer.isPlaying() ){
+                                    try{
+                                        playButton.setVisibility(itemView.GONE);
+                                        mediaPlayer.start();
+                                        pauseButton.setVisibility(itemView.VISIBLE);
+                                        updateSeekBar();
+                                    }catch (Exception e){
+
+                                    }
+                                }
+                            }
+
+
+
+                        });
+                        pauseButton.setOnClickListener(I->{
+
+                                if(mediaPlayer.isPlaying()){
+                                    playButton.setVisibility(itemView.VISIBLE);
+                                    pauseButton.setVisibility(itemView.GONE);
+                                    mHandler.removeCallbacks(updater);
+                                    mediaPlayer.pause();
+                                }
+
+                        });
+                        if(messageList.getReceiver()!=user.getUid()){
+
+                            prepareMediaPlayer(messageList.getAudioUrI());
+                        }else{
+                            prepareMediaPlayerOther(messageList.getAudioUrI());
+                        }
+                        mediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
+                            @Override
+                            public void onBufferingUpdate(MediaPlayer mp, int percent) {
+                                audioSeekBar.setSecondaryProgress(percent);
+                            }
+                        });
+                        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                            @Override
+                            public void onCompletion(MediaPlayer mp) {
+
+                                audioSeekBar.setProgress(0);
+                                duration.setText("0:00");
+                                pauseButton.setVisibility(View.GONE);
+                                playButton.setVisibility(View.VISIBLE);
+                                mediaPlayer.reset();
+                                mediaPlayer.release();
+                                if(messageList.getReceiver()!=user.getUid()){
+                                    prepareMediaPlayer(messageList.getAudioUrI());
+                                }else{
+                                    prepareMediaPlayerOther(messageList.getAudioUrI());
+
+                                }
+                            }
+                        });
+                        audioSeekBar.setOnTouchListener((v, event) -> {
+                            SeekBar seekBar=(SeekBar)v;
+                            int playPosition=(mediaPlayer.getDuration()/100)*seekBar.getProgress();
+                            mediaPlayer.seekTo(playPosition);
+                            duration.setText(millisecondsToText(mediaPlayer.getCurrentPosition()));
+                            return false;
+                        });
+
                         break;
                 }
                 if (messageList.isChecked()){
@@ -477,71 +556,114 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
             }else{
 //                date.setText(messageList.getDate());
             }
-
-
         }
 
+        void updateSeekBar(){
 
-    }
+            if(mediaPlayer != null){
+                mHandler=new Handler();
+                try{
+                    if(mediaPlayer.isPlaying()){
+                        int progress=(int) (((float)mediaPlayer.getCurrentPosition()/mediaPlayer.getDuration())*100);
+//                    audioSeekBar.setProgress((int)(((float)(mediaPlayer.getCurrentPosition()/mediaPlayer.getDuration())*100)));
+                        audioSeekBar.setProgress(progress);
+                        mHandler.postDelayed(updater,1000);
 
-    private void playAudio() {
+                    }
+                }catch(Exception e){
 
-        mediaPlayer = new MediaPlayer();
-        String audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+                }
 
-        // initializing media player
-        // below line is use to set the audio
-        // stream type for our media player.
-        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-
-        // below line is use to set our
-        // url to our media player.
-        try {
-            mediaPlayer.setDataSource(audioUrl);
-            // below line is use to prepare
-            // and start our media player.
-            mediaPlayer.prepare();
-            mediaPlayer.start();
-
-        } catch (IOException e) {
-            e.printStackTrace();
+            }
         }
-        // below line is use to display a toast message.
-        Toast.makeText(context, "Audio started playing..", Toast.LENGTH_SHORT).show();
-    }
-    private String format(long duration){
-        return String.format("%d min, %d sec",
-                TimeUnit.MILLISECONDS.toMinutes(duration),
-                TimeUnit.MILLISECONDS.toSeconds(duration) -
-                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(duration))
-        );
-    }
-    private void playAudio(String audioUrI) {
 
-        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        private Runnable updater=new Runnable() {
+            @Override
+            public void run() {
+                updateSeekBar();
 
-        // below line is use to set our
-        // url to our media player.
-        try {
-            mediaPlayer.setDataSource(audioUrI);
-            // below line is use to prepare
-            // and start our media player.
-            mediaPlayer.prepare();
-            mediaPlayer.start();
+               if(mediaPlayer != null){
+                   try {
+                       long currentDuration= mediaPlayer.getCurrentPosition();
+                       duration.setText(millisecondsToText(currentDuration));
+                   }catch(Exception e){
 
-        } catch (IOException e) {
-            e.printStackTrace();
+                   }
+
+               }
+            }
+        };
+
+        private void prepareMediaPlayer(String uri){
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.post(new Runnable() {
+                public void run() {
+                    try {
+                        mediaPlayer.setAudioAttributes(
+                                new AudioAttributes.Builder()
+                                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                                        .build()
+                        );
+                        mediaPlayer.setDataSource(context, Uri.parse(uri));
+                        mediaPlayer.prepare();
+                    } catch (Exception e) {
+                        Log.e("messageList", e.getLocalizedMessage() + 'k');
+                    }
+                }
+            });
+            }
+
+        private void prepareMediaPlayerOther(String uri){
+            Handler handler =new Handler(Looper.getMainLooper());
+            handler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    try{
+                        mediaPlayer.setAudioAttributes(
+                                new AudioAttributes.Builder()
+                                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                                        .build()
+                        );
+                        mediaPlayer.setDataSource(uri);
+                        mediaPlayer.prepare();
+                    }catch(Exception e){
+                        Log.e("messageList",e.getLocalizedMessage()+ 'k');
+                    }
+                }
+            });
+
         }
-        // below line is use to display a toast message.
-        Toast.makeText(context, "Audio started playing..", Toast.LENGTH_SHORT).show();
+    }
+
+
+    private String millisecondsToText(long duration){
+        String timerString ="";
+        String secondsString;
+        int hours=(int) (duration/(1000*3600));
+        int minutes=(int) (duration % (1000 *60 * 60))/(1000*60);
+        int seconds=(int) ((duration % (1000 *60 * 60))% (1000*60)/1000);
+
+        if (hours > 0) {
+            timerString = hours +":";
+        }
+        if (seconds<10){
+            secondsString = "0" + seconds;
+        }else{
+            secondsString = ""+ seconds ;
+        }
+        timerString= timerString + minutes+":"+ secondsString;
+        return timerString;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void setTimeTextVisibility(String ts1, String ts2, TextView timeText){
-
+        String date=new Tools().getDate();
         if(ts2==null){
             timeText.setVisibility(View.VISIBLE);
-            if(ts1.equals(getDate())){
+            if(ts1.equals(date)){
                 timeText.setText("Today");
             }else{
                 timeText.setText(formatDate(ts1));
@@ -556,7 +678,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                 String m2=ts2.substring(3,5);
                 String d1=ts1.substring(0,2);
                 String d2=ts2.substring(0,2);
-                Log.d("pos",String.valueOf(ts1.substring(0,2)));
                 boolean sameMonth = y1.equals(y2) &&
                         m1.equals(m2) && d1.equals(d2);
 
@@ -565,9 +686,9 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                     timeText.setText("");
                 }else {
                     timeText.setVisibility(View.VISIBLE);
-                    if(ts1.equals(getDate())){
+                    if(ts1.equals(date)){
                         timeText.setText("Today");
-                    }else if(ts1.substring(6,10).equals(getDate().substring(6,10)) && ts1.substring(3,5).equals(getDate().substring(3,5)) && Integer.parseInt(ts1.substring(0,2))+1==Integer.parseInt(getDate().substring(0,2))){
+                    }else if(ts1.substring(6,10).equals(date.substring(6,10)) && ts1.substring(3,5).equals(date.substring(3,5)) && Integer.parseInt(ts1.substring(0,2))+1==Integer.parseInt(date.substring(0,2))){
                         timeText.setText("Yesterday");
                     }else{
                         timeText.setText(formatDate(ts1));
@@ -626,25 +747,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         newDate=date.substring(0,2)+"-"+ month+ "-"+date.substring(6,10);
         return newDate;
     }
-
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private String getTime(){
-        LocalDateTime myDateObj = LocalDateTime.now();
-        DateTimeFormatter timeObj = DateTimeFormatter.ofPattern("HH:mm");
-        return myDateObj.format(timeObj);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private String getDate(){
-        LocalDateTime myDateObj = LocalDateTime.now();
-        DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        return myDateObj.format(dateObj);
-    }
-
-
-
-
 
 }
 

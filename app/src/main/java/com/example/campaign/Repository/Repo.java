@@ -58,11 +58,11 @@ public class Repo {
     private MutableLiveData<ArrayList<userModel>> userList=new MutableLiveData<>();
     private HashMap<String, String> messageArrange=new HashMap<>();
     private ArrayList<String> arrangedChatListId, chatListId,chatUIds;
-    private MutableLiveData<List<messageListModel>> messageList=new MutableLiveData<>();
+    private MutableLiveData<ArrayList<messageListModel>> messageList=new MutableLiveData<>();
 
     private FirebaseDatabase database=FirebaseDatabase.getInstance();
     private FirebaseUser fUser= FirebaseAuth.getInstance().getCurrentUser();
-    List<messageListModel> messageListModel=new ArrayList<>();
+    ArrayList<messageListModel> messageListModel=new ArrayList<>();
 
     public static Repo getInstance() {
         if(instance == null){
@@ -73,7 +73,7 @@ public class Repo {
     }
 
     public MutableLiveData<ArrayList<userModel>> getChatList(){
-        if (chats_List_Model!=null) {
+        if (chats_List_Model!=null && fUser!=null) {
             GetChatList getChatList=new GetChatList();
             new Thread(getChatList).start();
 //            loadChatList();
@@ -86,36 +86,51 @@ public class Repo {
 
     public MutableLiveData<HashMap<String , messageListModel>> getLastMessage(String userId){
 //        loadLastMessage(userId);
-        GetLastMessage getLastMessage=new GetLastMessage(userId);
-        new Thread(getLastMessage).start();
+        if(fUser!=null){
+            GetLastMessage getLastMessage=new GetLastMessage(userId);
+            new Thread(getLastMessage).start();
+        }
+
         return  lastMessage;
     }
 
-    public MutableLiveData<List<messageListModel>> getMessages(String otherUserId){
-        GetMessages getMessages =new GetMessages(otherUserId);
-        new Thread(getMessages).start();
-        messageList.setValue(messageListModel);
+    public MutableLiveData<ArrayList<messageListModel>> getMessages(String otherUserId){
+        if(fUser!=null){
+            GetMessages getMessages =new GetMessages(otherUserId);
+            new Thread(getMessages).start();
+            messageList.setValue(messageListModel);
+        }
+
         return messageList;
     }
 
     public MutableLiveData<userModel> getOtherUserInfo(String otherUserId){
-        GetOtherUserInfo getOtherUserInfo =new GetOtherUserInfo(otherUserId);
-        new Thread(getOtherUserInfo).start();
+        if(fUser!=null){
+            GetOtherUserInfo getOtherUserInfo =new GetOtherUserInfo(otherUserId);
+            new Thread(getOtherUserInfo).start();
 //        loadOtherUserInfo(otherUserId);
+        }
+
         return otherUserInfo;
     }
     public MutableLiveData<userModel> getFUserInfo(){
-        GetFUserInfo getFUserInfo= new GetFUserInfo();
-        new Thread(getFUserInfo).start();
+        if(fUser!=null){
+            GetFUserInfo getFUserInfo= new GetFUserInfo();
+            new Thread(getFUserInfo).start();
+        }
+
 //        loadCurrentUserInfo();
         return fUserInfo;
     }
 
     public MutableLiveData <ArrayList<userModel>> getAllUsers(Set<String> contacts){
-        GetAllUsers getAllUsers = new GetAllUsers(contacts);
-        new Thread(getAllUsers).start();
+        if(fUser!=null){
+            GetAllUsers getAllUsers = new GetAllUsers(contacts);
+            new Thread(getAllUsers).start();
 //        loadAllUsers(contacts);
-        userList.setValue(user_List_Model);
+            userList.setValue(user_List_Model);
+        }
+
         return userList;
     }
 

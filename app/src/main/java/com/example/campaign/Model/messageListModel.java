@@ -3,7 +3,7 @@ package com.example.campaign.Model;
 import java.io.Serializable;
 
 public class messageListModel implements Serializable {
-    private String text,profileUrI,videoUrI,audioUrI;
+    private String text,profileUrI,videoUrI,audioUrI,audioDuration;
     private int backgroundColor;
     private String receiver,date,time,messageStatus, imageUrI,type,userName,messageId;
     private boolean checked;
@@ -141,5 +141,13 @@ public class messageListModel implements Serializable {
 
     public void setAudioUrI(String audioUrI) {
         this.audioUrI = audioUrI;
+    }
+
+    public String getAudioDuration() {
+        return audioDuration;
+    }
+
+    public void setAudioDuration(String audioDuration) {
+        this.audioDuration = audioDuration;
     }
 }

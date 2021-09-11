@@ -83,28 +83,46 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <Button
+                <TextView
+                    android:id="@+id/timer"
 
-                    android:id="@+id/button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/next"
-                    android:textColor="@color/white"
-                    app:layout_constraintEnd_toStartOf="@+id/progressBar1"
+                    android:text="2:00"
+                    app:layout_constraintBottom_toBottomOf="parent"
+
+                    app:layout_constraintEnd_toStartOf="@+id/verifyButton"
                     app:layout_constraintHorizontal_bias="0.5"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
-                <ProgressBar
-                    android:id="@+id/progressBar1"
-                    style="?android:attr/progressBarStyle"
+                <Button
+
+                    android:id="@+id/verifyButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:visibility="gone"
+                    android:layout_marginStart="39dp"
+                    android:text="@string/next"
+                    android:textColor="@color/white"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.5"
-                    app:layout_constraintStart_toEndOf="@+id/button"
+                    app:layout_constraintStart_toEndOf="@+id/timer"
                     app:layout_constraintTop_toTopOf="parent" />
+                <Button
+                    android:visibility="gone"
+                    android:id="@+id/resendButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="39dp"
+                    android:text="Resend code"
+                    android:textColor="@color/white"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toEndOf="@+id/timer"
+                    app:layout_constraintTop_toTopOf="parent" />
+
             </androidx.constraintlayout.widget.ConstraintLayout>
 
         </LinearLayout>

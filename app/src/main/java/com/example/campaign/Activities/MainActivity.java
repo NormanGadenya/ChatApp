@@ -23,12 +23,15 @@ import java.util.Map.Entry;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -46,12 +49,14 @@ import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.campaign.Common.ServiceCheck;
 import com.example.campaign.Interfaces.RecyclerViewInterface;
 import com.example.campaign.Model.ChatViewModel;
 import com.example.campaign.Model.chatListModel;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.Model.userModel;
 import com.example.campaign.Repository.Repo;
+import com.example.campaign.Services.updateStatusService;
 import com.example.campaign.adapter.chatListAdapter;
 import com.example.campaign.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -113,25 +118,17 @@ public class MainActivity extends AppCompatActivity   {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         InitializeControllers();
-
         requestContactsPermission();
-
-//        ActionBar actionBar=getSupportActionBar();
-//        actionBar.setTitle("");
-////        actionBar.setDisplayHomeAsUpEnabled(true);
-//        actionBar.setDisplayShowCustomEnabled(true);
-//        LayoutInflater LayoutInflater=(LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-//        @SuppressLint("InflateParams") View actionBarView=LayoutInflater.inflate(R.layout.main_custom_bar,null);
-//        actionBar.setCustomView(actionBarView);
-
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         actionBar=getSupportActionBar();
         actionBar.setTitle("Messages");
+        actionBar.setElevation(10);
         chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
         chatViewModel.initChatsList();
-//        recyclerView.setHasFixedSize(true);
         database = FirebaseDatabase.getInstance();
-        updateStatus();
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        ServiceCheck serviceCheck= new ServiceCheck(updateStatusService.class,this,manager);
+        serviceCheck.checkServiceRunning();
         if (ContextCompat.checkSelfPermission(context,
                 Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
             handler.post(new Runnable() {
@@ -149,7 +146,6 @@ public class MainActivity extends AppCompatActivity   {
             requestContactsPermission();
         }
 
-//        getChatList();
 
         newChat.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -163,9 +159,12 @@ public class MainActivity extends AppCompatActivity   {
     protected void onStart() {
         super.onStart();
         list=chatViewModel.getChatListData().getValue();
-        chatListAdapter=new chatListAdapter(list, MainActivity.this,this,viewModelStoreOwner,lifecycleOwner);
-        chatViewModel.getChatListData().observe(this, chatList -> chatListAdapter.notifyDataSetChanged());
-        recyclerView.setAdapter(chatListAdapter);
+        if(list!=null){
+            chatListAdapter=new chatListAdapter(list, MainActivity.this,this,viewModelStoreOwner,lifecycleOwner);
+            chatViewModel.getChatListData().observe(this, chatList -> chatListAdapter.notifyDataSetChanged());
+            recyclerView.setAdapter(chatListAdapter);
+        }
+
 
     }
 
@@ -185,39 +184,6 @@ public class MainActivity extends AppCompatActivity   {
 
     }
 
-    Comparator comparator(){
-        Comparator<Entry<String, String>> valueComparator = new Comparator<Entry<String,String>>() {
-
-            @Override
-            public int compare(Entry<String, String> e1, Entry<String, String> e2) {
-                String v1 = e1.getValue();
-                String v2 = e2.getValue();
-                return v2.compareTo(v1);
-            }
-        };
-        return valueComparator;
-    }
-
-    void arrangeIdList(){
-        Set<Entry<String, String>> entries = messageArrange.entrySet();
-
-        List<Entry<String, String>> listOfEntries = new ArrayList<>(entries);
-        Collections.sort(listOfEntries, comparator());
-        LinkedHashMap<String, String> sortedByValue = new LinkedHashMap<>(listOfEntries.size());
-
-        for(Entry<String, String> entry : listOfEntries){
-            sortedByValue.put(entry.getKey(), entry.getValue());
-        }
-
-        Set<Entry<String, String>> entrySetSortedByValue = sortedByValue.entrySet();
-
-        for(Entry<String, String> mapping : entrySetSortedByValue) {
-            arrangedChatListId.add(mapping.getKey());
-        }
-    }
-
-
-
 
 
 
@@ -228,11 +194,6 @@ public class MainActivity extends AppCompatActivity   {
         editor.apply();
     }
 
-//    @Override
-//    public void onBackPressed() {
-//        super.onBackPressed();
-//
-//    }
 
     private ArrayList<userModel> FilterList(String newText){
         ArrayList<userModel> newList=new ArrayList<>();
@@ -258,26 +219,22 @@ public class MainActivity extends AppCompatActivity   {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String s) {
+                if (list != null) {
+                    ArrayList<userModel> newList=new ArrayList<>();
+                    newList.clear();
 
-                ArrayList<userModel> newList=new ArrayList<>();
-                newList.clear();
+                    if (!TextUtils.isEmpty(s.trim())){
+                        newList=FilterList(s);
+                        chatListAdapter=new chatListAdapter(newList, MainActivity.this,activity,viewModelStoreOwner,lifecycleOwner);
+                        chatListAdapter.notifyDataSetChanged();
+                    }else{
+                        chatListAdapter=new chatListAdapter(list, MainActivity.this,activity,viewModelStoreOwner,lifecycleOwner);
+                    }
 
-                if (!TextUtils.isEmpty(s.trim())){
-
-//                    for(userModel user:list){
-//                        if(user.getUserName().contains(s.toLowerCase())){
-//                            newList.add(user);
-//                        }
-//                    }
-                    newList=FilterList(s);
-                    chatListAdapter=new chatListAdapter(newList, MainActivity.this,activity,viewModelStoreOwner,lifecycleOwner);
+                    recyclerView.setAdapter(chatListAdapter);
                     chatListAdapter.notifyDataSetChanged();
-                }else{
-                    chatListAdapter=new chatListAdapter(list, MainActivity.this,activity,viewModelStoreOwner,lifecycleOwner);
                 }
 
-                recyclerView.setAdapter(chatListAdapter);
-                chatListAdapter.notifyDataSetChanged();
                 return false;
             }
 
@@ -419,33 +376,6 @@ public class MainActivity extends AppCompatActivity   {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private String getTime(){
-        LocalDateTime myDateObj = LocalDateTime.now();
-        DateTimeFormatter timeObj = DateTimeFormatter.ofPattern("HH:mm");
-        return myDateObj.format(timeObj);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private String getDate(){
-        LocalDateTime myDateObj = LocalDateTime.now();
-        DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        return myDateObj.format(dateObj);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private void updateStatus(){
-        DatabaseReference userDetailRef=database.getReference().child("UserDetails").child(user.getUid());
-        Map<String ,Object> onlineStatus=new HashMap<>();
-        onlineStatus.put("online",true);
-        userDetailRef.updateChildren(onlineStatus);
-
-        Map<String ,Object> lastSeenStatus=new HashMap<>();
-        lastSeenStatus.put("lastSeenDate",getDate());
-        lastSeenStatus.put("lastSeenTime",getTime());
-        lastSeenStatus.put("online",false);
-        userDetailRef.onDisconnect().updateChildren(lastSeenStatus);
-    }
 
 
 }

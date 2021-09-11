@@ -21,16 +21,25 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Campaign">
         <activity
+            android:name=".Activities.OtherUserActivity"
+            android:parentActivityName=".Activities.ChatActivity"
+            android:theme="@style/Theme.Campaign.NoActionBar" />
+        <activity
+            android:name=".Activities.ViewVideoActivity"
+            android:parentActivityName=".Activities.ChatActivity" />
+        <activity
             android:name=".Activities.splash"
-            android:theme="@style/Theme.Campaign.NoActionBar"
-            >
+            android:theme="@style/Theme.Campaign.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity android:name=".Activities.sendAudio" />
-        <activity android:name=".Activities.sendVideo" />
+        <activity
+            android:name=".Activities.sendVideo"
+            android:parentActivityName=".Activities.ChatActivity" />
         <activity
             android:name=".Activities.sendImage"
             android:parentActivityName=".Activities.ChatActivity" />
@@ -42,10 +51,7 @@
             android:name=".Activities.UserProfileActivity"
             android:parentActivityName=".Activities.ChatActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
-        <activity
-            android:name=".Activities.MainActivity"
-
-            />
+        <activity android:name=".Activities.MainActivity" />
         <activity
             android:name=".Activities.UserListActivity"
             android:parentActivityName=".Activities.MainActivity"
@@ -59,15 +65,13 @@
             android:theme="@style/Theme.Campaign" />
         <activity
             android:name=".Activities.RegistrationActivity"
-            android:theme="@style/Theme.Campaign.NoActionBar"></activity>
+            android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity
             android:name=".Activities.OtpActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity
             android:name=".Activities.SignUpActivity"
-            android:theme="@style/Theme.Campaign.NoActionBar">
-
-        </activity>
+            android:theme="@style/Theme.Campaign.NoActionBar" />
 
         <service
             android:name=".Notifications.MyFirebaseIdService"
@@ -85,7 +89,11 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-        <service android:name=".Services.AudioService"/>
+        <service android:name=".Services.updateStatusService" />
+        <service android:name=".Services.AudioUploadService" />
+        <service android:name=".Services.ProfileUploadService" />
+        <service android:name=".Services.ImageUploadService" />
+        <service android:name=".Services.VideoUploadService" />
     </application>
 
 </manifest>

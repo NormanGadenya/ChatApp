@@ -1,49 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".Activities.ViewImageActivity"
-    >
-
-    <ImageView
-        android:id="@+id/backgroundView"
+    tools:context=".Activities.ViewVideoActivity">
+    <FrameLayout
+        android:id="@+id/frameLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="centerCrop"
-
-       />
-
-    <com.zolad.zoominimageview.ZoomInImageView
-        android:id="@+id/imageView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:maxWidth="300dp"
-        android:maxHeight="300dp"
-        app:layout_constraintBottom_toBottomOf="@+id/backgroundView"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@id/captionBox"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/backgroundView"
-        app:layout_constraintTop_toTopOf="@+id/backgroundView"
-        tools:srcCompat="@tools:sample/backgrounds/scenic" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        >
+        <VideoView
+            android:id="@+id/attachedVideo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
+
+    </FrameLayout>
 
     <ProgressBar
         android:id="@+id/progressBar"
-        style="?android:attr/progressBarStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/backgroundView"
-        app:layout_constraintTop_toTopOf="parent" />
-
+        app:layout_constraintEnd_toEndOf="@+id/frameLayout"
+        app:layout_constraintStart_toStartOf="@+id/frameLayout"
+        app:layout_constraintTop_toTopOf="@+id/frameLayout" />
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#A9000000"
         android:id="@+id/captionBox"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent">
         <hani.momanii.supernova_emoji_library.Helper.EmojiconTextView
             android:layout_width="wrap_content"

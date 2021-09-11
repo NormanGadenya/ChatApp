@@ -12,7 +12,7 @@
         <item name="colorOnSecondary">@color/black</item>
         <item name="colorOnPrimarySurface">@color/black</item>
         <!-- Status bar color. -->
-        <!--        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>-->
+        <!--        <item name="android:statusBarColor" Tools:targetApi="l">?attr/colorPrimaryVariant</item>-->
         <item name="android:statusBarColor" tools:targetApi="l">@color/deepBlue</item>
         <item name="android:navigationBarColor" >@color/deepBlue</item>
         <!-- Customize your theme here. -->

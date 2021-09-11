@@ -17,6 +17,7 @@ import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
+import com.example.campaign.Model.messageListModel;
 import com.example.campaign.Model.viewImageModel;
 import com.example.campaign.R;
 import com.zolad.zoominimageview.ZoomInImageView;
@@ -27,10 +28,10 @@ import java.util.List;
 import jp.wasabeef.glide.transformations.BlurTransformation;
 
 public class viewImageListAdapter extends RecyclerView.Adapter<viewImageListAdapter.Holder> {
-    private ArrayList<String> list;
+    private ArrayList<messageListModel> list;
     private Context context;
 
-    public viewImageListAdapter(ArrayList<String> list, Context context){
+    public viewImageListAdapter(ArrayList<messageListModel> list, Context context){
         this.list=list;
         this.context=context;
     }
@@ -43,8 +44,8 @@ public class viewImageListAdapter extends RecyclerView.Adapter<viewImageListAdap
 
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
-        Glide.with(context).load(list.get(position)).into(holder.zoomInImageView);
-        Glide.with(context).load(list.get(position)).
+        Glide.with(context).load(list.get(position).getImageUrI()).into(holder.zoomInImageView);
+        Glide.with(context).load(list.get(position).getImageUrI()).
                 listener(new RequestListener<Drawable>() {
                              @Override
                              public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {

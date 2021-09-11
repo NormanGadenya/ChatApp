@@ -2,6 +2,7 @@ package com.example.campaign.Activities;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
@@ -11,8 +12,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -30,36 +31,26 @@ import android.widget.Toast;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.palette.graphics.Palette;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.DataSource;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.engine.GlideException;
-import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.target.Target;
-import com.example.campaign.Model.ChatViewModel;
 import com.example.campaign.Model.UserViewModel;
-import com.example.campaign.Model.userModel;
 import com.example.campaign.R;
+import com.example.campaign.Services.ProfileUploadService;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
-
-import jp.wasabeef.glide.transformations.BlurTransformation;
 
 public class UserProfileActivity extends AppCompatActivity {
     private FirebaseUser firebaseUser= FirebaseAuth.getInstance().getCurrentUser();
@@ -70,7 +61,7 @@ public class UserProfileActivity extends AppCompatActivity {
     private FloatingActionButton editProfilePic;
     private ImageButton editUserNameBtn;
     private EditText editUserName;
-    String profileUrI;
+    private String profileUrI;
     private String editedUserName;
     private ImageView imageView;
     private Button doneButton;
@@ -87,13 +78,14 @@ public class UserProfileActivity extends AppCompatActivity {
         InitializeControllers();
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
         userViewModel.initFUserInfo();
-
+        updateStatus();
         editUserNameBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 userName.setVisibility(View.GONE);
                 editUserNameBtn.setVisibility(View.GONE);
                 editUserName.setVisibility(View.VISIBLE);
+                
             }
         });
         editProfilePic.setOnClickListener(v -> {
@@ -127,14 +119,11 @@ public class UserProfileActivity extends AppCompatActivity {
         doneButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                uploadFile(firebaseUser.getUid());
+                updateUserDetails(firebaseUser.getUid());
+//                uploadFile(firebaseUser.getUid());
             }
         });
-
         setupToolBar();
-
-
-
     }
 
 
@@ -154,7 +143,6 @@ public class UserProfileActivity extends AppCompatActivity {
         imageView=findViewById(R.id.userProfilePic);
     }
 
-
     private void setupToolBar(){
 
         userViewModel.getFUserInfo().observe(this,user->{
@@ -167,6 +155,7 @@ public class UserProfileActivity extends AppCompatActivity {
         });
 
     }
+
     private void requestStoragePermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                 Manifest.permission.READ_EXTERNAL_STORAGE)) {
@@ -186,6 +175,7 @@ public class UserProfileActivity extends AppCompatActivity {
     private void uploadFile( String userId) {
 
         if (selected != null) {
+
             progressBar.setVisibility(View.VISIBLE);
             StorageReference fileReference = mStorageReference.child(System.currentTimeMillis()
                     + ".jpg");
@@ -197,10 +187,29 @@ public class UserProfileActivity extends AppCompatActivity {
                 return fileReference.getDownloadUrl();
             }).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
+                    if(profileUrI!=null){
+                        firebaseStorage.getReferenceFromUrl(profileUrI).delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                Uri downloadUri = task.getResult();
+                                DatabaseReference myRef = database.getReference().child("UserDetails").child(userId);
+                                Map<String ,Object> userDetail=new HashMap<>();
+                                if(editedUserName!=null){
+                                    userDetail.put("userName",editedUserName);
+                                }
+                                try{
+                                    userDetail.put("profileUrI",downloadUri.toString());
+                                    myRef.updateChildren(userDetail);
+                                }catch (Exception e){
+                                    Log.e("Error",e.getLocalizedMessage());
+                                }
+                                progressBar.setVisibility(View.GONE);
+                                Toast.makeText(getApplicationContext(), "Successfully updated", Toast.LENGTH_SHORT).show();
+                            }
+                        });
 
-                    firebaseStorage.getReferenceFromUrl(profileUrI).delete().addOnSuccessListener(new OnSuccessListener<Void>() {
-                        @Override
-                        public void onSuccess(Void aVoid) {
+                    }else{
+
                             Uri downloadUri = task.getResult();
                             DatabaseReference myRef = database.getReference().child("UserDetails").child(userId);
                             Map<String ,Object> userDetail=new HashMap<>();
@@ -215,8 +224,10 @@ public class UserProfileActivity extends AppCompatActivity {
                             }
                             progressBar.setVisibility(View.GONE);
                             Toast.makeText(getApplicationContext(), "Successfully updated", Toast.LENGTH_SHORT).show();
-                        }
-                    });
+
+
+
+                    }
 
 
                 }
@@ -234,12 +245,61 @@ public class UserProfileActivity extends AppCompatActivity {
         }
     }
 
+    private void updateUserDetails( String userId) {
+        DatabaseReference myRef = database.getReference().child("UserDetails").child(userId);
+        Map<String ,Object> userDetail=new HashMap<>();
+        if (selected != null) {
+            if(editedUserName!=null){
+                userDetail.put("userName",editedUserName);
+                myRef.updateChildren(userDetail);
+            }
+            Intent i= new Intent (getApplicationContext(), ProfileUploadService.class);
+            i.putExtra("userId",userId);
+            i.setData(selected);
+            startService(i);
+
+        }else{
+            userDetail.put("userName",editedUserName);
+            myRef.updateChildren(userDetail);
+        }
+
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void updateStatus(){
+        DatabaseReference userDetailRef=database.getReference().child("UserDetails").child(firebaseUser.getUid());
+        Map<String ,Object> onlineStatus=new HashMap<>();
+        onlineStatus.put("online",true);
+        userDetailRef.updateChildren(onlineStatus);
+
+        Map<String ,Object> lastSeenStatus=new HashMap<>();
+        lastSeenStatus.put("lastSeenDate",getDate());
+        lastSeenStatus.put("lastSeenTime",getTime());
+        lastSeenStatus.put("online",false);
+        userDetailRef.onDisconnect().updateChildren(lastSeenStatus);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private String getTime(){
+        LocalDateTime myDateObj = LocalDateTime.now();
+        DateTimeFormatter timeObj = DateTimeFormatter.ofPattern("HH:mm");
+        return myDateObj.format(timeObj);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private String getDate(){
+        LocalDateTime myDateObj = LocalDateTime.now();
+        DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        return myDateObj.format(dateObj);
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == GALLERY_REQUEST)  {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == GALLERY_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(intent,GALLERY_REQUEST);
+                startActivityForResult(intent, GALLERY_REQUEST);
             } else {
                 Toast.makeText(this, "Permission DENIED", Toast.LENGTH_SHORT).show();
             }

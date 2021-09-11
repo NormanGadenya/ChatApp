@@ -5,16 +5,16 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
+import android.os.ResultReceiver;
 import android.webkit.MimeTypeMap;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 
+import com.example.campaign.Common.Tools;
 import com.example.campaign.Interfaces.APIService;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.Notifications.Client;
@@ -31,25 +31,30 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnPausedListener;
+import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class AudioService extends Service {
+public class VideoUploadService extends Service {
     private FirebaseDatabase database;
     private FirebaseStorage storage,firebaseStorage;
     private StorageReference mStorageReference;
     boolean notify=false;
+    private static final String FORMAT = "%02d:%02d";
     String fUserName,userId,otherUserId;
+    ResultReceiver myResultReceiver;
+    Bundle bundle = new Bundle();
     Uri uri;
     APIService apiService;
+    private String time=new Tools().getTime();
+    private String date=new Tools().getDate();
 
     @Nullable
     @Override
@@ -58,18 +63,22 @@ public class AudioService extends Service {
         return null;
     }
 
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         database = FirebaseDatabase.getInstance();
         firebaseStorage= FirebaseStorage.getInstance();
         storage= FirebaseStorage.getInstance();
+        mStorageReference=firebaseStorage.getReference();
+        myResultReceiver =  intent.getParcelableExtra("receiver");
         fUserName=intent.getStringExtra("fUserName");
         userId=intent.getStringExtra("userId");
         otherUserId=intent.getStringExtra("otherUserId");
+        String caption =intent.getStringExtra("caption");
         String uriString=intent.getStringExtra("uri");
         uri=Uri.parse(uriString);
-        uploadAudio(userId,otherUserId,uri,getApplicationContext());
-        return START_STICKY;
+        uploadVideo(userId,otherUserId,uri,getApplicationContext(),caption);
+        return START_NOT_STICKY;
     }
 
     @Override
@@ -77,24 +86,43 @@ public class AudioService extends Service {
         super.onDestroy();
     }
 
-    private void uploadAudio(String userId, String otherUserId, Uri uri, Context context){
+    private void uploadVideo(String userId, String otherUserId, Uri uri, Context context,String caption){
+
         if(uri!=null){
             updateToken(FirebaseInstanceId.getInstance().getToken());
             apiService= Client.getClient("https://fcm.googleapis.com").create(APIService.class);
             DatabaseReference myRef = database.getReference();
             DatabaseReference fUserChatRef= myRef.child("chats").child(userId).child(otherUserId).push();
             messageListModel message=new messageListModel();
-            message.setTime(getTime());
-            message.setDate(getDate());
-            message.setType("AUDIO");
+            message.setTime(time);
+            message.setDate(date);
+            message.setType("VIDEO");
+            message.setText(caption);
+            message.setVideoUrI(String.valueOf(uri));
             message.setReceiver(otherUserId);
+            fUserChatRef.setValue(message);
             String messageKey=fUserChatRef.getKey();
-
             StorageReference fileReference;
             fileReference = mStorageReference.child(System.currentTimeMillis()
                     + getMimeType(context,uri));
-            UploadTask uploadTask =fileReference.putFile(uri);
-            uploadTask.continueWithTask(task -> {
+
+            fileReference.putFile(uri).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                    double progress = 100.0 * (taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
+                    System.out.println("Upload is " + progress + "% done");
+                    int currentProgress = (int) progress;
+                    bundle.putInt("uploadVideoPercentage",currentProgress);
+                    bundle.putString("uploadVideoTId",messageKey);
+
+                    myResultReceiver.send(200,bundle);
+                }
+            }).addOnPausedListener(new OnPausedListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onPaused(UploadTask.TaskSnapshot taskSnapshot) {
+                    System.out.println("Upload is paused");
+                }
+            }).continueWithTask(task -> {
                 if (!task.isSuccessful()) {
                     throw task.getException();
                 }
@@ -103,37 +131,21 @@ public class AudioService extends Service {
                 if (task.isSuccessful()) {
                     Uri downloadUri = task.getResult();
                     messageListModel messageOtherUser=new messageListModel();
-                    messageOtherUser.setAudioUrI(downloadUri.toString());
-                    messageOtherUser.setTime(getTime());
-                    messageOtherUser.setDate(getDate());
-                    messageOtherUser.setType("AUDIO");
-                    message.setAudioUrI(downloadUri.toString());
+                    messageOtherUser.setVideoUrI(downloadUri.toString());
+                    messageOtherUser.setTime(time);
+                    messageOtherUser.setDate(date);
+                    messageOtherUser.setType("VIDEO");
+                    message.setAudioUrI(uri.toString());
                     messageOtherUser.setReceiver(otherUserId);
                     DatabaseReference messageRef= myRef.child("chats").child(otherUserId).child(userId);
-                    fUserChatRef.setValue(message);
                     messageRef.child(messageKey).setValue(messageOtherUser);
-
                     notify=true;
                     if(notify){
-                        sendNotification(otherUserId,fUserName,"AUDIO");
+                        sendNotification(otherUserId,fUserName,"VIDEO");
                     }
                 }
             });
         }
-
-    }
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private String getTime(){
-        LocalDateTime myDateObj = LocalDateTime.now();
-        DateTimeFormatter timeObj = DateTimeFormatter.ofPattern("HH:mm");
-        return myDateObj.format(timeObj);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private String getDate(){
-        LocalDateTime myDateObj = LocalDateTime.now();
-        DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        return myDateObj.format(dateObj);
     }
 
     private void updateToken(String token) {

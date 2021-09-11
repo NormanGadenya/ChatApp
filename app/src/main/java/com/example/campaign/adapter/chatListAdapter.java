@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.os.Build;
-import android.os.Vibrator;
 import android.util.Log;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
@@ -16,9 +15,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -33,42 +30,30 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.campaign.Activities.ChatActivity;
-import com.example.campaign.Interfaces.RecyclerViewInterface;
+import com.example.campaign.Common.Tools;
 import com.example.campaign.Model.ChatViewModel;
-import com.example.campaign.Model.chatListModel;
-import com.example.campaign.Model.messageListModel;
 import com.example.campaign.Model.userModel;
 import com.example.campaign.R;
-import com.example.campaign.Repository.Repo;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-
-import de.hdodenhof.circleimageview.CircleImageView;
 
 
 public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder> {
     private List<userModel> list;
     private Context context;
     private FirebaseUser firebaseUser =FirebaseAuth.getInstance().getCurrentUser();
-    private RecyclerViewInterface recyclerViewInterface;
     private FirebaseDatabase database = FirebaseDatabase.getInstance();
     private Activity activity;
     private ChatViewModel chatViewModel;
     boolean isSelected,isEnabled=false;
-    ArrayList<userModel> selected=new ArrayList<>();
+    private ArrayList<userModel> selected=new ArrayList<>();
     private ViewModelStoreOwner viewModelStoreOwner;
     private LifecycleOwner lifecycleOwner;
 
@@ -204,15 +189,11 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                                 case R.id.menu_delete:
                                     DatabaseReference chatRef=database.getReference().child("chats").child(firebaseUser.getUid());
                                     for(userModel c:selected){
-
                                         chatRef.child(c.getUserId()).removeValue();
                                         list.remove(c);
                                         Log.d("the list",String.valueOf(list.size()));
                                         notifyDataSetChanged();
-
                                     }
-
-
                                     mode.finish();
                                     break;
 
@@ -291,17 +272,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
             profile = itemView.findViewById(R.id.image_profile);
             tvTyping=itemView.findViewById(R.id.tv_typing);
             checkBox=itemView.findViewById(R.id.checkBox);
-
-
         }
-    }
-
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private String getDate(){
-        LocalDateTime myDateObj = LocalDateTime.now();
-        DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        return myDateObj.format(dateObj);
     }
 
     private String formatLastMessage(String text) {
@@ -315,57 +286,10 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
         return text;
     }
 
-    private String formatDate(String date){
-        String newDate;
-        String month=null;
-        switch(date.substring(3,5)){
-            case "01":
-                month="JAN";
-                break;
-            case "02":
-                month="FEB";
-                break;
-            case "03":
-                month="MAR";
-                break;
-            case "04":
-                month="APR";
-                break;
-            case "05":
-                month="MAY";
-                break;
-            case "06":
-                month="JUNE";
-                break;
-            case "07":
-                month="JULY";
-                break;
-            case "08":
-                month="AUG";
-                break;
-            case "09":
-                month="SEPT";
-                break;
-            case "10":
-                month="OCT";
-                break;
-            case "11":
-                month="NOV";
-                break;
-            case "12":
-                month="DEC";
-                break;
-
-        }
-        newDate=date.substring(0,2)+"-"+ month+ "-"+date.substring(6,10);
-        return newDate;
-    }
     private void getLastMessage(String userId,TextView description,TextView dateTime,ImageView imageView){
-        DatabaseReference messageRef=database.getReference();
+        String localDate=new Tools().getDate();
         chatViewModel = new ViewModelProvider(viewModelStoreOwner).get(ChatViewModel.class);
         chatViewModel.initLastMessage(userId);
-
-
         chatViewModel.getLastMessage().observe(lifecycleOwner, lastMessage -> {
             if(lastMessage.containsKey(userId)){
                 String textMessage=lastMessage.get(userId).getText();
@@ -374,9 +298,9 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                 String audioUrI=lastMessage.get(userId).getAudioUrI();
                 String time=lastMessage.get(userId).getTime();
                 String date=lastMessage.get(userId).getDate();
-                if (getDate().equals(date)){
+                if (localDate.equals(date)){
                     dateTime.setText(time);
-                }else if(date.substring(6,10).equals(getDate().substring(6,10)) && date.substring(3,5).equals(getDate().substring(3,5)) && Integer.parseInt(date.substring(0,2))+1==Integer.parseInt(getDate().substring(0,2))){
+                }else if(date.substring(6,10).equals(localDate.substring(6,10)) && date.substring(3,5).equals(localDate.substring(3,5)) && Integer.parseInt(date.substring(0,2))+1==Integer.parseInt(localDate.substring(0,2))){
                     dateTime.setText("Yesterday");
                 }else{
                     dateTime.setText(date);
@@ -389,61 +313,21 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                 }else {
                     description.setVisibility(View.GONE);
                     imageView.setVisibility(View.VISIBLE);
-                    Log.d("img222","img23");
-                    if(imageUrI!=null){
 
+                    if(imageUrI!=null){
                         imageView.setImageDrawable(context.getDrawable(R.drawable.gallery));
-                        Log.d("img222","img");
                     }else if(videoUrI!=null){
                         imageView.setImageDrawable(context.getDrawable(R.drawable.ic_baseline_videocam_24));
-                        Log.d("img222","vid");
                     }else{
                         imageView.setImageDrawable(context.getDrawable(R.drawable.ic_baseline_music_note_24));
-                        Log.d("img222","aud");
+
                     }
                 }
                 chatViewModel.setLastMessage(null);
             }
 
         });
-//        messageRef.child("chats").child(firebaseUser.getUid()).child(userId).orderByKey().limitToLast(1).addValueEventListener(new ValueEventListener() {
-//            @RequiresApi(api = Build.VERSION_CODES.O)
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                String textMessage=null;
-//                String imageUrI=null;
-//                for(DataSnapshot dataSnapshot:snapshot.getChildren()){
-//                    messageListModel message=dataSnapshot.getValue(messageListModel.class);
-//                    textMessage=message.getText();
-//                    imageUrI=message.getImageUrI();
-//
-//
-//                    String time=message.getTime();
-//                    String date=message.getDate();
-//                    if (getDate().equals(date)){
-//                        dateTime.setText(time);
-//                    }else{
-//                        dateTime.setText(date);
-//                    }
-//
-//                }
-//                if(imageUrI==null){
-//                    textMessage=formatLastMessage(textMessage);
-//                    description.setText(textMessage);
-//                    imageView.setVisibility(View.GONE);
-//                }else{
-//                    description.setVisibility(View.GONE);
-//                    imageView.setVisibility(View.VISIBLE);
-//                }
-//
-//
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError error) {
-//
-//            }
-//        });
+
     }
 
 

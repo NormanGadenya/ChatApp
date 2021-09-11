@@ -12,58 +12,45 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 
-import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.ColorFilter;
-import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.view.DragEvent;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
-import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
 
+import com.example.campaign.Common.Tools;
 import com.example.campaign.Model.userModel;
 
 import com.example.campaign.R;
+import com.example.campaign.Services.ProfileUploadService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.UserInfo;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
-import com.mikhaellopez.circularimageview.CircularImageView;
 import com.zolad.zoominimageview.ZoomInImageView;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 import static android.view.View.GONE;
 
 
 public class RegistrationActivity extends AppCompatActivity {
     private Button submit_button;
-    private EditText userName;
+    private EditText userNameTV;
     private FirebaseDatabase database;
     private FirebaseAuth firebaseAuth;
     private FloatingActionButton selProfilePic,gallery_button,camera_button,remove_button;
@@ -77,8 +64,10 @@ public class RegistrationActivity extends AppCompatActivity {
     private static final int GALLERY_REQUEST = 100;
     private static final int CONTACTS_REQUEST=200;
     private StorageReference mStorageReference;
-    private boolean btnSelected=false;
+    private boolean btnSelected,clickedDone=false;
     private View layout_act_drag;
+    private String date=new Tools().getDate();
+    private String time=new Tools().getTime();
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
@@ -102,7 +91,7 @@ public class RegistrationActivity extends AppCompatActivity {
                         .setDuration(300)
                         .alpha(1.0f)
                         .setListener(null);
-                userName.setEnabled(false);
+                userNameTV.setEnabled(false);
 
             }else{
                 wrapper.setVisibility(GONE);
@@ -112,51 +101,80 @@ public class RegistrationActivity extends AppCompatActivity {
                         .setDuration(300)
                         .alpha(0.0f)
                         .setListener(null);
-                userName.setEnabled(true);
+                userNameTV.setEnabled(true);
 
             }
 
         });
 
         submit_button.setOnClickListener(v -> {
-            String name = userName.getText().toString();
+            String userName = userNameTV.getText().toString();
             progressBar.setVisibility(View.VISIBLE);
-            if(name.isEmpty()){
+            if(userName.isEmpty()){
                 Toast.makeText(RegistrationActivity.this, "Please fill in the fields", Toast.LENGTH_SHORT).show();
             }else{
                 if (user!=null) {
+                    Log.d("done", String.valueOf(clickedDone));
+                    if(!clickedDone){
 
-                    for (UserInfo profileData : user.getProviderData()){
-                        userId=profileData.getUid();
-                        phoneNumber=profileData.getPhoneNumber();
-                        uploadFile(name,phoneNumber,userId);
+                        userId = user.getUid();
+                        phoneNumber = user.getPhoneNumber();
+
+                        updateUserDetails(userName,phoneNumber,userId);
+
+                        if(selected!=null){
+                            Intent i= new Intent (getApplicationContext(), ProfileUploadService.class);
+                            i.putExtra("userId",userId);
+                            i.setData(selected);
+                            startService(i);
+                        }
+                    }
+
+                    if (ContextCompat.checkSelfPermission(RegistrationActivity.this,
+                            Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+                        Intent chatList=new Intent(RegistrationActivity.this, MainActivity.class);
+                        startActivity(chatList);
+                        userNameTV.setEnabled(false);
+                    } else {
+                        requestContactsPermission();
+                    }
+
+                }
+            }
+        });
+        userNameTV.setOnKeyListener(new View.OnKeyListener() {
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                // If the event is a key-down event on the "enter" button
+                clickedDone=false;
+                if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
+                        (keyCode == KeyEvent.KEYCODE_ENTER)) {
+                    if (user!=null) {
+                        progressBar.setVisibility(View.VISIBLE);
+                        String userName=userNameTV.getText().toString();
+                        userId=user.getUid();
+                        phoneNumber=user.getPhoneNumber();
+
+//                            uploadFile(name,phoneNumber,userId);
+
+                        updateUserDetails(userName,phoneNumber,userId);
+                        clickedDone=true;
+                        if(selected!=null){
+                            Intent i= new Intent (getApplicationContext(), ProfileUploadService.class);
+                            i.putExtra("userId",userId);
+                            i.setData(selected);
+                            startService(i);
+
+                        }
                         if (ContextCompat.checkSelfPermission(RegistrationActivity.this,
                                 Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
                             Intent chatList=new Intent(RegistrationActivity.this, MainActivity.class);
                             startActivity(chatList);
-                            userName.setEnabled(false);
+                            userNameTV.setEnabled(false);
                         } else {
                             requestContactsPermission();
                         }
-                    }
-                }
-            }
-        });
-        userName.setOnKeyListener(new View.OnKeyListener() {
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                // If the event is a key-down event on the "enter" button
-                if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
-                        (keyCode == KeyEvent.KEYCODE_ENTER)) {
+//                        progressBar.setVisibility(View.GONE);
 
-                    if (user!=null) {
-                        progressBar.setVisibility(View.VISIBLE);
-                        for (UserInfo profileData : user.getProviderData()){
-                            String name=userName.getText().toString();
-                            userId=profileData.getUid();
-                            phoneNumber=profileData.getPhoneNumber();
-                            uploadFile(name,phoneNumber,userId);
-
-                        }
                     }
 
                     return true;
@@ -170,7 +188,7 @@ public class RegistrationActivity extends AppCompatActivity {
                     Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
                     Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                     startActivityForResult(intent,GALLERY_REQUEST);
-                    userName.setEnabled(false);
+                    userNameTV.setEnabled(false);
             } else {
                 requestStoragePermission();
             }
@@ -180,7 +198,7 @@ public class RegistrationActivity extends AppCompatActivity {
                     Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
                 Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 startActivityForResult(cameraIntent,  CAMERA_REQUEST);
-                userName.setEnabled(false);
+                userNameTV.setEnabled(false);
             } else {
                 requestCameraPermission();
             }
@@ -190,13 +208,27 @@ public class RegistrationActivity extends AppCompatActivity {
             selected=null;
             profilePic.setImageResource(R.drawable.person);
             wrapper.setVisibility(GONE);
-            userName.setEnabled(true);
+            userNameTV.setEnabled(true);
         });
 
     }
 
+    private void updateUserDetails(String userName, String phoneNumber, String userId) {
+            userModel userModel =new userModel();
+            userModel.setUserName(userName);
+            userModel.setPhoneNumber(phoneNumber);
+            userModel.setTyping(false);
+            userModel.setLastSeenDate(date);
+            userModel.setLastSeenTime(time);
+            userModel.setOnline(true);
+            userModel.setShowLastSeen(true);
+            userModel.setShowOnlineState(true);
+            DatabaseReference myRef = database.getReference();
+            myRef.child("UserDetails").child(userId).setValue(userModel);
+    }
+
     private void InitializeControllers() {
-        userName=findViewById(R.id.editTextPersonName);
+        userNameTV=findViewById(R.id.editTextPersonName);
         submit_button=findViewById(R.id.RegistrationButton);
         selProfilePic=findViewById(R.id.selProfilePic);
         gallery_button=findViewById(R.id.gallery_button);
@@ -211,94 +243,6 @@ public class RegistrationActivity extends AppCompatActivity {
     }
 
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private void uploadFile(String name, String phoneNumber, String userId) {
-        
-        if (selected != null) {
-            imageProgress.setVisibility(View.VISIBLE);
-            userName.setEnabled(false);
-            StorageReference fileReference = mStorageReference.child(System.currentTimeMillis()
-                    + getMimeType(getApplicationContext(),selected));
-            profilePic.setColorFilter(Color.argb(125, 0, 0, 0));
-            submit_button.setEnabled(false);
-            progressBar.setVisibility(GONE);
-            UploadTask uploadTask =fileReference.putFile(selected);
-            uploadTask.continueWithTask(task -> {
-                if (!task.isSuccessful()) {
-                    submit_button.setEnabled(true);
-                    progressBar.setVisibility(GONE);
-                    imageProgress.setVisibility(GONE);
-                    throw task.getException();
-
-                }
-                return fileReference.getDownloadUrl();
-            }).addOnCompleteListener(task -> {
-
-
-                if (task.isSuccessful()) {
-                    imageProgress.setVisibility(View.GONE);
-                    progressBar.setVisibility(View.VISIBLE);
-                    submit_button.setEnabled(true);
-                    profilePic.setColorFilter(Color.argb(0, 0, 0, 0));
-                    Uri downloadUri = task.getResult();
-                    DatabaseReference myRef = database.getReference();
-                    userModel userModel =new userModel();
-                    userModel.setTyping(false);
-                    userModel.setUserName(name);
-                    userModel.setLastSeenDate(getDate());
-                    userModel.setLastSeenTime(getTime());
-                    userModel.setOnline(true);
-                    userModel.setShowLastSeen(true);
-                    userModel.setShowOnlineState(true);
-                    userModel.setPhoneNumber(phoneNumber);
-                    userModel.setProfileUrI(downloadUri.toString());
-
-
-                    try{
-                        myRef.child("UserDetails").child(userId).setValue(userModel);
-
-                    }catch(Exception e){
-                        System.out.println(e.getLocalizedMessage());
-                    }
-                    progressBar.setVisibility(View.GONE);
-
-
-                }
-            });
-
-
-
-//            fileReference.putFile(selected).continueWithTask(task -> {
-//                if (!task.isSuccessful()) {
-//                    throw task.getException();
-//                }
-//                UploadTask uploadTask =fileReference.putFile(selected);
-//                .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-//                    @Override
-//                    public void onProgress(@NonNull UploadTask.TaskSnapshot snapshot) {
-//                       long progress= snapshot.getBytesTransferred()/snapshot.getTotalByteCount();
-//                       progress=progress*100;
-//                        imageProgress.setProgress((int) progress);
-//                    }
-//                });
-//
-//                return fileReference.getDownloadUrl();
-//            });
-        } else {
-            Toast.makeText(this, "No file selected", Toast.LENGTH_SHORT).show();
-            userModel userModel =new userModel();
-            userModel.setUserName(name);
-            userModel.setPhoneNumber(phoneNumber);
-            try{
-                DatabaseReference myRef = database.getReference();
-                myRef.child("UserDetails").child(userId).setValue(userModel);
-
-            }catch(Exception e){
-                System.out.println(e.getLocalizedMessage());
-            }
-
-        }
-    }
     private Uri getImageUri( Bitmap photo) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         photo.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
@@ -336,13 +280,7 @@ public class RegistrationActivity extends AppCompatActivity {
                     new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST);
         }
     }
-    private void closeKeyboard(){
-        View view=this.getCurrentFocus();
-        if (view!=null){
-            InputMethodManager im=(InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-            im.hideSoftInputFromWindow(view.getWindowToken(),0);
-        }
-    }
+
     private void requestCameraPermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                 Manifest.permission.CAMERA)) {
@@ -370,25 +308,24 @@ public class RegistrationActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == GALLERY_REQUEST)  {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == GALLERY_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(intent,GALLERY_REQUEST);
+                startActivityForResult(intent, GALLERY_REQUEST);
             } else {
                 Toast.makeText(this, "Permission DENIED", Toast.LENGTH_SHORT).show();
             }
-        }
-        else if (requestCode ==CAMERA_REQUEST){
+        } else if (requestCode == CAMERA_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-                startActivityForResult(cameraIntent,  CAMERA_REQUEST);
+                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                startActivityForResult(cameraIntent, CAMERA_REQUEST);
             } else {
                 Toast.makeText(this, "Permission DENIED", Toast.LENGTH_SHORT).show();
             }
-        }
-        else if(requestCode== CONTACTS_REQUEST){
-            if(grantResults.length >0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
-                Intent chatList=new Intent(RegistrationActivity.this, MainActivity.class);
+        } else if (requestCode == CONTACTS_REQUEST) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Intent chatList = new Intent(RegistrationActivity.this, MainActivity.class);
                 startActivity(chatList);
             }
         }
@@ -403,11 +340,11 @@ public class RegistrationActivity extends AppCompatActivity {
                 Bitmap bitmap=MediaStore.Images.Media.getBitmap(getContentResolver(),selected);
                 profilePic.setImageBitmap(bitmap);
                 wrapper.setVisibility(GONE);
-                userName.setEnabled(true);
+                userNameTV.setEnabled(true);
 
             }catch(Exception e){
                 Log.d("error",e.getMessage());
-                userName.setEnabled(true);
+                userNameTV.setEnabled(true);
 
             }
         }
@@ -418,7 +355,7 @@ public class RegistrationActivity extends AppCompatActivity {
                 selected=getImageUri(bitmap);
                 profilePic.setImageBitmap(bitmap);
                 wrapper.setVisibility(GONE);
-                userName.setEnabled(true);
+                userNameTV.setEnabled(true);
 
             }catch(Exception e){
                 Log.d("error",e.getMessage());
@@ -427,46 +364,16 @@ public class RegistrationActivity extends AppCompatActivity {
 
         }
         else{
-            userName.setEnabled(true);
+            userNameTV.setEnabled(true);
         }
 
-    }
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private String getTime(){
-        LocalDateTime myDateObj = LocalDateTime.now();
-        DateTimeFormatter timeObj = DateTimeFormatter.ofPattern("HH:mm");
-        return myDateObj.format(timeObj);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private String getDate(){
-        LocalDateTime myDateObj = LocalDateTime.now();
-        DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        return myDateObj.format(dateObj);
     }
 
     @Override
     public void onBackPressed() {
 
      wrapper.setVisibility(GONE);
-     userName.setEnabled(true);
-    }
-    public static String getMimeType(Context context, Uri uri) {
-        String extension;
-
-        //Check uri format to avoid null
-        if (uri.getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
-            //If scheme is a content
-            final MimeTypeMap mime = MimeTypeMap.getSingleton();
-            extension = mime.getExtensionFromMimeType(context.getContentResolver().getType(uri));
-        } else {
-            //If scheme is a File
-            //This will replace white spaces with %20 and also other special characters. This will avoid returning null values on file name with spaces and special characters.
-            extension = MimeTypeMap.getFileExtensionFromUrl(Uri.fromFile(new File(uri.getPath())).toString());
-
-        }
-
-        return extension;
+     userNameTV.setEnabled(true);
     }
 
 }

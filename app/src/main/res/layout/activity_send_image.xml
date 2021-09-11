@@ -17,24 +17,23 @@
         app:layout_constraintTop_toTopOf="parent"
          />
 
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraint_layout2"
-        android:layout_marginBottom="8dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:padding="5dp"
         app:layout_constraintEnd_toEndOf="parent">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/const_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="4dp"
             android:background="@drawable/card_background2"
             android:maxHeight="60dp"
             android:minHeight="40dp"
-            app:layout_constraintEnd_toStartOf="@+id/sendButton"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
@@ -46,24 +45,26 @@
                 android:background="@color/transparent"
                 android:clickable="true"
                 android:src="@drawable/smiley"
-                android:tint="@color/white"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/white" />
 
             <hani.momanii.supernova_emoji_library.Helper.EmojiconEditText
                 android:id="@+id/caption"
-                android:layout_width="250dp"
+                android:layout_width="300dp"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="8dp"
                 android:background="@android:color/transparent"
                 android:hint="Type caption"
                 android:maxHeight="60dp"
+                android:minWidth="250dp"
                 android:minHeight="40dp"
                 android:paddingLeft="10dp"
                 android:textColor="@color/white"
                 android:textColorHint="@color/cream"
                 app:emojiconSize="28sp"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@id/emoji_button"
                 app:layout_constraintTop_toTopOf="parent" />
         </androidx.constraintlayout.widget.ConstraintLayout>
@@ -73,8 +74,8 @@
             android:id="@+id/sendButton"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginStart="2dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
             android:background="@drawable/ripple"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -82,7 +83,5 @@
             app:srcCompat="@drawable/send" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>
