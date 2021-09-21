@@ -94,6 +94,7 @@ public class UserListActivity extends AppCompatActivity {
     private Set<String> contactsList=new HashSet<>();
     private UserViewModel userViewModel;
     private VerticalRecyclerViewFastScroller fastScroller;
+    private SharedPreferences contactsSharedPrefs;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
@@ -110,35 +111,23 @@ public class UserListActivity extends AppCompatActivity {
         ServiceCheck serviceCheck=new ServiceCheck(updateStatusService.class,this,manager);
         serviceCheck.checkServiceRunning();
 
-        // todo fix contacts
-        if (ContextCompat.checkSelfPermission(context,
-                Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
                     loadSharedPreferenceData();
-                    if (contactsList==null){
-                        contactsList=getPhoneNumbers();
-                        saveSharedPreferenceData();
-                    }
-                    userViewModel.initUserList(getPhoneNumbers());
+                    userViewModel.initUserList(contactsSharedPrefs);
                     list=userViewModel.getAllUsers().getValue();
                     userListAdapter=new userListAdapter(list, UserListActivity.this);
                     recyclerView.setAdapter(userListAdapter);
-                    loadUsers(contactsList);
-
-
+                    loadUsers();
                 }
             });
 
-        } else {
-            requestContactsPermission();
-        }
+
         final Intent intent = getIntent();
 
         openingAnimation(savedInstanceState, intent);
-//        fastScroller.setRecyclerView(recyclerView);
-//        recyclerView.setOnScrollListener(fastScroller.getOnScrollListener());
+
 
 
     }
@@ -177,8 +166,6 @@ public class UserListActivity extends AppCompatActivity {
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowCustomEnabled(true);
         rootLayout = findViewById(R.id.root_layout);
-//        fastScroller=findViewById(R.id.fastScrollerContacts);
-
     }
 
     protected void revealActivity(int x, int y) {
@@ -198,135 +185,26 @@ public class UserListActivity extends AppCompatActivity {
         }
     }
 
-    protected void unRevealActivity() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            finish();
-        } else {
-            float finalRadius = (float) (Math.max(rootLayout.getWidth(), rootLayout.getHeight()) * 1.1);
-            Animator circularReveal = ViewAnimationUtils.createCircularReveal(
-                    rootLayout, revealX, revealY, finalRadius, 0);
 
-            circularReveal.setDuration(400);
-            circularReveal.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    rootLayout.setVisibility(View.INVISIBLE);
-                    finish();
-                }
-            });
-
-
-            circularReveal.start();
-        }
-    }
     private void loadSharedPreferenceData() {
-        SharedPreferences sharedPreferences=getSharedPreferences("contactsSharedPreferences",MODE_PRIVATE);
-        contactsList=sharedPreferences.getStringSet("contactsList",null);
+        contactsSharedPrefs=getSharedPreferences("contactsSharedPreferences",MODE_PRIVATE);
 
-    }
-    private void saveSharedPreferenceData() {
-        SharedPreferences sharedPreferences =getSharedPreferences("contactsSharedPreferences",MODE_PRIVATE);
-        SharedPreferences.Editor editor=sharedPreferences.edit();
-        editor.putStringSet("contactsList",contactsList);
-        editor.apply();
+
     }
 
 
 
 
-    private void loadUsers(Set<String> contacts){
+
+    private void loadUsers(){
 
         userViewModel.getAllUsers().observe(this, userModels -> {
+
             userListAdapter.notifyDataSetChanged();
             progressBar.setVisibility(View.GONE);
 
 
         });
-
-    }
-
-    public boolean isAlphanumeric2(String str) {
-        for (int i=0; i<str.length(); i++) {
-            char c = str.charAt(i);
-            if (c < 0x30 || (c >= 0x3a && c <= 0x40) || (c > 0x5a && c <= 0x60) || c > 0x7a)
-                return false;
-        }
-        return true;
-    }
-    private Set<String> getPhoneNumbers() {
-        Set<String> phoneNumbers=new HashSet<>();
-        Cursor phones = context.getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
-
-        // Loop Through All The Numbers
-        while (phones.moveToNext()) {
-            String name = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
-            String phoneNumber = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-            // Cleanup the phone number
-            phoneNumber = phoneNumber.replaceAll("[()\\s-]+", "");
-
-            // Enter Into Hash Map
-            namePhoneMap.put(phoneNumber, name);
-
-        }
-        for (Map.Entry<String, String> entry : namePhoneMap.entrySet()) {
-            String key = entry.getKey();
-
-            if (key.contains("+")){
-                phoneNumbers.add(key);
-            }else{
-                if(isAlphanumeric2(key) ){
-
-                        Long i=Long.parseLong(key);
-                        System.out.println(key);
-                        String j="+256"+i;
-
-                        phoneNumbers.add(j);
-
-
-                }
-            }
-        }
-        phones.close();
-        return phoneNumbers;
-    }
-
-    private void requestContactsPermission() {
-//        if (ActivityCompat.shouldShowRequestPermissionRationale(UserListActivity.this,
-//                Manifest.permission.READ_CONTACTS)) {
-//            ActivityCompat.requestPermissions(UserListActivity.this,
-//                    new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST);
-//        }
-
-        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                Manifest.permission.READ_CONTACTS)) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Permission needed")
-                    .setMessage("This permission is needed because we need to access your storage")
-                    .setPositiveButton("ok", (dialog, which) -> ActivityCompat.requestPermissions(UserListActivity.this,
-                            new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST))
-                    .setNegativeButton("cancel", (dialog, which) -> dialog.dismiss())
-                    .create().show();
-        } else {
-            ActivityCompat.requestPermissions(this,
-                    new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST);
-        }
-    }
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == CONTACTS_REQUEST) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                loadSharedPreferenceData();
-                if (contactsList == null) {
-                    System.out.println("scscdvf");
-                    contactsList = getPhoneNumbers();
-                }
-                loadUsers(contactsList);
-
-            } else {
-                Toast.makeText(getApplicationContext(), "Permission DENIED", Toast.LENGTH_SHORT).show();
-            }
-        }
 
     }
 
@@ -353,7 +231,6 @@ public class UserListActivity extends AppCompatActivity {
         ArrayList<userModel> newList=new ArrayList<>();
         for(userModel user:list){
             if(user.getUserName().toLowerCase().contains(newText.toLowerCase())){
-
                 newList.add(user);
             }
         }

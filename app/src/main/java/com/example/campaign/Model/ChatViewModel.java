@@ -1,5 +1,6 @@
 package com.example.campaign.Model;
 
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
 

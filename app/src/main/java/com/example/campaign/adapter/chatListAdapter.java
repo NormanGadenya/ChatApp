@@ -3,9 +3,11 @@ package com.example.campaign.adapter;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.os.Build;
+import android.os.Handler;
 import android.util.Log;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
@@ -45,6 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
 
 
 public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder> {
@@ -58,7 +61,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     private ArrayList<userModel> selected=new ArrayList<>();
     private ViewModelStoreOwner viewModelStoreOwner;
     private LifecycleOwner lifecycleOwner;
-
+    private  SharedPreferences contactsSharedPrefs;
 
 
     public chatListAdapter(List<userModel> list, Context context, Activity activity,ViewModelStoreOwner viewModelStoreOwner ,LifecycleOwner lifecycleOwner) {
@@ -69,6 +72,10 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
         this.viewModelStoreOwner=viewModelStoreOwner;
 
 
+    }
+
+    public void setContactsSharedPrefs(SharedPreferences contactsSharedPrefs){
+        this.contactsSharedPrefs=contactsSharedPrefs;
     }
 
     @NonNull
@@ -91,8 +98,15 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
 
         final userModel chatlist = list.get(position);
 
+
         getLastMessage(chatlist.getUserId(),holder.tvDesc,holder.tvDate,holder.imageView,holder.messageStatus);
-        holder.tvName.setText(chatlist.getUserName());
+        String userName=contactsSharedPrefs.getString(chatlist.getPhoneNumber(),null);
+        if(userName!=null){
+            holder.tvName.setText(userName);
+        }else{
+            holder.tvName.setText(chatlist.getUserName());
+        }
+
 
         if (chatlist.getProfileUrI()==null){
             holder.profile.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
@@ -102,44 +116,43 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
 
         if(chatlist.getOnline()){
 
-//            holder.profile.setBorderColor( context.getColor(R.color.teal_200));
-//            holder.profile.setBorderColorEnd( Color.WHITE);
-            holder.onlineStatus.setVisibility( View.VISIBLE);
-//            holder.profile.setBorderColorStart(Color.CYAN);
-//            holder.profile.setBorderColorEnd( Color.MAGENTA);
+            holder.onlineStatus.setVisibility( VISIBLE);
 
         }else{
             holder.onlineStatus.setVisibility( GONE);
-//            holder.profile.setBorderColorStart(Color.WHITE);
-//            holder.profile.setBorderColorEnd( Color.WHITE);
+
 
         }
-//        holder.profile.setBorderColorDirection(CircularImageView.GradientDirection.LEFT_TO_RIGHT);
-//        holder.profile.setBorderWidth(10);
+
         if(chatlist.getTyping()!=null){
             if(chatlist.getTyping()){
-                holder.tvTyping.setVisibility(View.VISIBLE);
+                holder.tvTyping.setVisibility(VISIBLE);
                 holder.tvDesc.setVisibility(GONE);
-//                holder.tvDate.setVisibility(View.GONE);
+                holder.messageStatus.setVisibility(GONE);
 
             }else{
                 holder.tvTyping.setVisibility(GONE);
-                holder.tvDesc.setVisibility(View.VISIBLE);
-//                holder.tvDate.setVisibility(View.VISIBLE);
+                holder.tvDesc.setVisibility(VISIBLE);
+                holder.messageStatus.setVisibility(VISIBLE);
             }
         }
 
 
         holder.itemView.setOnClickListener(v -> {
-//            recyclerViewInterface.onItemClick(holder.getAdapterPosition());
             if(isEnabled){
                 clickedItem(holder);
 
             }else{
                 if(list!=null){
+                    String name;
+                    if(userName==null){
+                        name=list.get(position).getUserName();
+                    }else{
+                        name=userName;
+                    }
                     Intent intent =new Intent(context, ChatActivity.class)
                             .putExtra("userId",list.get(position).getUserId())
-                            .putExtra("userName",list.get(position).getUserName())
+                            .putExtra("userName",name)
                             .putExtra("profileUrI",list.get(position).getProfileUrI());
 
                     activity.startActivity(intent);
@@ -152,7 +165,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
         });
 
         if(isSelected){
-            holder.checkBox.setVisibility(View.VISIBLE);
+            holder.checkBox.setVisibility(VISIBLE);
             holder.itemView.setBackgroundColor(Color.LTGRAY);
         }else{
             holder.checkBox.setVisibility(GONE);
@@ -243,7 +256,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     private void clickedItem(Holder holder) {
         userModel chatListModel=list.get(holder.getAdapterPosition());
         if(holder.checkBox.getVisibility()== GONE){
-            holder.checkBox.setVisibility(View.VISIBLE);
+            holder.checkBox.setVisibility(VISIBLE);
             holder.itemView.setBackgroundColor(Color.LTGRAY);
             selected.add(chatListModel);
         }else{
@@ -332,7 +345,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
 
                 }else {
                     description.setVisibility(GONE);
-                    imageView.setVisibility(View.VISIBLE);
+                    imageView.setVisibility(VISIBLE);
 
                     if(imageUrI!=null){
                         imageView.setImageDrawable(context.getDrawable(R.drawable.gallery));

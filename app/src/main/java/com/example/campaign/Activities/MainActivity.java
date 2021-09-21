@@ -109,40 +109,24 @@ public class MainActivity extends AppCompatActivity   {
     Activity activity=this;
     private ViewModelStoreOwner viewModelStoreOwner;
     private LifecycleOwner lifecycleOwner;
-
+    private SharedPreferences contactsSharedPrefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         InitializeControllers();
-        requestContactsPermission();
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         actionBar=getSupportActionBar();
         actionBar.setTitle("Messages");
         actionBar.setElevation(10);
         chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
+        loadSharedPreferenceData();
         chatViewModel.initChatsList();
         database = FirebaseDatabase.getInstance();
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         ServiceCheck serviceCheck= new ServiceCheck(updateStatusService.class,this,manager);
         serviceCheck.checkServiceRunning();
-        if (ContextCompat.checkSelfPermission(context,
-                Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if(contactsList==null){
-                        contactsList=getPhoneNumbers();
-                        saveSharedPreferenceData();
-                    }
-
-                }
-            });
-
-        } else {
-            requestContactsPermission();
-        }
 
 
         newChat.setOnClickListener(new View.OnClickListener() {
@@ -159,10 +143,10 @@ public class MainActivity extends AppCompatActivity   {
         list=chatViewModel.getChatListData().getValue();
         if(list!=null){
             chatListAdapter=new chatListAdapter(list, MainActivity.this,this,viewModelStoreOwner,lifecycleOwner);
+            chatListAdapter.setContactsSharedPrefs(contactsSharedPrefs);
             chatViewModel.getChatListData().observe(this, chatList -> chatListAdapter.notifyDataSetChanged());
             recyclerView.setAdapter(chatListAdapter);
         }
-
 
     }
 
@@ -182,13 +166,10 @@ public class MainActivity extends AppCompatActivity   {
 
     }
 
-    private void saveSharedPreferenceData() {
-        SharedPreferences sharedPreferences =getSharedPreferences("contactsSharedPreferences",MODE_PRIVATE);
-        SharedPreferences.Editor editor=sharedPreferences.edit();
-        editor.putStringSet("contactsList",contactsList);
-        editor.apply();
-    }
+    private void loadSharedPreferenceData() {
+        contactsSharedPrefs=getSharedPreferences("contactsSharedPreferences",MODE_PRIVATE);
 
+    }
 
     private ArrayList<userModel> FilterList(String newText){
         ArrayList<userModel> newList=new ArrayList<>();
@@ -221,9 +202,11 @@ public class MainActivity extends AppCompatActivity   {
                     if (!TextUtils.isEmpty(s.trim())){
                         newList=FilterList(s);
                         chatListAdapter=new chatListAdapter(newList, MainActivity.this,activity,viewModelStoreOwner,lifecycleOwner);
+                        chatListAdapter.setContactsSharedPrefs(contactsSharedPrefs);
                         chatListAdapter.notifyDataSetChanged();
                     }else{
                         chatListAdapter=new chatListAdapter(list, MainActivity.this,activity,viewModelStoreOwner,lifecycleOwner);
+                        chatListAdapter.setContactsSharedPrefs(contactsSharedPrefs);
                     }
 
                     recyclerView.setAdapter(chatListAdapter);
@@ -243,11 +226,13 @@ public class MainActivity extends AppCompatActivity   {
                 if (newText.length()>0){
                     newList=FilterList(newText);
                     chatListAdapter=new chatListAdapter(newList, MainActivity.this,activity,viewModelStoreOwner,lifecycleOwner);
+                    chatListAdapter.setContactsSharedPrefs(contactsSharedPrefs);
                     chatListAdapter.notifyDataSetChanged();
 
 
                 }else{
                     chatListAdapter=new chatListAdapter(list, MainActivity.this,activity,viewModelStoreOwner,lifecycleOwner);
+                    chatListAdapter.setContactsSharedPrefs(contactsSharedPrefs);
 
                 }
                 recyclerView.setAdapter(chatListAdapter);
@@ -306,70 +291,6 @@ public class MainActivity extends AppCompatActivity   {
         ActivityCompat.startActivity(this, intent, options.toBundle());
     }
 
-
-    public boolean isAlphanumeric2(String str) {
-        for (int i=0; i<str.length(); i++) {
-            char c = str.charAt(i);
-            if (c < 0x30 || (c >= 0x3a && c <= 0x40) || (c > 0x5a && c <= 0x60) || c > 0x7a)
-                return false;
-        }
-        return true;
-    }
-    private Set<String> getPhoneNumbers() {
-        Set<String> phoneNumbers=new HashSet<>();
-        Cursor phones = context.getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
-
-        // Loop Through All The Numbers
-        while (phones.moveToNext()) {
-
-            String name = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
-            String phoneNumber = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-
-            // Cleanup the phone number
-            phoneNumber = phoneNumber.replaceAll("[()\\s-]+", "");
-
-            // Enter Into Hash Map
-            namePhoneMap.put(phoneNumber, name);
-
-        }
-        for (Map.Entry<String, String> entry : namePhoneMap.entrySet()) {
-            String key = entry.getKey();
-            String value = entry.getValue();
-            if (key.contains("+")){
-                phoneNumbers.add(key);
-            }else{
-                if(isAlphanumeric2(key)){
-                    Long i=Long.parseLong(key);
-                    String j="+256"+i;
-                    phoneNumbers.add(j);
-                }
-            }
-        }
-        phones.close();
-        return phoneNumbers;
-    }
-
-    private void requestContactsPermission() {
-        if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
-                android.Manifest.permission.READ_CONTACTS)) {
-            ActivityCompat.requestPermissions(MainActivity.this,
-                    new String[] {Manifest.permission.READ_CONTACTS}, CONTACTS_REQUEST);
-        }
-    }
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == CONTACTS_REQUEST) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && contactsList != null) {
-                contactsList = getPhoneNumbers();
-                saveSharedPreferenceData();
-
-            } else {
-                Toast.makeText(getApplicationContext(), "Permission DENIED", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
 
 
 

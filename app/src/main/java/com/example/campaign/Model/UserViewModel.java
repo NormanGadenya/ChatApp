@@ -1,5 +1,6 @@
 package com.example.campaign.Model;
 
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
 
@@ -18,11 +19,11 @@ public class UserViewModel extends ViewModel {
     private MutableLiveData<ArrayList<userModel>> userList;
     private MutableLiveData<Uri>selectedUri=new MutableLiveData<>();
 
-    public void initUserList(Set<String > contacts){
+    public void initUserList(SharedPreferences sharedPreferences){
         if(userList!=null){
             return;
         }
-        userList= Repo.getInstance().getAllUsers(contacts);
+        userList= Repo.getInstance().getAllUsers(sharedPreferences);
     }
 
     public void initOtherUserInfo(String otherUserId){

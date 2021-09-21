@@ -2,6 +2,7 @@ package com.example.campaign.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,10 +24,10 @@ import java.util.List;
 public class userListAdapter extends RecyclerView.Adapter<userListAdapter.Holder> implements FastScrollRecyclerView.SectionedAdapter {
     private List<userModel> list;
     private Context context;
-
     public userListAdapter(List<userModel> list, Context context){
         this.context = context;
         this.list=list;
+
     }
 
     @NonNull

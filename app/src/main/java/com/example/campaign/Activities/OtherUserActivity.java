@@ -68,6 +68,7 @@ public class OtherUserActivity extends AppCompatActivity {
     private TextView userName,phoneNumber;
     private String profileUrI;
     private String otherUserId;
+    private String otherUserName;
     private Bitmap profileBitmap;
     private ImageView imageView;
     private FloatingActionButton saveProfilePicBtn;
@@ -87,6 +88,7 @@ public class OtherUserActivity extends AppCompatActivity {
         ServiceCheck serviceCheck=new ServiceCheck(updateStatusService.class,this,manager);
         serviceCheck.checkServiceRunning();
         otherUserId=getIntent().getStringExtra("otherUserId");
+        otherUserName=getIntent().getStringExtra("otherUserName");
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
         userViewModel.initOtherUserInfo(otherUserId);
         setupToolBar();
@@ -116,7 +118,12 @@ public class OtherUserActivity extends AppCompatActivity {
             }
             setSupportActionBar(toolbar);
             phoneNumber.setText(user.getPhoneNumber());
-            userName.setText(user.getUserName());
+            Log.d("otherUserName", "setupToolBar: "+otherUserName);
+            if(otherUserId!=null){
+                userName.setText(otherUserName);
+            }else{
+                userName.setText(user.getUserName());
+            }
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             Glide.with(getApplicationContext()).load(profileUrI).into(imageView);
         });

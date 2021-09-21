@@ -479,6 +479,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
             }else{
                 onlineStatusView.setVisibility(GONE);
+                onlineStatus.setVisibility(GONE);
                 String lastSeenDate=user.getLastSeenDate();
                 String lastSeenTime=user.getLastSeenTime();
                 if (lastSeenDate.equals(date)){
@@ -488,7 +489,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 }
                 profilePic.setBorderColorStart(Color.WHITE);
                 profilePic.setBorderColorEnd( Color.WHITE);
-                onlineStatus.setSelected(true);
+//                onlineStatus.setSelected(true);
 
             }
             profilePic.setBorderColorDirection(CircularImageView.GradientDirection.LEFT_TO_RIGHT);
@@ -545,6 +546,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         msgGroupDate=findViewById(R.id.msgGroupDateTop);
         onlineStatusView=findViewById(R.id.onlineStatusView);
         otherUserId=getIntent().getStringExtra("userId");
+        otherUserName=getIntent().getStringExtra("userName");
         if(otherUserId!=null){
             saveSharedPreferenceData();
         }
@@ -636,7 +638,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private void getOtherUserDetails(String otherUserId) {
         userViewModel.initOtherUserInfo(otherUserId);
         userViewModel.getOtherUserInfo().observe(this,otherUserInfo ->{
-            otherUserName=otherUserInfo.getUserName();
             profileUrI=otherUserInfo.getProfileUrI();
             userName.setText(otherUserName);
             statusCheck(otherUserInfo);
@@ -660,7 +661,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                     @Override
                     public void onClick(View v) {
                    Intent intent =new Intent(getApplicationContext(), OtherUserActivity.class);
-                    intent.putExtra("otherUserId",otherUserId);
+                    intent.putExtra("otherUserId",otherUserId).putExtra("otherUserName",otherUserName);
                     startActivity(intent);
                     }
                 });

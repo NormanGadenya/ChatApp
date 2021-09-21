@@ -1,5 +1,6 @@
 package com.example.campaign.Repository;
 
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -119,9 +120,9 @@ public class Repo {
         return fUserInfo;
     }
 
-    public MutableLiveData <ArrayList<userModel>> getAllUsers(Set<String> contacts){
+    public MutableLiveData <ArrayList<userModel>> getAllUsers(SharedPreferences contactsSharedPrefs){
         if(fUser!=null){
-            GetAllUsers getAllUsers = new GetAllUsers(contacts);
+            GetAllUsers getAllUsers = new GetAllUsers(contactsSharedPrefs);
             new Thread(getAllUsers).start();
             userList.setValue(user_List_Model);
         }
@@ -366,7 +367,56 @@ public class Repo {
         });
     }
 
-    private void loadAllUsers(Set<String> contacts){
+
+    private void loadAllUsers(SharedPreferences contactsSharedPrefs){
+        DatabaseReference userDetails=database.getReference().child("UserDetails");
+        userDetails.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List <String> phoneNumbersList=new ArrayList<>();
+                user_List_Model.clear();
+                for (DataSnapshot dataSnapshot: snapshot.getChildren()){
+                    userModel userListObj=new userModel();
+                    String userId=dataSnapshot.getKey();
+                    userModel users=dataSnapshot.getValue(userModel.class);
+                    String phoneNumber=fUser.getPhoneNumber();
+
+                    phoneNumbersList.add(fUser.getPhoneNumber());
+
+                    int i= Collections.frequency(phoneNumbersList,users.getPhoneNumber());
+                    if(contactsSharedPrefs!=null && users!= null){
+                        if ( !users.getPhoneNumber().equals(phoneNumber)) {
+                            if (i <=1 && contactsSharedPrefs.contains(phoneNumber)){
+                                String userName=contactsSharedPrefs.getString(users.getPhoneNumber(),null);
+                                if(userName!=null){
+                                    userListObj.setUserName(userName);
+                                }else{
+                                    userListObj.setUserName(users.getUserName());
+                                }
+
+                                userListObj.setPhoneNumber(users.getPhoneNumber());
+                                userListObj.setProfileUrI(users.getProfileUrI());
+                                userListObj.setUserId(userId);
+                                userListObj.setOnline(users.getOnline());
+                                user_List_Model.add(userListObj);
+                                Collections.sort(user_List_Model,userModel::compareTo);
+                                userList.postValue(user_List_Model);
+                            }
+                        }
+
+                    }
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+    private void loadAllUsers(){
         DatabaseReference userDetails=database.getReference().child("UserDetails");
         userDetails.addValueEventListener(new ValueEventListener() {
             @Override
@@ -380,22 +430,24 @@ public class Repo {
                     String phoneNumber=fUser.getPhoneNumber();
                     phoneNumbersList.add(fUser.getPhoneNumber());
 
-                    int i= Collections.frequency(phoneNumbersList,users.getPhoneNumber());
-                    if(contacts!=null && users!= null){
-                        if ( !users.getPhoneNumber().equals(phoneNumber)) {
-                            if (i <=1 && contacts.contains(phoneNumber)){
-                                userListObj.setUserName(users.getUserName());
-                                userListObj.setPhoneNumber(users.getPhoneNumber());
-                                userListObj.setProfileUrI(users.getProfileUrI());
-                                userListObj.setUserId(id);
-                                userListObj.setOnline(users.getOnline());
-                                user_List_Model.add(userListObj);
-                                Collections.sort(user_List_Model,userModel::compareTo);
-                                userList.postValue(user_List_Model);
-                            }
-                        }
+                    userListObj.setUserName(users.getUserName());
+                    userListObj.setPhoneNumber(users.getPhoneNumber());
+                    userListObj.setProfileUrI(users.getProfileUrI());
+                    userListObj.setUserId(id);
+                    userListObj.setOnline(users.getOnline());
+                    user_List_Model.add(userListObj);
+                    Collections.sort(user_List_Model,userModel::compareTo);
+                    userList.postValue(user_List_Model);
 
-                    }
+//                    int i= Collections.frequency(phoneNumbersList,users.getPhoneNumber());
+//                    if(contacts!=null && users!= null){
+//                        if ( !users.getPhoneNumber().equals(phoneNumber)) {
+//                            if (i <=1 && contacts.contains(phoneNumber)){
+//
+//                            }
+//                        }
+//
+//                    }
 
                 }
             }
@@ -458,13 +510,13 @@ public class Repo {
     }
 
     class GetAllUsers implements Runnable {
-        Set <String> contacts;
-        GetAllUsers(Set <String> contacts){
-            this.contacts=contacts;
+         private SharedPreferences contactsSharedPrefs;
+        GetAllUsers(SharedPreferences contactsSharedPrefs){
+            this.contactsSharedPrefs=contactsSharedPrefs;
         }
         @Override
         public void run() {
-            loadAllUsers(contacts);
+            loadAllUsers(contactsSharedPrefs);
         }
     }
 
