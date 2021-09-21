@@ -17,14 +17,13 @@ import java.time.format.DateTimeFormatter;
 public class Tools {
     public Context context;
 
-        @RequiresApi(api = Build.VERSION_CODES.O)
     public String getTime(){
         LocalDateTime myDateObj = LocalDateTime.now();
         DateTimeFormatter timeObj = DateTimeFormatter.ofPattern("HH:mm");
         return myDateObj.format(timeObj);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
+
     public String getDate(){
         LocalDateTime myDateObj = LocalDateTime.now();
         DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");

@@ -12,6 +12,7 @@ public class userModel implements Comparable{
     private Boolean Typing,showLastSeenState,showOnlineState;
 
 
+
     public userModel(){
 
     }
@@ -29,8 +30,6 @@ public class userModel implements Comparable{
     public void setUserName(String name) {
         this.userName = name;
     }
-
-
 
     public String getPhoneNumber() {
         return phoneNumber;
@@ -100,8 +99,8 @@ public class userModel implements Comparable{
         return Typing;
     }
 
-    public void setTyping(Boolean typing) {
-        this.Typing = typing;
+    public void setTyping(Boolean Typing) {
+        this.Typing = Typing;
     }
 
     @Override

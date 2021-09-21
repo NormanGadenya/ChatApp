@@ -114,7 +114,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private MenuInflater menuInflater;
     private ProgressBar progressBar;
     private messageListAdapter messageListAdapter;
-    private ImageView backgroundImageView;
+    private ImageView backgroundImageView,onlineStatusView;
     private SharedPreferences settingsSharedPreferences;
     private LinearLayoutManager layoutManager;
     private ArrayList<String> imageUrIList=new ArrayList<>();
@@ -138,7 +138,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private String date,time;
     private Tools tools;
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -472,12 +471,14 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             if(user.getOnline() && user.getShowOnlineState()){
 //                            onlineStatus.setVisibility(View.VISIBLE);
                 lastSeen="online";
-                profilePic.setBorderColorStart( Color.CYAN);
-                profilePic.setBorderColorEnd( Color.MAGENTA);
+                onlineStatusView.setVisibility(VISIBLE);
+//                profilePic.setBorderColorStart( Color.CYAN);
+//                profilePic.setBorderColorEnd( Color.MAGENTA);
 //                profilePic.setBorderColorStart(context.getColor(R.color.teal_200));
                 onlineStatus.setSelected(false);
 
             }else{
+                onlineStatusView.setVisibility(GONE);
                 String lastSeenDate=user.getLastSeenDate();
                 String lastSeenTime=user.getLastSeenTime();
                 if (lastSeenDate.equals(date)){
@@ -542,6 +543,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         progressBar=findViewById(R.id.progressBar2);
         backgroundImageView=findViewById(R.id.backgroundView);
         msgGroupDate=findViewById(R.id.msgGroupDateTop);
+        onlineStatusView=findViewById(R.id.onlineStatusView);
         otherUserId=getIntent().getStringExtra("userId");
         if(otherUserId!=null){
             saveSharedPreferenceData();
@@ -664,7 +666,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 });
 
             }else{
-
+                progressBar.setVisibility(GONE);
                 profilePic.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
                 profilePic.setCircleColor(Color.WHITE);
 
@@ -682,14 +684,9 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 recyclerView.scrollToPosition(messageList.size()-1);
             }
 
-
-
         });
-
-
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 

@@ -76,16 +76,13 @@ public class Repo {
         if (chats_List_Model!=null && fUser!=null) {
             GetChatList getChatList=new GetChatList();
             new Thread(getChatList).start();
-//            loadChatList();
             chatList.setValue(chats_List_Model);
             chats_List_Model.clear();
         }
-
         return chatList;
     }
 
     public MutableLiveData<HashMap<String , messageListModel>> getLastMessage(String userId){
-//        loadLastMessage(userId);
         if(fUser!=null){
             GetLastMessage getLastMessage=new GetLastMessage(userId);
             new Thread(getLastMessage).start();
@@ -108,7 +105,6 @@ public class Repo {
         if(fUser!=null){
             GetOtherUserInfo getOtherUserInfo =new GetOtherUserInfo(otherUserId);
             new Thread(getOtherUserInfo).start();
-//        loadOtherUserInfo(otherUserId);
         }
 
         return otherUserInfo;
@@ -127,7 +123,6 @@ public class Repo {
         if(fUser!=null){
             GetAllUsers getAllUsers = new GetAllUsers(contacts);
             new Thread(getAllUsers).start();
-//        loadAllUsers(contacts);
             userList.setValue(user_List_Model);
         }
 
@@ -169,7 +164,6 @@ public class Repo {
         chatListId=new ArrayList<>();
         arrangedChatListId=new ArrayList<>();
         chatUIds=new ArrayList<>();
-
         DatabaseReference mRef=database.getReference().child("chats").child(fUser.getUid());
         DatabaseReference chatListRef=database.getReference().child("chats");
         chatListRef.child(fUser.getUid()).addValueEventListener(new ValueEventListener() {
@@ -210,53 +204,7 @@ public class Repo {
 
             }
         });
-//        ItemTouchHelper.SimpleCallback simpleCallback=new ItemTouchHelper.SimpleCallback(0,ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT){
-//
-//            @Override
-//            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
-//                return false;
-//            }
-//
-//            @RequiresApi(api = Build.VERSION_CODES.N)
-//            @Override
-//            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-//                try {
-//                    int position = viewHolder.getAdapterPosition();
-//
-//                        Vibrator vibrator = (Vibrator) context.getSystemService(VIBRATOR_SERVICE);
-//                        vibrator.vibrate(50);
-//                        String otherUserId = list.get(position).getUserId();
-//                        Toast.makeText(context, "chat deleted", Toast.LENGTH_LONG).show();
-//                        DatabaseReference chatRef = database.getReference().child("chats").child(user.getUid()).child(otherUserId);
-//                        chatListId.remove(otherUserId);
-//                        arrangedChatListId.remove(position);
-////                        list.remove(position);
-//                        chatRef.removeValue();
-//
-//
-//                        //list.remove(position);
-//                        chatListAdapter.notifyItemRemoved(position);
-//
-//
-//                }catch (Exception e){
-//                    Log.e("Error",e.getLocalizedMessage());
-//                }
-//            }
-//
-//            @Override
-//            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
-//                new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
-//                        .addBackgroundColor(ContextCompat.getColor(MainActivity.this,R.color.Red_200))
-//                        .addActionIcon(R.drawable.remove)
-//                        .create()
-//                        .decorate();
-//
-//                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
-//
-//            }
-//        };
-//        ItemTouchHelper itemTouchHelper=new ItemTouchHelper(simpleCallback);
-//        itemTouchHelper.attachToRecyclerView(recyclerView);
+
 
     }
     private void getChatUserInfo() {
@@ -390,8 +338,6 @@ public class Repo {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 userModel user= snapshot.getValue(userModel.class);
-
-                System.out.println("user2"+ user.getShowLastSeenState());
                 otherUserInfo.postValue(user);
 
             }
@@ -426,7 +372,6 @@ public class Repo {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 List <String> phoneNumbersList=new ArrayList<>();
-                Log.d("snapshot",snapshot.toString());
                 user_List_Model.clear();
                 for (DataSnapshot dataSnapshot: snapshot.getChildren()){
                     userModel userListObj=new userModel();

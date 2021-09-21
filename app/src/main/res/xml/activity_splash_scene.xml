@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MotionScene 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:motion="http://schemas.android.com/apk/res-auto">
+
+    <Transition
+
+        motion:constraintSetEnd="@+id/end"
+        motion:constraintSetStart="@id/start"
+        motion:autoTransition="animateToEnd"
+        motion:duration="2000">
+       <KeyFrameSet>
+           <KeyAttribute
+               motion:motionTarget="@+id/splashImage"
+               motion:framePosition="20"
+               android:scaleX="0.6"
+               android:scaleY="0.6" />
+           <KeyAttribute
+               motion:motionTarget="@+id/splashImage"
+               motion:framePosition="40"
+               android:scaleX="1.2"
+               android:scaleY="1.2" />
+           <KeyAttribute
+               motion:motionTarget="@+id/splashImage"
+               motion:framePosition="60"
+               android:scaleX="0.6"
+               android:scaleY="0.6"
+                />
+           <KeyAttribute
+               motion:motionTarget="@+id/splashImage"
+               motion:framePosition="100"
+               android:scaleX="1.0"
+               android:scaleY="1.0"
+                />
+       </KeyFrameSet>
+
+    </Transition>
+
+    <ConstraintSet android:id="@+id/start">
+        <Constraint
+            android:id="@+id/splashImage"
+            motion:layout_constraintEnd_toEndOf="parent"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            motion:layout_constraintBottom_toBottomOf="parent"
+            motion:layout_constraintTop_toTopOf="parent"
+            motion:layout_constraintStart_toStartOf="parent" />
+    </ConstraintSet>
+
+    <ConstraintSet android:id="@+id/end">
+        <Constraint
+            android:id="@+id/splashImage"
+            motion:layout_constraintEnd_toEndOf="parent"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            motion:layout_constraintBottom_toBottomOf="parent"
+            motion:layout_constraintTop_toTopOf="parent"
+            motion:layout_constraintStart_toStartOf="parent" />
+    </ConstraintSet>
+
+</MotionScene>

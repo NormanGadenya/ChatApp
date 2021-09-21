@@ -12,10 +12,5 @@
         android:endColor="@color/BLUE_NCS"
 
         ></gradient>
-    <corners
-        android:topRightRadius="50dp"
-        android:bottomRightRadius="50dp"
-        android:bottomLeftRadius="50dp"
-        android:topLeftRadius="50dp"
-        />
+
 </shape>

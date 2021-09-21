@@ -31,6 +31,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -78,9 +79,7 @@ public class UserListActivity extends AppCompatActivity {
     View rootLayout;
     private int revealX;
     private int revealY;
-    private List<String> chatListId;
     private FastScrollRecyclerView recyclerView;
-
     private FirebaseUser user;
     private FirebaseDatabase database;
     private List<userModel> list;
@@ -105,13 +104,13 @@ public class UserListActivity extends AppCompatActivity {
         progressBar.setVisibility(View.VISIBLE);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         database = FirebaseDatabase.getInstance();
-
+        
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         ServiceCheck serviceCheck=new ServiceCheck(updateStatusService.class,this,manager);
         serviceCheck.checkServiceRunning();
 
-
+        // todo fix contacts
         if (ContextCompat.checkSelfPermission(context,
                 Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
             handler.post(new Runnable() {
@@ -122,9 +121,8 @@ public class UserListActivity extends AppCompatActivity {
                         contactsList=getPhoneNumbers();
                         saveSharedPreferenceData();
                     }
-                    userViewModel.initUserList(contactsList);
+                    userViewModel.initUserList(getPhoneNumbers());
                     list=userViewModel.getAllUsers().getValue();
-                    System.out.println(contactsList);
                     userListAdapter=new userListAdapter(list, UserListActivity.this);
                     recyclerView.setAdapter(userListAdapter);
                     loadUsers(contactsList);
@@ -138,13 +136,18 @@ public class UserListActivity extends AppCompatActivity {
         }
         final Intent intent = getIntent();
 
+        openingAnimation(savedInstanceState, intent);
+//        fastScroller.setRecyclerView(recyclerView);
+//        recyclerView.setOnScrollListener(fastScroller.getOnScrollListener());
+
+
+    }
+
+    private void openingAnimation(Bundle savedInstanceState, Intent intent) {
         if (savedInstanceState == null && intent.hasExtra(EXTRA_CIRCULAR_REVEAL_X) && intent.hasExtra(EXTRA_CIRCULAR_REVEAL_Y)) {
             rootLayout.setVisibility(View.INVISIBLE);
-
             revealX = intent.getIntExtra(EXTRA_CIRCULAR_REVEAL_X, 0);
             revealY = intent.getIntExtra(EXTRA_CIRCULAR_REVEAL_Y, 0);
-
-
             ViewTreeObserver viewTreeObserver = rootLayout.getViewTreeObserver();
             if (viewTreeObserver.isAlive()) {
                 viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -158,10 +161,6 @@ public class UserListActivity extends AppCompatActivity {
         } else {
             rootLayout.setVisibility(View.VISIBLE);
         }
-//        fastScroller.setRecyclerView(recyclerView);
-//        recyclerView.setOnScrollListener(fastScroller.getOnScrollListener());
-
-
     }
 
 

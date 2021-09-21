@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -35,9 +36,11 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.palette.graphics.Palette;
 
 import com.bumptech.glide.Glide;
+import com.example.campaign.Common.ServiceCheck;
 import com.example.campaign.Model.UserViewModel;
 import com.example.campaign.R;
 import com.example.campaign.Services.ProfileUploadService;
+import com.example.campaign.Services.updateStatusService;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
@@ -78,7 +81,9 @@ public class UserProfileActivity extends AppCompatActivity {
         InitializeControllers();
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
         userViewModel.initFUserInfo();
-        updateStatus();
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        ServiceCheck serviceCheck= new ServiceCheck(updateStatusService.class,this,manager);
+        serviceCheck.checkServiceRunning();
         editUserNameBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -263,34 +268,6 @@ public class UserProfileActivity extends AppCompatActivity {
             myRef.updateChildren(userDetail);
         }
 
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private void updateStatus(){
-        DatabaseReference userDetailRef=database.getReference().child("UserDetails").child(firebaseUser.getUid());
-        Map<String ,Object> onlineStatus=new HashMap<>();
-        onlineStatus.put("online",true);
-        userDetailRef.updateChildren(onlineStatus);
-
-        Map<String ,Object> lastSeenStatus=new HashMap<>();
-        lastSeenStatus.put("lastSeenDate",getDate());
-        lastSeenStatus.put("lastSeenTime",getTime());
-        lastSeenStatus.put("online",false);
-        userDetailRef.onDisconnect().updateChildren(lastSeenStatus);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private String getTime(){
-        LocalDateTime myDateObj = LocalDateTime.now();
-        DateTimeFormatter timeObj = DateTimeFormatter.ofPattern("HH:mm");
-        return myDateObj.format(timeObj);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private String getDate(){
-        LocalDateTime myDateObj = LocalDateTime.now();
-        DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        return myDateObj.format(dateObj);
     }
 
     @Override

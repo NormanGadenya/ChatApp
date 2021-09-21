@@ -44,6 +44,8 @@ import com.mikhaellopez.circularimageview.CircularImageView;
 import java.util.ArrayList;
 import java.util.List;
 
+import static android.view.View.GONE;
+
 
 public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder> {
     private List<userModel> list;
@@ -89,7 +91,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
 
         final userModel chatlist = list.get(position);
 
-        getLastMessage(chatlist.getUserId(),holder.tvDesc,holder.tvDate,holder.imageView);
+        getLastMessage(chatlist.getUserId(),holder.tvDesc,holder.tvDate,holder.imageView,holder.messageStatus);
         holder.tvName.setText(chatlist.getUserName());
 
         if (chatlist.getProfileUrI()==null){
@@ -102,24 +104,26 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
 
 //            holder.profile.setBorderColor( context.getColor(R.color.teal_200));
 //            holder.profile.setBorderColorEnd( Color.WHITE);
-            holder.profile.setBorderColorStart(Color.CYAN);
-            holder.profile.setBorderColorEnd( Color.MAGENTA);
+            holder.onlineStatus.setVisibility( View.VISIBLE);
+//            holder.profile.setBorderColorStart(Color.CYAN);
+//            holder.profile.setBorderColorEnd( Color.MAGENTA);
 
         }else{
-            holder.profile.setBorderColorStart(Color.WHITE);
-            holder.profile.setBorderColorEnd( Color.WHITE);
+            holder.onlineStatus.setVisibility( GONE);
+//            holder.profile.setBorderColorStart(Color.WHITE);
+//            holder.profile.setBorderColorEnd( Color.WHITE);
 
         }
-        holder.profile.setBorderColorDirection(CircularImageView.GradientDirection.LEFT_TO_RIGHT);
-        holder.profile.setBorderWidth(10);
+//        holder.profile.setBorderColorDirection(CircularImageView.GradientDirection.LEFT_TO_RIGHT);
+//        holder.profile.setBorderWidth(10);
         if(chatlist.getTyping()!=null){
             if(chatlist.getTyping()){
                 holder.tvTyping.setVisibility(View.VISIBLE);
-                holder.tvDesc.setVisibility(View.GONE);
+                holder.tvDesc.setVisibility(GONE);
 //                holder.tvDate.setVisibility(View.GONE);
 
             }else{
-                holder.tvTyping.setVisibility(View.GONE);
+                holder.tvTyping.setVisibility(GONE);
                 holder.tvDesc.setVisibility(View.VISIBLE);
 //                holder.tvDate.setVisibility(View.VISIBLE);
             }
@@ -151,7 +155,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
             holder.checkBox.setVisibility(View.VISIBLE);
             holder.itemView.setBackgroundColor(Color.LTGRAY);
         }else{
-            holder.checkBox.setVisibility(View.GONE);
+            holder.checkBox.setVisibility(GONE);
             holder.itemView.setBackgroundColor(Color.TRANSPARENT);
         }
 
@@ -238,12 +242,12 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
 
     private void clickedItem(Holder holder) {
         userModel chatListModel=list.get(holder.getAdapterPosition());
-        if(holder.checkBox.getVisibility()==View.GONE){
+        if(holder.checkBox.getVisibility()== GONE){
             holder.checkBox.setVisibility(View.VISIBLE);
             holder.itemView.setBackgroundColor(Color.LTGRAY);
             selected.add(chatListModel);
         }else{
-            holder.checkBox.setVisibility(View.GONE);
+            holder.checkBox.setVisibility(GONE);
             holder.itemView.setBackgroundColor(Color.TRANSPARENT);
             selected.remove(chatListModel);
             Log.d("item_count",String.valueOf(selected.size()));
@@ -261,7 +265,8 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
         private CircularImageView profile;
         private ImageView imageView;
         private ImageView checkBox;
-
+        private ImageView messageStatus;
+        private View onlineStatus;
 
         public Holder(@NonNull View itemView) {
             super(itemView);
@@ -272,6 +277,8 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
             profile = itemView.findViewById(R.id.image_profile);
             tvTyping=itemView.findViewById(R.id.tv_typing);
             checkBox=itemView.findViewById(R.id.checkBox);
+            onlineStatus=itemView.findViewById(R.id.onlineStatus);
+            messageStatus=itemView.findViewById(R.id.messageStatus);
         }
     }
 
@@ -286,15 +293,17 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
         return text;
     }
 
-    private void getLastMessage(String userId,TextView description,TextView dateTime,ImageView imageView){
+    private void getLastMessage(String userId,TextView description,TextView dateTime,ImageView imageView,ImageView messageStatus){
         String localDate=new Tools().getDate();
         chatViewModel = new ViewModelProvider(viewModelStoreOwner).get(ChatViewModel.class);
         chatViewModel.initLastMessage(userId);
         chatViewModel.getLastMessage().observe(lifecycleOwner, lastMessage -> {
             if(lastMessage.containsKey(userId)){
+                Boolean messageChecked=lastMessage.get(userId).isChecked();;
                 String textMessage=lastMessage.get(userId).getText();
                 String imageUrI=lastMessage.get(userId).getImageUrI();
                 String videoUrI=lastMessage.get(userId).getVideoUrI();
+                String receiver=lastMessage.get(userId).getReceiver();
                 String audioUrI=lastMessage.get(userId).getAudioUrI();
                 String time=lastMessage.get(userId).getTime();
                 String date=lastMessage.get(userId).getDate();
@@ -305,13 +314,24 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                 }else{
                     dateTime.setText(date);
                 }
+                if (messageChecked != null) {
+
+
+                    if (messageChecked) {
+
+                        messageStatus.setImageResource(R.drawable.ic_baseline_done_all_24);
+                    } else {
+                        messageStatus.setImageResource(R.drawable.ic_baseline_done_24);
+                    }
+                }
+
                 if(imageUrI==null && videoUrI ==null && audioUrI==null){
                     textMessage=formatLastMessage(textMessage);
                     description.setText(textMessage);
-                    imageView.setVisibility(View.GONE);
+                    imageView.setVisibility(GONE);
 
                 }else {
-                    description.setVisibility(View.GONE);
+                    description.setVisibility(GONE);
                     imageView.setVisibility(View.VISIBLE);
 
                     if(imageUrI!=null){

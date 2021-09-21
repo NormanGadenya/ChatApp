@@ -10,6 +10,7 @@ import android.content.ContextWrapper;
 import android.net.Uri;
 import android.os.Build;
 
+import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 
 public class OreoNotification extends ContextWrapper {
@@ -41,6 +42,7 @@ public class OreoNotification extends ContextWrapper {
         return notificationManager;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public Notification.Builder getOreoNotification(String title, String body, PendingIntent pendingIntent, Uri soundUri, String icon){
         return new Notification.Builder(getApplicationContext(),CHANNEL_ID)
                 .setContentTitle(title)

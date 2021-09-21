@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
 
+import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 
 import com.example.campaign.Activities.ChatActivity;
@@ -35,6 +36,7 @@ public class MyFirebaseMessaging extends FirebaseMessagingService {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void sendOreoNotification(RemoteMessage remoteMessage) {
         String user=remoteMessage.getData().get("user");
         String icon=remoteMessage.getData().get("icon");

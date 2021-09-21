@@ -87,7 +87,6 @@ public class MainActivity extends AppCompatActivity   {
     private TextView welcomeMsg;
     private ImageView welcomeEmoji;
     HashMap <String,String> messageArrange=new HashMap<>();
-
     private Context context;
     private FirebaseUser user;
     private FirebaseDatabase database;
@@ -112,7 +111,6 @@ public class MainActivity extends AppCompatActivity   {
     private LifecycleOwner lifecycleOwner;
 
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -183,9 +181,6 @@ public class MainActivity extends AppCompatActivity   {
         viewModelStoreOwner=this;
 
     }
-
-
-
 
     private void saveSharedPreferenceData() {
         SharedPreferences sharedPreferences =getSharedPreferences("contactsSharedPreferences",MODE_PRIVATE);

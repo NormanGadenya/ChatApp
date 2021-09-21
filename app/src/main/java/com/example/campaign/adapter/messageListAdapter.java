@@ -548,6 +548,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                 if (messageList.isChecked()){
                     messageStatus.setImageResource(R.drawable.ic_baseline_done_all_24);
 
+
                 }
                 else{
                     messageStatus.setImageResource(R.drawable.ic_baseline_done_24);

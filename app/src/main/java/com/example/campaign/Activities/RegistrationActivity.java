@@ -52,7 +52,7 @@ public class RegistrationActivity extends AppCompatActivity {
     private Button submit_button;
     private EditText userNameTV;
     private FirebaseDatabase database;
-    private FirebaseAuth firebaseAuth;
+
     private FloatingActionButton selProfilePic,gallery_button,camera_button,remove_button;
     private String userId;
     private String phoneNumber;
@@ -69,7 +69,7 @@ public class RegistrationActivity extends AppCompatActivity {
     private String date=new Tools().getDate();
     private String time=new Tools().getTime();
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
