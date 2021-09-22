@@ -267,50 +267,60 @@ public class Repo {
     private void loadMessages(String otherUserId){
         DatabaseReference messageRef=database.getReference().child("chats").child(fUser.getUid()).child(otherUserId);
         DatabaseReference otherUserMRef=database.getReference().child("chats").child(otherUserId).child(fUser.getUid());
-
-        messageRef.addValueEventListener(new ValueEventListener(){
+        Thread getMessageThread= new Thread(new Runnable() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                messageListModel.clear();
-                ArrayList<String> mKeys=new ArrayList<>();
-
-                for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
-                    try{
-
-                        messageListModel message = snapshot.getValue(messageListModel.class);
-                        String imageUrI=message.getImageUrI();
-                        message.setMessageId(snapshot.getKey());
-                        String receiver = message.getReceiver();
-                        message.setReceiver(receiver);
-
-
-                        messageListModel.add(message);
-                        messageList.postValue(messageListModel);
-
-                        mKeys.add(snapshot.getKey());
-
-
-
-
-
-                    }catch(Exception e){
-                        Log.d("error1",e.getMessage());
-                    }
-
-                }
-
-                otherUserMRef.addValueEventListener(new ValueEventListener() {
+            public void run() {
+                messageRef.addValueEventListener(new ValueEventListener(){
                     @Override
-                    public void onDataChange(@NonNull DataSnapshot otherSnapshot) {
-                        for(DataSnapshot s:otherSnapshot.getChildren()){
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        messageListModel.clear();
+                        ArrayList<String> mKeys=new ArrayList<>();
 
-                            if(mKeys.contains(s.getKey())){
-                                HashMap<String,Object> messageStatus=new HashMap<>();
-                                messageStatus.put("checked",true);
-                                otherUserMRef.child(s.getKey()).updateChildren(messageStatus);
+                        for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
+                            try{
+                                messageListModel message = snapshot.getValue(messageListModel.class);
+                                message.setMessageId(snapshot.getKey());
+                                String receiver = message.getReceiver();
+                                message.setReceiver(receiver);
+                                messageListModel.add(message);
+                                messageList.postValue(messageListModel);
+                                mKeys.add(snapshot.getKey());
+
+                            }catch(Exception e){
+                                Log.d("error1",e.getMessage());
                             }
-                        }
 
+                        }
+                        Thread readMessageThread = new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                otherUserMRef.addValueEventListener(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot otherSnapshot) {
+
+                                        for(DataSnapshot s:otherSnapshot.getChildren()){
+
+                                            if(mKeys.contains(s.getKey())){
+                                                HashMap<String,Object> messageStatus=new HashMap<>();
+                                                messageStatus.put("checked",true);
+                                                Log.d("otherSnapshot",otherSnapshot.getKey() + "" + s.getKey());
+                                                otherUserMRef.child(s.getKey()).updateChildren(messageStatus);
+
+
+                                            }
+                                        }
+                                    }
+
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError error) {
+
+                                    }
+                                });
+
+                            }
+                        });
+                        readMessageThread.start();
                     }
 
                     @Override
@@ -318,17 +328,10 @@ public class Repo {
 
                     }
                 });
-
-
-
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
             }
         });
+        getMessageThread.start();
+
 
 
     }

@@ -20,6 +20,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
+import com.example.campaign.Common.Tools;
 import com.example.campaign.Interfaces.APIService;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.Notifications.Client;
@@ -57,11 +58,13 @@ public class AudioUploadService extends Service {
     private StorageReference mStorageReference;
     boolean notify=false;
     private static final String FORMAT = "%02d:%02d";
-    String fUserName,userId,otherUserId;
-    ResultReceiver myResultReceiver;
-    Bundle bundle = new Bundle();
-    Uri uri;
-    APIService apiService;
+    private String date=new Tools().getDate();
+    private String time=new Tools().getTime();
+    private String fPhoneNumber,userId,otherUserId;
+    private ResultReceiver myResultReceiver;
+    private Bundle bundle = new Bundle();
+    private Uri uri;
+    private APIService apiService;
 
     @Nullable
     @Override
@@ -78,7 +81,7 @@ public class AudioUploadService extends Service {
         storage= FirebaseStorage.getInstance();
         mStorageReference=firebaseStorage.getReference();
         myResultReceiver =  intent.getParcelableExtra("receiver");
-        fUserName=intent.getStringExtra("fUserName");
+        fPhoneNumber=intent.getStringExtra("fPhoneNumber");
         userId=intent.getStringExtra("userId");
         otherUserId=intent.getStringExtra("otherUserId");
         String uriString=intent.getStringExtra("uri");
@@ -93,7 +96,8 @@ public class AudioUploadService extends Service {
         super.onDestroy();
     }
 
-    private void uploadAudio(String userId, String otherUserId, Uri uri, Context context,String duration){
+
+    private void uploadAudio(String userId, String otherUserId, Uri uri, Context context, String duration){
 
         if(uri!=null){
             updateToken(FirebaseInstanceId.getInstance().getToken());
@@ -101,8 +105,8 @@ public class AudioUploadService extends Service {
             DatabaseReference myRef = database.getReference();
             DatabaseReference fUserChatRef= myRef.child("chats").child(userId).child(otherUserId).push();
             messageListModel message=new messageListModel();
-            message.setTime(getTime());
-            message.setDate(getDate());
+            message.setTime(time);
+            message.setDate(date);
             message.setType("AUDIO");
             message.setAudioUrI(String.valueOf(uri));
             message.setAudioDuration(duration);
@@ -136,8 +140,8 @@ public class AudioUploadService extends Service {
                     Uri downloadUri = task.getResult();
                     messageListModel messageOtherUser=new messageListModel();
                     messageOtherUser.setAudioUrI(downloadUri.toString());
-                    messageOtherUser.setTime(getTime());
-                    messageOtherUser.setDate(getDate());
+                    messageOtherUser.setTime(time);
+                    messageOtherUser.setDate(date);
                     messageOtherUser.setType("AUDIO");
                     messageOtherUser.setAudioDuration(duration);
                     messageOtherUser.setReceiver(otherUserId);
@@ -145,26 +149,14 @@ public class AudioUploadService extends Service {
                     messageRef.child(messageKey).setValue(messageOtherUser);
                     notify=true;
                     if(notify){
-                        sendNotification(otherUserId,fUserName,"AUDIO");
+                        sendNotification(otherUserId,fPhoneNumber,"AUDIO");
                     }
                 }
             });
         }
 
     }
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private String getTime(){
-        LocalDateTime myDateObj = LocalDateTime.now();
-        DateTimeFormatter timeObj = DateTimeFormatter.ofPattern("HH:mm");
-        return myDateObj.format(timeObj);
-    }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private String getDate(){
-        LocalDateTime myDateObj = LocalDateTime.now();
-        DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        return myDateObj.format(dateObj);
-    }
 
     private void updateToken(String token) {
         DatabaseReference reference= FirebaseDatabase.getInstance().getReference("Tokens");
@@ -176,7 +168,7 @@ public class AudioUploadService extends Service {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
-    private void sendNotification(String otherUserId, String otherUserName, String message) {
+    private void sendNotification(String otherUserId, String fPhoneNumber, String message) {
         DatabaseReference tokens=database.getReference("Tokens");
         Query query=tokens.orderByKey().equalTo(otherUserId);
         query.addValueEventListener(new ValueEventListener() {
@@ -184,7 +176,7 @@ public class AudioUploadService extends Service {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for(DataSnapshot dataSnapshot:snapshot.getChildren()){
                     Token token=dataSnapshot.getValue(Token.class);
-                    Data data=new Data(userId, R.mipmap.ic_launcher2,otherUserName+ ":" +message,otherUserId,"New message");
+                    Data data=new Data(userId, R.mipmap.ic_launcher2,message,fPhoneNumber,otherUserId,"New message");
                     Sender sender = new Sender(data,token.getToken());
                     apiService.sendNotification(sender)
                             .enqueue(new Callback<MyResponse>(){

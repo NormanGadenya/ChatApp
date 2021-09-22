@@ -3,15 +3,22 @@ package com.example.campaign.Notifications;
 public class Data {
     private String user;
     private int icon;
-    private String body;
+//    private String body;
     private String sender;
     private String title;
-    public Data(String user, int icon, String body, String sender,String title) {
+    private String message;
+    private String phoneNumber;
+    public Data(String user, int icon, String message,String phoneNumber, String sender,String title) {
         this.user = user;
         this.icon = icon;
-        this.body = body;
+        this.message = message;
+//        this.body = body;
+        this.phoneNumber=phoneNumber;
+
         this.sender = sender;
         this.title=title;
+
+
     }
 
     public String getUser() {
@@ -30,13 +37,13 @@ public class Data {
         this.icon = icon;
     }
 
-    public String getBody() {
-        return body;
-    }
-
-    public void setBody(String body) {
-        this.body = body;
-    }
+//    public String getBody() {
+//        return body;
+//    }
+//
+//    public void setBody(String body) {
+//        this.body = body;
+//    }
 
     public String getSender() {
         return sender;
@@ -44,5 +51,21 @@ public class Data {
 
     public void setSender(String sender) {
         this.sender = sender;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 }

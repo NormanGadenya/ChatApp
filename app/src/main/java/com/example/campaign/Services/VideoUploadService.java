@@ -48,7 +48,7 @@ public class VideoUploadService extends Service {
     private StorageReference mStorageReference;
     boolean notify=false;
     private static final String FORMAT = "%02d:%02d";
-    String fUserName,userId,otherUserId;
+    String fPhoneNumber,userId,otherUserId;
     ResultReceiver myResultReceiver;
     Bundle bundle = new Bundle();
     Uri uri;
@@ -71,7 +71,7 @@ public class VideoUploadService extends Service {
         storage= FirebaseStorage.getInstance();
         mStorageReference=firebaseStorage.getReference();
         myResultReceiver =  intent.getParcelableExtra("receiver");
-        fUserName=intent.getStringExtra("fUserName");
+        fPhoneNumber=intent.getStringExtra("fPhoneNumber");
         userId=intent.getStringExtra("userId");
         otherUserId=intent.getStringExtra("otherUserId");
         String caption =intent.getStringExtra("caption");
@@ -141,7 +141,7 @@ public class VideoUploadService extends Service {
                     messageRef.child(messageKey).setValue(messageOtherUser);
                     notify=true;
                     if(notify){
-                        sendNotification(otherUserId,fUserName,"VIDEO");
+                        sendNotification(otherUserId,fPhoneNumber,"VIDEO");
                     }
                 }
             });
@@ -158,7 +158,7 @@ public class VideoUploadService extends Service {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
-    private void sendNotification(String otherUserId, String otherUserName, String message) {
+    private void sendNotification(String otherUserId, String fPhoneNumber, String message) {
         DatabaseReference tokens=database.getReference("Tokens");
         Query query=tokens.orderByKey().equalTo(otherUserId);
         query.addValueEventListener(new ValueEventListener() {
@@ -166,7 +166,7 @@ public class VideoUploadService extends Service {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for(DataSnapshot dataSnapshot:snapshot.getChildren()){
                     Token token=dataSnapshot.getValue(Token.class);
-                    Data data=new Data(userId, R.mipmap.ic_launcher2,otherUserName+ ":" +message,otherUserId,"New message");
+                    Data data=new Data(userId, R.mipmap.ic_launcher2,message,fPhoneNumber,otherUserId,"New message");
                     Sender sender = new Sender(data,token.getToken());
                     apiService.sendNotification(sender)
                             .enqueue(new Callback<MyResponse>(){

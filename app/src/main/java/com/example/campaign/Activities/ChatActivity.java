@@ -100,7 +100,7 @@ import static android.view.View.VISIBLE;
 
 public class ChatActivity extends AppCompatActivity implements RecyclerViewInterface {
 
-    private String otherUserId, message, profileUrI,otherUserName,lastSeen,fUserName;
+    private String otherUserId, message, profileUrI,otherUserName,lastSeen;
     private FirebaseDatabase database;
     private ArrayList<messageListModel> messageList = new ArrayList<>();
     private RecyclerView recyclerView ;
@@ -125,8 +125,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     final int IMAGEREQUEST =2;
     final int AUDIOREQUEST=3;
     final int VIDEOREQUEST=4;
-    MenuItem profileDetails,settings,delete;
-    View rootView,layoutActions,textArea;
+    private MenuItem profileDetails,settings,delete;
+    private View rootView,layoutActions,textArea;
     private APIService apiService;
     private MediaPlayer mediaPlayer;
     private String uploadImageTId,uploadVideoTId,uploadAudioTId;
@@ -137,6 +137,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private Map<String ,Integer> uploadAudioData=new HashMap<>();
     private String date,time;
     private Tools tools;
+    private String fPhoneNumber;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -153,10 +154,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         layoutManager= new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
         messageViewModel.initChats(otherUserId);
-        userViewModel.initFUserInfo();
-        userViewModel.getFUserInfo().observe(this,user->{
-            fUserName=user.getUserName();
-        });
+
+
         serviceCheck();
         messageList=messageViewModel.getMessages().getValue();
         loadAdapter();
@@ -271,7 +270,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private void uploadVideo(String videoUrI,String caption){
         Intent intent =new Intent(this, VideoUploadService.class);
         ResultReceiver myResultReceiver=new MyReceiver(null);
-        intent.putExtra("fUserName",fUserName)
+        intent.putExtra("fPhoneNumber",fPhoneNumber)
                 .putExtra("uri",videoUrI)
                 .putExtra("userId",user.getUid())
                 .putExtra("otherUserId",otherUserId)
@@ -283,7 +282,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private void uploadImage(String imageUrI,String caption){
         Intent intent =new Intent(this, ImageUploadService.class);
         ResultReceiver myResultReceiver=new MyReceiver(null);
-        intent.putExtra("fUserName",fUserName)
+        intent.putExtra("fPhoneNumber",fPhoneNumber)
                 .putExtra("uri",imageUrI)
                 .putExtra("userId",user.getUid())
                 .putExtra("otherUserId",otherUserId)
@@ -313,7 +312,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             sMessage_2.child(messageKey).setValue(m);
             notify=true;
             if(notify){
-                sendNotification(otherUserId,fUserName,message);
+                sendNotification(otherUserId,fPhoneNumber,message);
             }
             newMessage.setText("");
         }
@@ -327,7 +326,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         serviceCheck.checkServiceRunning();
     }
 
-    private void sendNotification(String otherUserId, String otherUserName, String message) {
+    private void sendNotification(String otherUserId, String fPhoneNumber, String message) {
         DatabaseReference tokens=database.getReference("Tokens");
         Query query=tokens.orderByKey().equalTo(otherUserId);
         query.addValueEventListener(new ValueEventListener() {
@@ -335,7 +334,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for(DataSnapshot dataSnapshot:snapshot.getChildren()){
                     Token token=dataSnapshot.getValue(Token.class);
-                    Data data=new Data(user.getUid(),R.mipmap.ic_launcher2,otherUserName+ ":" +message,otherUserId,"New message");
+                    Data data=new Data(user.getUid(),R.mipmap.ic_launcher2,message,fPhoneNumber,otherUserId,"New message");
                     Sender sender = new Sender(data,token.getToken());
                     apiService.sendNotification(sender)
                             .enqueue(new Callback<MyResponse>(){
@@ -547,6 +546,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         onlineStatusView=findViewById(R.id.onlineStatusView);
         otherUserId=getIntent().getStringExtra("userId");
         otherUserName=getIntent().getStringExtra("userName");
+        fPhoneNumber=user.getPhoneNumber();
         if(otherUserId!=null){
             saveSharedPreferenceData();
         }
@@ -714,7 +714,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
                         retriever.setDataSource(getApplicationContext(), selected);
                         String duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                        intent.putExtra("fUserName", fUserName)
+                        intent.putExtra("fPhoneNumber", fPhoneNumber)
                                 .putExtra("uri", uri)
                                 .putExtra("receiver", myResultReceiver)
                                 .putExtra("userId", user.getUid())
@@ -775,13 +775,10 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 return false;
             }
         });
-
         return true;
 
     }
-    private void showToast(String msg) {
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-    }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

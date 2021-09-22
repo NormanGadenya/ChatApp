@@ -309,7 +309,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
             progressBar=itemView.findViewById(R.id.progressBar);
             msgGroupDate=itemView.findViewById(R.id.msgGroupDate);
             checkBox=itemView.findViewById(R.id.checkBox);
-
             audioSeekBar=itemView.findViewById(R.id.music_progress);
             playButton=itemView.findViewById(R.id.playButton);
             pauseButton=itemView.findViewById(R.id.pauseButton);
@@ -323,7 +322,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
                 switch(messageList.getType()){
                     case "TEXT":
-//                        voicePlayerView.setVisibility(itemView.GONE);
                         videoPlayButton.setVisibility(View.GONE);
                         message.setText(messageList.getText());
                         imageView.setVisibility(itemView.GONE);

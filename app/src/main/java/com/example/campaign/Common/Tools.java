@@ -11,23 +11,29 @@ import androidx.annotation.RequiresApi;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
+import java.util.Date;
 
 public class Tools {
     public Context context;
 
     public String getTime(){
-        LocalDateTime myDateObj = LocalDateTime.now();
-        DateTimeFormatter timeObj = DateTimeFormatter.ofPattern("HH:mm");
-        return myDateObj.format(timeObj);
+        Date dateTime = Calendar.getInstance().getTime();
+        SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm");
+        String time = DATE_FORMAT.format(dateTime);
+        return time;
     }
 
 
     public String getDate(){
-        LocalDateTime myDateObj = LocalDateTime.now();
-        DateTimeFormatter dateObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        return myDateObj.format(dateObj);
+
+        Date dateTime = Calendar.getInstance().getTime();
+        SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+        String date = DATE_FORMAT.format(dateTime);
+        return date;
     }
 
     public boolean checkInternetConnection(){

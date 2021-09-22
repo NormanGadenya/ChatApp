@@ -75,25 +75,16 @@ import xyz.danoz.recyclerviewfastscroller.vertical.VerticalRecyclerViewFastScrol
 public class UserListActivity extends AppCompatActivity {
     public static final String EXTRA_CIRCULAR_REVEAL_X="EXTRA_CIRCULAR_REVEAL_X" ;
     public static final String EXTRA_CIRCULAR_REVEAL_Y = "EXTRA_CIRCULAR_REVEAL_Y";
-
     View rootLayout;
     private int revealX;
     private int revealY;
     private FastScrollRecyclerView recyclerView;
-    private FirebaseUser user;
-    private FirebaseDatabase database;
     private List<userModel> list;
     private com.example.campaign.adapter.userListAdapter userListAdapter;
     private Handler handler;
-    private String TAG ="userAct";
     private ProgressBar progressBar;
-    private Context context;
     private MenuInflater menuInflater;
-    public  Map<String, String> namePhoneMap ;
-    private int CONTACTS_REQUEST=110;
-    private Set<String> contactsList=new HashSet<>();
     private UserViewModel userViewModel;
-    private VerticalRecyclerViewFastScroller fastScroller;
     private SharedPreferences contactsSharedPrefs;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -104,8 +95,6 @@ public class UserListActivity extends AppCompatActivity {
         InitializeControllers();
         progressBar.setVisibility(View.VISIBLE);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        database = FirebaseDatabase.getInstance();
-        
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         ServiceCheck serviceCheck=new ServiceCheck(updateStatusService.class,this,manager);
@@ -117,18 +106,20 @@ public class UserListActivity extends AppCompatActivity {
                     loadSharedPreferenceData();
                     userViewModel.initUserList(contactsSharedPrefs);
                     list=userViewModel.getAllUsers().getValue();
-                    userListAdapter=new userListAdapter(list, UserListActivity.this);
-                    recyclerView.setAdapter(userListAdapter);
+                    try{
+                        userListAdapter=new userListAdapter(list, UserListActivity.this);
+                        recyclerView.setAdapter(userListAdapter);
+                    }catch(Exception e){
+                        Log.e("Exception",e.getMessage());
+                    }
+
                     loadUsers();
                 }
             });
 
 
         final Intent intent = getIntent();
-
         openingAnimation(savedInstanceState, intent);
-
-
 
     }
 
@@ -154,13 +145,10 @@ public class UserListActivity extends AppCompatActivity {
 
 
     private void InitializeControllers() {
-        user= FirebaseAuth.getInstance().getCurrentUser();
         recyclerView=findViewById(R.id.recyclerViewUserList);
         progressBar=findViewById(R.id.progressBarUserList);
         list=new ArrayList<>();
         handler=new Handler();
-        context=getApplicationContext();
-        namePhoneMap= new HashMap<String, String>();
         ActionBar actionBar=getSupportActionBar();
         actionBar.setTitle("Select Contact");
         actionBar.setDisplayHomeAsUpEnabled(true);
@@ -171,7 +159,6 @@ public class UserListActivity extends AppCompatActivity {
     protected void revealActivity(int x, int y) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             float finalRadius = (float) (Math.max(rootLayout.getWidth(), rootLayout.getHeight()) * 1.1);
-
             // create the animator for this view (the start radius is zero)
             Animator circularReveal = ViewAnimationUtils.createCircularReveal(rootLayout, x, y, 0, finalRadius);
             circularReveal.setDuration(400);
@@ -188,8 +175,6 @@ public class UserListActivity extends AppCompatActivity {
 
     private void loadSharedPreferenceData() {
         contactsSharedPrefs=getSharedPreferences("contactsSharedPreferences",MODE_PRIVATE);
-
-
     }
 
 
@@ -197,13 +182,9 @@ public class UserListActivity extends AppCompatActivity {
 
 
     private void loadUsers(){
-
         userViewModel.getAllUsers().observe(this, userModels -> {
-
             userListAdapter.notifyDataSetChanged();
             progressBar.setVisibility(View.GONE);
-
-
         });
 
     }
