@@ -31,7 +31,7 @@ public class Tools {
     public String getDate(){
 
         Date dateTime = Calendar.getInstance().getTime();
-        SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd-MM-yyyy");
         String date = DATE_FORMAT.format(dateTime);
         return date;
     }

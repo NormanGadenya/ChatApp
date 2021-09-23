@@ -63,7 +63,7 @@ public class Repo {
 
     private FirebaseDatabase database=FirebaseDatabase.getInstance();
     private FirebaseUser fUser= FirebaseAuth.getInstance().getCurrentUser();
-    ArrayList<messageListModel> messageListModel=new ArrayList<>();
+    private ArrayList<messageListModel> messageListModel=new ArrayList<>();
 
     public static Repo getInstance() {
         if(instance == null){
@@ -145,21 +145,20 @@ public class Repo {
 
     void arrangeIdList(){
         Set<Map.Entry<String, String>> entries = messageArrange.entrySet();
-
         List<Map.Entry<String, String>> listOfEntries = new ArrayList<>(entries);
         Collections.sort(listOfEntries, comparator());
         LinkedHashMap<String, String> sortedByValue = new LinkedHashMap<>(listOfEntries.size());
-
         for(Map.Entry<String, String> entry : listOfEntries){
             sortedByValue.put(entry.getKey(), entry.getValue());
         }
-
         Set<Map.Entry<String, String>> entrySetSortedByValue = sortedByValue.entrySet();
 
         for(Map.Entry<String, String> mapping : entrySetSortedByValue) {
             arrangedChatListId.add(mapping.getKey());
         }
     }
+
+
 
     private void loadChatList() {
         chatListId=new ArrayList<>();
@@ -216,6 +215,7 @@ public class Repo {
                 HashMap<String,userModel> chatListOrder=new HashMap<>();
                 chatListOrder.clear();
                 chats_List_Model.clear();
+                Log.d("snapshot",snapshot.toString());
                 for(DataSnapshot dataSnapshot:snapshot.getChildren()){
                     if(arrangedChatListId.contains(dataSnapshot.getKey())){
                         System.out.println(dataSnapshot);

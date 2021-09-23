@@ -141,7 +141,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         return new Holder(view);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
 
@@ -657,7 +656,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         return timerString;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
+
     private void setTimeTextVisibility(String ts1, String ts2, TextView timeText){
         String date=new Tools().getDate();
         if(ts2==null){
