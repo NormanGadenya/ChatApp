@@ -2,7 +2,6 @@ package com.example.campaign.Model;
 
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -11,13 +10,12 @@ import androidx.lifecycle.ViewModel;
 import com.example.campaign.Repository.Repo;
 
 import java.util.ArrayList;
-import java.util.Set;
 
 public class UserViewModel extends ViewModel {
     private MutableLiveData<userModel> fUserInfo;
     private MutableLiveData <userModel> otherUserInfo;
     private MutableLiveData<ArrayList<userModel>> userList;
-    private MutableLiveData<Uri>selectedUri=new MutableLiveData<>();
+    private final MutableLiveData<Uri>selectedUri=new MutableLiveData<>();
 
     public void initUserList(SharedPreferences sharedPreferences){
         if(userList!=null){

@@ -1,17 +1,13 @@
 package com.example.campaign.Model;
 
-import android.content.SharedPreferences;
-import android.net.Uri;
-import android.util.Log;
-
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
+
 import com.example.campaign.Repository.Repo;
+
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
 
 public class ChatViewModel extends ViewModel {
 

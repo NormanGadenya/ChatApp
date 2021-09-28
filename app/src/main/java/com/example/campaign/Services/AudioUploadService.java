@@ -1,24 +1,18 @@
 package com.example.campaign.Services;
 
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.media.MediaMetadataRetriever;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ResultReceiver;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 
 import com.example.campaign.Common.Tools;
 import com.example.campaign.Interfaces.APIService;
@@ -40,30 +34,26 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnPausedListener;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.StorageTask;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.concurrent.TimeUnit;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import static com.example.campaign.Common.Tools.getMimeType;
+
 public class AudioUploadService extends Service {
     private FirebaseDatabase database;
-    private FirebaseStorage storage,firebaseStorage;
     private StorageReference mStorageReference;
     boolean notify=false;
-    private static final String FORMAT = "%02d:%02d";
-    private String date=new Tools().getDate();
-    private String time=new Tools().getTime();
-    private String fPhoneNumber,userId,otherUserId;
+    private final String date=new Tools().getDate();
+    private final String time=new Tools().getTime();
+    private String fPhoneNumber;
+    private String userId;
     private ResultReceiver myResultReceiver;
-    private Bundle bundle = new Bundle();
-    private Uri uri;
+    private final Bundle bundle = new Bundle();
     private APIService apiService;
 
     @Nullable
@@ -77,23 +67,18 @@ public class AudioUploadService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         database = FirebaseDatabase.getInstance();
-        firebaseStorage= FirebaseStorage.getInstance();
-        storage= FirebaseStorage.getInstance();
-        mStorageReference=firebaseStorage.getReference();
+        FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
+
+        mStorageReference= firebaseStorage.getReference();
         myResultReceiver =  intent.getParcelableExtra("receiver");
         fPhoneNumber=intent.getStringExtra("fPhoneNumber");
         userId=intent.getStringExtra("userId");
-        otherUserId=intent.getStringExtra("otherUserId");
+        String otherUserId = intent.getStringExtra("otherUserId");
         String uriString=intent.getStringExtra("uri");
         String duration=intent.getStringExtra("audioDuration");
-        uri=Uri.parse(uriString);
-        uploadAudio(userId,otherUserId,uri,getApplicationContext(),duration);
+        Uri uri = Uri.parse(uriString);
+        uploadAudio(userId, otherUserId, uri,getApplicationContext(),duration);
         return START_NOT_STICKY;
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
     }
 
 
@@ -116,21 +101,13 @@ public class AudioUploadService extends Service {
             StorageReference fileReference;
             fileReference = mStorageReference.child(System.currentTimeMillis()
                     + getMimeType(context,uri));
-            fileReference.putFile(uri).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                    double progress = 100.0 * (taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
-                    int currentProgress = (int) progress;
-                    bundle.putInt("uploadAudioPercentage",currentProgress);
-                    bundle.putString("uploadAudioTId",messageKey);
-                    myResultReceiver.send(300,bundle);
-                }
-            }).addOnPausedListener(new OnPausedListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onPaused(UploadTask.TaskSnapshot taskSnapshot) {
-                    System.out.println("Upload is paused");
-                }
-            }).continueWithTask(task -> {
+            fileReference.putFile(uri).addOnProgressListener(taskSnapshot -> {
+                double progress = 100.0 * (taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
+                int currentProgress = (int) progress;
+                bundle.putInt("uploadAudioPercentage",currentProgress);
+                bundle.putString("uploadAudioTId",messageKey);
+                myResultReceiver.send(300,bundle);
+            }).addOnPausedListener(taskSnapshot -> System.out.println("Upload is paused")).continueWithTask(task -> {
                 if (!task.isSuccessful()) {
                     throw task.getException();
                 }
@@ -149,7 +126,7 @@ public class AudioUploadService extends Service {
                     messageRef.child(messageKey).setValue(messageOtherUser);
                     notify=true;
                     if(notify){
-                        sendNotification(otherUserId,fPhoneNumber,"AUDIO");
+                        sendNotification(otherUserId,fPhoneNumber);
                     }
                 }
             });
@@ -164,11 +141,7 @@ public class AudioUploadService extends Service {
         reference.child(userId).setValue(token1);
     }
 
-    private void showToast(String msg) {
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-    }
-
-    private void sendNotification(String otherUserId, String fPhoneNumber, String message) {
+    private void sendNotification(String otherUserId, String fPhoneNumber) {
         DatabaseReference tokens=database.getReference("Tokens");
         Query query=tokens.orderByKey().equalTo(otherUserId);
         query.addValueEventListener(new ValueEventListener() {
@@ -176,7 +149,7 @@ public class AudioUploadService extends Service {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for(DataSnapshot dataSnapshot:snapshot.getChildren()){
                     Token token=dataSnapshot.getValue(Token.class);
-                    Data data=new Data(userId, R.mipmap.ic_launcher2,message,fPhoneNumber,otherUserId,"New message");
+                    Data data=new Data(userId, R.mipmap.ic_launcher2, "AUDIO",fPhoneNumber,otherUserId,"New message");
                     Sender sender = new Sender(data,token.getToken());
                     apiService.sendNotification(sender)
                             .enqueue(new Callback<MyResponse>(){
@@ -185,22 +158,19 @@ public class AudioUploadService extends Service {
                                 public void onResponse(Call<MyResponse> call, Response<MyResponse> response) {
                                     if(response.code()==200){
                                         if(response.body().success==1){
-                                            showToast("failed");
                                         }else{
-                                            showToast("achieved");
                                         }
                                     }
                                 }
 
                                 @Override
                                 public void onFailure(Call<MyResponse> call, Throwable t) {
-                                    showToast("failed2");
+                                    t.fillInStackTrace();
                                 }
                             });
                     notify=false;
                 }
             }
-
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
 
@@ -210,22 +180,6 @@ public class AudioUploadService extends Service {
 
 
 
-    public static String getMimeType(Context context, Uri uri) {
-        String extension;
 
-        //Check uri format to avoid null
-        if (uri.getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
-            //If scheme is a content
-            final MimeTypeMap mime = MimeTypeMap.getSingleton();
-            extension = mime.getExtensionFromMimeType(context.getContentResolver().getType(uri));
-        } else {
-            //If scheme is a File
-            //This will replace white spaces with %20 and also other special characters. This will avoid returning null values on file name with spaces and special characters.
-            extension = MimeTypeMap.getFileExtensionFromUrl(Uri.fromFile(new File(uri.getPath())).toString());
-
-        }
-
-        return extension;
-    }
 
 }

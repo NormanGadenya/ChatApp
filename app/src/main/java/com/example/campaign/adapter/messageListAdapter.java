@@ -8,7 +8,6 @@ import android.graphics.drawable.Drawable;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -24,17 +23,14 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
-
+import com.example.campaign.Common.Tools;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
-
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
@@ -43,7 +39,6 @@ import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.example.campaign.Activities.ChatActivity;
 
-import com.example.campaign.Common.Tools;
 import com.example.campaign.Interfaces.RecyclerViewInterface;
 import com.example.campaign.Model.ChatViewModel;
 import com.example.campaign.Model.messageListModel;
@@ -52,9 +47,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-
 import com.zolad.zoominimageview.ZoomInImageView;
-
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -65,6 +58,9 @@ import java.util.Map;
 import hani.momanii.supernova_emoji_library.Helper.EmojiconTextView;
 import jp.wasabeef.glide.transformations.BlurTransformation;
 
+import static com.example.campaign.Common.Tools.MESSAGE_LEFT;
+import static com.example.campaign.Common.Tools.MESSAGE_RIGHT;
+
 
 public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.Holder>  {
     private List<messageListModel> list;
@@ -72,34 +68,21 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     public Map<String,Integer> uploadImageTask=new HashMap<>();
     public Map<String,Integer> uploadVideoTask=new HashMap<>();
     private RecyclerViewInterface recyclerViewInterface;
-    private static final int MESSAGE_LEFT=0;
-    private static final int MESSAGE_RIGHT=1;
-    public static final int DATE=3;
+    private Tools tools = new Tools();
+    public static final String TAG="messageListAdapter";
     private FirebaseUser user;
-    private String profileUrI,otherUserId;
+    private String otherUserId;
     private Activity activity;
     private ChatViewModel chatViewModel;
-    private TextView msgGroupDateTop;
     private MediaPlayer mediaPlayer;
-    boolean isSelected,isEnabled=false;
-    FirebaseDatabase database=FirebaseDatabase.getInstance();
-    ArrayList<messageListModel> selected=new ArrayList<>();
-    private FirebaseUser firebaseUser=FirebaseAuth.getInstance().getCurrentUser();
+    private boolean isSelected,isEnabled=false;
+    private  final FirebaseDatabase database=FirebaseDatabase.getInstance();
+    private final ArrayList<messageListModel> selected=new ArrayList<>();
+    private final FirebaseUser firebaseUser=FirebaseAuth.getInstance().getCurrentUser();
     private Handler mHandler = new Handler();
 
 
 
-    public messageListAdapter(List<messageListModel> list, Context context, String profileUrI, RecyclerViewInterface recyclerViewInterface,Activity activity,String otherUserId,TextView msgGroupDateTop)  {
-        this.list = list;
-        this.context = context;
-        this.profileUrI=profileUrI;
-        this.recyclerViewInterface=recyclerViewInterface;
-        this.activity=activity;
-        this.otherUserId=otherUserId;
-        this.msgGroupDateTop=msgGroupDateTop;
-
-    }
-    public void setUploadImageTask(Map<String,Integer> uploadImageTask){this.uploadImageTask=uploadImageTask;}
     public messageListAdapter(){ }
     public void setMessageList(List<messageListModel> list){
         this.list=list;
@@ -119,9 +102,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     }
 
 
-    public void setMsgGroupDateTop(TextView textView){
-        this.msgGroupDateTop=textView;
-    }
 
     @NonNull
     @Override
@@ -164,89 +144,76 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
             holder.checkBox.setVisibility(View.GONE);
             holder.itemView.setBackgroundColor(Color.TRANSPARENT);
         }
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(isEnabled){
-                    clickedItem(holder);
-                }
-
+        holder.itemView.setOnClickListener(v -> {
+            if(isEnabled){
+                clickedItem(holder);
             }
+
         });
 
-        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
+        holder.itemView.setOnLongClickListener(v -> {
 
-                if(!isEnabled){
-                    ActionMode.Callback callback= new ActionMode.Callback() {
-                        @Override
-                        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                            MenuInflater menuInflater=mode.getMenuInflater();
-                            menuInflater.inflate(R.menu.action_menu,menu);
-                            return true;
-                        }
+            if(!isEnabled){
+                ActionMode.Callback callback= new ActionMode.Callback() {
+                    @Override
+                    public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                        MenuInflater menuInflater=mode.getMenuInflater();
+                        menuInflater.inflate(R.menu.action_menu,menu);
+                        return true;
+                    }
 
-                        @Override
-                        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-                            isEnabled=true;
-                            clickedItem(holder);
-                            chatViewModel.getText().observe((LifecycleOwner)activity,new Observer<String>(){
+                    @Override
+                    public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                        isEnabled=true;
+                        clickedItem(holder);
+                        chatViewModel.getText().observe((LifecycleOwner)activity, s -> mode.setTitle(String.format("%s selected", s)));
+                        return true;
+                    }
 
-                                @Override
-                                public void onChanged(String s) {
-                                    mode.setTitle(String.format("%s selected",s));
-                                }
-                            });
-                            return true;
-                        }
-
-                        @Override
-                        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-                            int id=item.getItemId();
-                            switch (id){
-                                case R.id.menu_delete:
-                                    DatabaseReference messageRef=database.getReference().child("chats").child(firebaseUser.getUid()).child(otherUserId);
-                                    for(messageListModel c:selected){
-                                        list.remove(c);
-                                        messageRef.child(c.getMessageId()).removeValue();
-                                        notifyDataSetChanged();
-                                    }
-                                    mode.finish();
-                                    break;
-
-                                case R.id.menu_selectAll:
-                                    if(selected.size() ==list.size()){
-                                        isSelected=false;
-                                        selected.clear();
-                                    }else{
-                                        isSelected=true;
-                                        selected.clear();
-                                        selected.addAll(list);
-                                    }
-                                    chatViewModel.setText(String.valueOf(selected.size()));
+                    @Override
+                    public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                        int id=item.getItemId();
+                        switch (id){
+                            case R.id.menu_delete:
+                                DatabaseReference messageRef=database.getReference().child("chats").child(firebaseUser.getUid()).child(otherUserId);
+                                for(messageListModel c:selected){
+                                    list.remove(c);
+                                    messageRef.child(c.getMessageId()).removeValue();
                                     notifyDataSetChanged();
-                                    break;
+                                }
+                                mode.finish();
+                                break;
 
-                            }
-                            return true;
-                        }
+                            case R.id.menu_selectAll:
+                                if(selected.size() ==list.size()){
+                                    isSelected=false;
+                                    selected.clear();
+                                }else{
+                                    isSelected=true;
+                                    selected.clear();
+                                    selected.addAll(list);
+                                }
+                                chatViewModel.setText(String.valueOf(selected.size()));
+                                notifyDataSetChanged();
+                                break;
 
-                        @Override
-                        public void onDestroyActionMode(ActionMode mode) {
-                            isEnabled=false;
-                            isSelected=false;
-                            selected.clear();
-                            notifyDataSetChanged();
                         }
-                    };
-                    ((AppCompatActivity)v.getContext()).startActionMode(callback);
-                }else{
-                    clickedItem(holder);
-                }
-                return true;
+                        return true;
+                    }
+
+                    @Override
+                    public void onDestroyActionMode(ActionMode mode) {
+                        isEnabled=false;
+                        isSelected=false;
+                        selected.clear();
+                        notifyDataSetChanged();
+                    }
+                };
+                ((AppCompatActivity)v.getContext()).startActionMode(callback);
+            }else{
+                clickedItem(holder);
             }
-
+            return true;
         });
     }
 
@@ -286,16 +253,21 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
     }
 
+    @SuppressWarnings("RedundantThrows")
     public class Holder extends RecyclerView.ViewHolder  {
-        private TextView time,msgGroupDate;
-        private EmojiconTextView message;
-        private ImageView messageStatus;
-        private ZoomInImageView imageView;
-        private ProgressBar progressBar,audioLoadProgress;
-        private ImageButton videoPlayButton,playButton,pauseButton;
-        private TextView duration;
-        private SeekBar audioSeekBar;
-        private ImageView checkBox;
+        private final TextView time;
+        private final TextView msgGroupDate;
+        private final EmojiconTextView message;
+        private final ImageView messageStatus;
+        private final ZoomInImageView imageView;
+        private final ProgressBar progressBar;
+        private final ProgressBar audioLoadProgress;
+        private final ImageButton videoPlayButton;
+        private final ImageButton playButton;
+        private final ImageButton pauseButton;
+        private final TextView duration;
+        private final SeekBar audioSeekBar;
+        private final ImageView checkBox;
 
         public Holder(@NonNull View itemView) {
             super(itemView);
@@ -314,31 +286,28 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
             duration=itemView.findViewById(R.id.duration);
         }
 
-        void bind(final messageListModel messageList) throws IOException {
-            Log.d("addPos",String.valueOf(getAdapterPosition()));
-            ArrayList<messageListModel> imageList=new ArrayList<>();
+        @SuppressLint({"ClickableViewAccessibility", "SetTextI18n"})
+        private void bind(final messageListModel messageList) throws IOException {
+
             if(messageList.getReceiver()!=null){
 
                 switch(messageList.getType()){
                     case "TEXT":
                         videoPlayButton.setVisibility(View.GONE);
+
                         message.setText(messageList.getText());
-                        imageView.setVisibility(itemView.GONE);
-                        audioLoadProgress.setVisibility(itemView.GONE);
-                        message.setVisibility(itemView.VISIBLE);
+                        imageView.setVisibility(View.GONE);
+                        audioLoadProgress.setVisibility(View.GONE);
+                        message.setVisibility(View.VISIBLE);
                         time.setText(messageList.getTime());
-                        playButton.setVisibility(itemView.GONE);
-                        pauseButton.setVisibility(itemView.GONE);
-                        audioSeekBar.setVisibility(itemView.GONE);
-                        progressBar.setVisibility(itemView.GONE);
-                        duration.setVisibility(itemView.GONE);
-                        message.setOnLongClickListener(new View.OnLongClickListener() {
-                            @SuppressLint("MissingPermission")
-                            @Override
-                            public boolean onLongClick(View v) {
-                                recyclerViewInterface.onLongItemClick(getAdapterPosition());
-                                return false;
-                            }
+                        playButton.setVisibility(View.GONE);
+                        pauseButton.setVisibility(View.GONE);
+                        audioSeekBar.setVisibility(View.GONE);
+                        progressBar.setVisibility(View.GONE);
+                        duration.setVisibility(View.GONE);
+                        message.setOnLongClickListener(v -> {
+                            recyclerViewInterface.onLongItemClick(getAdapterPosition());
+                            return false;
                         });
                         break;
                     case "IMAGE":
@@ -346,30 +315,28 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         Map<String,Integer> uploadImageData;
                         uploadImageData=((ChatActivity)context).getUploadImageTaskData();
                         videoPlayButton.setVisibility(View.GONE);
-                        progressBar.setVisibility(itemView.VISIBLE);
-                        playButton.setVisibility(itemView.GONE);
-                        audioLoadProgress.setVisibility(itemView.GONE);
-                        pauseButton.setVisibility(itemView.GONE);
-                        audioSeekBar.setVisibility(itemView.GONE);
-                        imageView.setVisibility(itemView.VISIBLE);
-                        imageView.setOnClickListener(I->{
-                            recyclerViewInterface.onItemClick(getAdapterPosition());
-                        });
-                        duration.setVisibility(itemView.GONE);
+                        progressBar.setVisibility(View.VISIBLE);
+                        playButton.setVisibility(View.GONE);
+                        audioLoadProgress.setVisibility(View.GONE);
+                        pauseButton.setVisibility(View.GONE);
+                        audioSeekBar.setVisibility(View.GONE);
+                        imageView.setVisibility(View.VISIBLE);
+                        imageView.setOnClickListener(I-> recyclerViewInterface.onItemClick(getAdapterPosition()));
+                        duration.setVisibility(View.GONE);
                         if(messageList.getText()==null){
-                            message.setVisibility(itemView.GONE);
+                            message.setVisibility(View.GONE);
                         }else{
                             message.setText(messageList.getText());
-                            message.setVisibility(itemView.VISIBLE);
+                            message.setVisibility(View.VISIBLE);
                         }
 
                         imageView.setClipToOutline(true);
 
                         time.setText(messageList.getTime());
                         if(uploadImageData.containsKey(messageList.getMessageId()) && uploadImageData!=null){
-                            progressBar.setVisibility(itemView.VISIBLE);
+                            progressBar.setVisibility(View.VISIBLE);
                             if(uploadImageData.get(messageList.getMessageId())==1){
-                                progressBar.setVisibility(itemView.GONE);
+                                progressBar.setVisibility(View.GONE);
                             }
 
                             Glide.with(context).load(messageList.getImageUrI()).transform(new BlurTransformation(uploadImageData.get(messageList.getMessageId()))).listener(new RequestListener<Drawable>() {
@@ -408,23 +375,22 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                     case "VIDEO":
                         Map<String,Integer> uploadVideoData;
                         uploadVideoData=((ChatActivity)context).getUploadVideoTaskData();
-                        progressBar.setVisibility(itemView.VISIBLE);
-                        imageView.setVisibility(itemView.VISIBLE);
-                        playButton.setVisibility(itemView.GONE);
-                        pauseButton.setVisibility(itemView.GONE);
-                        audioSeekBar.setVisibility(itemView.GONE);
-                        duration.setVisibility(itemView.GONE);
+                        progressBar.setVisibility(View.VISIBLE);
+                        imageView.setVisibility(View.VISIBLE);
+                        playButton.setVisibility(View.GONE);
+                        pauseButton.setVisibility(View.GONE);
+                        audioSeekBar.setVisibility(View.GONE);
+                        duration.setVisibility(View.GONE);
                         if(messageList.getText()==null){
-                            message.setVisibility(itemView.GONE);
+                            message.setVisibility(View.GONE);
                         }else{
+
                             message.setText(messageList.getText());
-                            message.setVisibility(itemView.VISIBLE);
+                            message.setVisibility(View.VISIBLE);
                         }
                         imageView.setClipToOutline(true);
                         videoPlayButton.setVisibility(View.VISIBLE);
-                        videoPlayButton.setOnClickListener(V->{
-                            recyclerViewInterface.onItemClick(getAdapterPosition());
-                        });
+                        videoPlayButton.setOnClickListener(V-> recyclerViewInterface.onItemClick(getAdapterPosition()));
                         time.setText(messageList.getTime());
                         String videoUrI=messageList.getVideoUrI();
                         if(videoUrI!=null){
@@ -433,13 +399,13 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                                     .placeholder(R.drawable.black)
                                     .into(imageView);
                             if(uploadVideoData.containsKey(messageList.getMessageId()) && uploadVideoData!=null){
-                                progressBar.setVisibility(itemView.VISIBLE);
+                                progressBar.setVisibility(View.VISIBLE);
                                 if(uploadVideoData.get(messageList.getMessageId())==100){
-                                    progressBar.setVisibility(itemView.GONE);
+                                    progressBar.setVisibility(View.GONE);
                                 }
 
                             }else{
-                                progressBar.setVisibility(itemView.GONE);
+                                progressBar.setVisibility(View.GONE);
                             }
                         }
                         break;
@@ -447,44 +413,44 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                     case "AUDIO":
                         Map<String,Integer> uploadAudioData;
                         uploadAudioData=((ChatActivity)context).getUploadAudioTaskData();
-                        playButton.setVisibility(itemView.VISIBLE);
-                        pauseButton.setVisibility(itemView.GONE);
-                        audioSeekBar.setVisibility(itemView.VISIBLE);
+                        playButton.setVisibility(View.VISIBLE);
+                        pauseButton.setVisibility(View.GONE);
+                        audioSeekBar.setVisibility(View.VISIBLE);
                         duration.setVisibility(View.VISIBLE);
                         message.setVisibility(View.GONE);
                         videoPlayButton.setVisibility(View.GONE);
                         message.setText(messageList.getText());
-                        imageView.setVisibility(itemView.GONE);
-                        message.setVisibility(itemView.VISIBLE);
+                        imageView.setVisibility(View.GONE);
+                        message.setVisibility(View.VISIBLE);
                         time.setText(messageList.getTime());
-                        progressBar.setVisibility(itemView.GONE);
+                        progressBar.setVisibility(View.GONE);
                         if(uploadAudioData.containsKey(messageList.getMessageId()) && uploadAudioData!=null){
-                            audioLoadProgress.setVisibility(itemView.VISIBLE);
-                            playButton.setVisibility(itemView.GONE);
+                            audioLoadProgress.setVisibility(View.VISIBLE);
+                            playButton.setVisibility(View.GONE);
                             audioSeekBar.setEnabled(false);
                             if(uploadAudioData.get(messageList.getMessageId())==100){
-                                audioLoadProgress.setVisibility(itemView.GONE);
-                                playButton.setVisibility(itemView.VISIBLE);
+                                audioLoadProgress.setVisibility(View.GONE);
+                                playButton.setVisibility(View.VISIBLE);
                                 audioSeekBar.setEnabled(true);
                             }
 
                         }else{
-                            progressBar.setVisibility(itemView.GONE);
+                            progressBar.setVisibility(View.GONE);
                         }
                         audioSeekBar.setMax(100);
-                        duration.setText(millisecondsToText(Long.valueOf(messageList.getAudioDuration())));
+                        duration.setText(millisecondsToText(Long.parseLong(messageList.getAudioDuration())));
                         mediaPlayer=new MediaPlayer();
                         recyclerViewInterface.getMediaPlayer(mediaPlayer);
                         playButton.setOnClickListener(I->{
                             if(mediaPlayer!=null){
                                 if(!mediaPlayer.isPlaying() ){
                                     try{
-                                        playButton.setVisibility(itemView.GONE);
+                                        playButton.setVisibility(View.GONE);
                                         mediaPlayer.start();
-                                        pauseButton.setVisibility(itemView.VISIBLE);
+                                        pauseButton.setVisibility(View.VISIBLE);
                                         updateSeekBar();
                                     }catch (Exception e){
-
+                                        Log.e(TAG, "bind: ",e.fillInStackTrace() );
                                     }
                                 }
                             }
@@ -495,41 +461,33 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         pauseButton.setOnClickListener(I->{
 
                                 if(mediaPlayer.isPlaying()){
-                                    playButton.setVisibility(itemView.VISIBLE);
-                                    pauseButton.setVisibility(itemView.GONE);
+                                    playButton.setVisibility(View.VISIBLE);
+                                    pauseButton.setVisibility(View.GONE);
                                     mHandler.removeCallbacks(updater);
                                     mediaPlayer.pause();
                                 }
 
                         });
-                        if(messageList.getReceiver()!=user.getUid()){
+                        if(!messageList.getReceiver().equals(user.getUid())){
 
                             prepareMediaPlayer(messageList.getAudioUrI());
                         }else{
                             prepareMediaPlayerOther(messageList.getAudioUrI());
                         }
-                        mediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
-                            @Override
-                            public void onBufferingUpdate(MediaPlayer mp, int percent) {
-                                audioSeekBar.setSecondaryProgress(percent);
-                            }
-                        });
-                        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                            @Override
-                            public void onCompletion(MediaPlayer mp) {
+                        mediaPlayer.setOnBufferingUpdateListener((mp, percent) -> audioSeekBar.setSecondaryProgress(percent));
+                        mediaPlayer.setOnCompletionListener(mp -> {
 
-                                audioSeekBar.setProgress(0);
-                                duration.setText("0:00");
-                                pauseButton.setVisibility(View.GONE);
-                                playButton.setVisibility(View.VISIBLE);
-                                mediaPlayer.reset();
-                                mediaPlayer.release();
-                                if(messageList.getReceiver()!=user.getUid()){
-                                    prepareMediaPlayer(messageList.getAudioUrI());
-                                }else{
-                                    prepareMediaPlayerOther(messageList.getAudioUrI());
+                            audioSeekBar.setProgress(0);
+                            duration.setText("0:00");
+                            pauseButton.setVisibility(View.GONE);
+                            playButton.setVisibility(View.VISIBLE);
+                            mediaPlayer.reset();
+                            mediaPlayer.release();
+                            if(!messageList.getReceiver().equals(user.getUid())){
+                                prepareMediaPlayer(messageList.getAudioUrI());
+                            }else{
+                                prepareMediaPlayerOther(messageList.getAudioUrI());
 
-                                }
                             }
                         });
                         audioSeekBar.setOnTouchListener((v, event) -> {
@@ -551,8 +509,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                     messageStatus.setImageResource(R.drawable.ic_baseline_done_24);
                 }
 
-            }else{
-//                date.setText(messageList.getDate());
             }
         }
 
@@ -563,19 +519,18 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                 try{
                     if(mediaPlayer.isPlaying()){
                         int progress=(int) (((float)mediaPlayer.getCurrentPosition()/mediaPlayer.getDuration())*100);
-//                    audioSeekBar.setProgress((int)(((float)(mediaPlayer.getCurrentPosition()/mediaPlayer.getDuration())*100)));
                         audioSeekBar.setProgress(progress);
                         mHandler.postDelayed(updater,1000);
 
                     }
                 }catch(Exception e){
-
+                    Log.e(TAG, "updateSeekBar: ",e.fillInStackTrace() );
                 }
 
             }
         }
 
-        private Runnable updater=new Runnable() {
+        private final Runnable updater=new Runnable() {
             @Override
             public void run() {
                 updateSeekBar();
@@ -585,7 +540,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                        long currentDuration= mediaPlayer.getCurrentPosition();
                        duration.setText(millisecondsToText(currentDuration));
                    }catch(Exception e){
-
+                       Log.e(TAG, "run: ",e.fillInStackTrace() );
                    }
 
                }
@@ -594,42 +549,36 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
         private void prepareMediaPlayer(String uri){
             Handler handler = new Handler(Looper.getMainLooper());
-            handler.post(new Runnable() {
-                public void run() {
-                    try {
-                        mediaPlayer.setAudioAttributes(
-                                new AudioAttributes.Builder()
-                                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                                        .build()
-                        );
-                        mediaPlayer.setDataSource(context, Uri.parse(uri));
-                        mediaPlayer.prepare();
-                    } catch (Exception e) {
-                        Log.e("messageList", e.getLocalizedMessage() + 'k');
-                    }
+            handler.post(() -> {
+                try {
+                    mediaPlayer.setAudioAttributes(
+                            new AudioAttributes.Builder()
+                                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                                    .build()
+                    );
+                    mediaPlayer.setDataSource(context, Uri.parse(uri));
+                    mediaPlayer.prepare();
+                } catch (Exception e) {
+                    Log.e("messageList", e.getLocalizedMessage() + 'k');
                 }
             });
             }
 
         private void prepareMediaPlayerOther(String uri){
             Handler handler =new Handler(Looper.getMainLooper());
-            handler.post(new Runnable() {
-
-                @Override
-                public void run() {
-                    try{
-                        mediaPlayer.setAudioAttributes(
-                                new AudioAttributes.Builder()
-                                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                                        .build()
-                        );
-                        mediaPlayer.setDataSource(uri);
-                        mediaPlayer.prepare();
-                    }catch(Exception e){
-                        Log.e("messageList",e.getLocalizedMessage()+ 'k');
-                    }
+            handler.post(() -> {
+                try{
+                    mediaPlayer.setAudioAttributes(
+                            new AudioAttributes.Builder()
+                                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                                    .build()
+                    );
+                    mediaPlayer.setDataSource(uri);
+                    mediaPlayer.prepare();
+                }catch(Exception e){
+                    Log.e("messageList",e.getLocalizedMessage()+ 'k');
                 }
             });
 
@@ -662,7 +611,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         if(ts2==null){
             timeText.setVisibility(View.VISIBLE);
             if(ts1.equals(date)){
-                timeText.setText("Today");
+                timeText.setText(R.string.today);
             }else{
                 timeText.setText(formatDate(ts1));
             }
@@ -685,9 +634,9 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                 }else {
                     timeText.setVisibility(View.VISIBLE);
                     if(ts1.equals(date)){
-                        timeText.setText("Today");
+                        timeText.setText(R.string.today);
                     }else if(ts1.substring(6,10).equals(date.substring(6,10)) && ts1.substring(3,5).equals(date.substring(3,5)) && Integer.parseInt(ts1.substring(0,2))+1==Integer.parseInt(date.substring(0,2))){
-                        timeText.setText("Yesterday");
+                        timeText.setText(R.string.yesterday);
                     }else{
                         timeText.setText(formatDate(ts1));
                     }

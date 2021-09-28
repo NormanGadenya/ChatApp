@@ -25,7 +25,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="30dp"
-                android:text="Phone Number Verification"
+                android:text="@string/phone_number_verification"
                 android:textColor="@color/white"
                 android:fontFamily="sans-serif-condensed-medium"/>
             <TextView

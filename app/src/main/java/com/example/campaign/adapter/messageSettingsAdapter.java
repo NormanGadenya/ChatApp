@@ -1,37 +1,26 @@
 package com.example.campaign.adapter;
 
 import android.content.Context;
-import android.content.Intent;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.FragmentActivity;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
-import com.example.campaign.Model.ChatViewModel;
 import com.example.campaign.Model.messageListModel;
-import com.example.campaign.Model.userModel;
 import com.example.campaign.R;
-import com.example.campaign.Activities.ChatActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.mikhaellopez.circularimageview.CircularImageView;
-import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
 
 import java.util.List;
 
 public class messageSettingsAdapter extends RecyclerView.Adapter<messageSettingsAdapter.Holder> {
-    private List<messageListModel> list;
-    private Context context;
+    private final List<messageListModel> list;
+    private final Context context;
     private static final int MESSAGE_LEFT=0;
     private static final int MESSAGE_RIGHT=1;
-    private FirebaseUser firebaseUser=FirebaseAuth.getInstance().getCurrentUser();
+    private final FirebaseUser firebaseUser=FirebaseAuth.getInstance().getCurrentUser();
 
     public messageSettingsAdapter(List<messageListModel> list, Context context){
         this.context = context;
@@ -52,7 +41,7 @@ public class messageSettingsAdapter extends RecyclerView.Adapter<messageSettings
             view =LayoutInflater.from(context).inflate(R.layout.chat_item_date,parent,false);
         }
 
-        return new messageSettingsAdapter.Holder(view);
+        return new Holder(view);
     }
 
     @Override
@@ -68,25 +57,21 @@ public class messageSettingsAdapter extends RecyclerView.Adapter<messageSettings
 
 
     @Override
-    public int getItemViewType(int position){
+    public int getItemViewType(int position) {
 
-        final messageListModel messageList=list.get(position);
+        final messageListModel messageList = list.get(position);
 
-        if(messageList.getReceiver().equals(firebaseUser.getUid())){
+        if (messageList.getReceiver().equals(firebaseUser.getUid())) {
 
             return MESSAGE_LEFT;
-        }
-        else {
+        } else {
             return MESSAGE_RIGHT;
         }
 
 
     }
 
-
-
-
-    public class Holder extends RecyclerView.ViewHolder {
+    public static class Holder extends RecyclerView.ViewHolder {
 
         public Holder(@NonNull View itemView) {
             super(itemView);

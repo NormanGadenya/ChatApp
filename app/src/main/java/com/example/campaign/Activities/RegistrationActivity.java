@@ -1,22 +1,12 @@
 package com.example.campaign.Activities;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
-
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -28,10 +18,15 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.example.campaign.Common.Tools;
 import com.example.campaign.Model.userModel;
-
 import com.example.campaign.R;
 import com.example.campaign.Services.ProfileUploadService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -39,14 +34,15 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
+
 import com.zolad.zoominimageview.ZoomInImageView;
 
 import java.io.ByteArrayOutputStream;
 
 import static android.view.View.GONE;
-
+import static com.example.campaign.Common.Tools.CAMERA_REQUEST;
+import static com.example.campaign.Common.Tools.CONTACTS_REQUEST;
+import static com.example.campaign.Common.Tools.GALLERY_REQUEST;
 
 public class RegistrationActivity extends AppCompatActivity {
     private Button submit_button;
@@ -58,24 +54,19 @@ public class RegistrationActivity extends AppCompatActivity {
     private String phoneNumber;
     private CardView wrapper;
     private Uri selected;
-    private ProgressBar progressBar,imageProgress;
+    private ProgressBar progressBar;
     private ZoomInImageView profilePic;
-    private static final int CAMERA_REQUEST = 1888;
-    private static final int GALLERY_REQUEST = 100;
-    private static final int CONTACTS_REQUEST=200;
-    private StorageReference mStorageReference;
+
+
     private boolean btnSelected,clickedDone=false;
-    private View layout_act_drag;
-    private String date=new Tools().getDate();
-    private String time=new Tools().getTime();
+    private final String date=new Tools().getDate();
+    private final String time=new Tools().getTime();
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_registration_activity);
-        mStorageReference= FirebaseStorage.getInstance().getReference();
         database = FirebaseDatabase.getInstance();
 
         InitializeControllers();
@@ -142,45 +133,43 @@ public class RegistrationActivity extends AppCompatActivity {
                 }
             }
         });
-        userNameTV.setOnKeyListener(new View.OnKeyListener() {
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                // If the event is a key-down event on the "enter" button
-                clickedDone=false;
-                if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
-                        (keyCode == KeyEvent.KEYCODE_ENTER)) {
-                    if (user!=null) {
-                        progressBar.setVisibility(View.VISIBLE);
-                        String userName=userNameTV.getText().toString();
-                        userId=user.getUid();
-                        phoneNumber=user.getPhoneNumber();
+        userNameTV.setOnKeyListener((v, keyCode, event) -> {
+            // If the event is a key-down event on the "enter" button
+            clickedDone=false;
+            if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
+                    (keyCode == KeyEvent.KEYCODE_ENTER)) {
+                if (user!=null) {
+                    progressBar.setVisibility(View.VISIBLE);
+                    String userName=userNameTV.getText().toString();
+                    userId=user.getUid();
+                    phoneNumber=user.getPhoneNumber();
 
 //                            uploadFile(name,phoneNumber,userId);
 
-                        updateUserDetails(userName,phoneNumber,userId);
-                        clickedDone=true;
-                        if(selected!=null){
-                            Intent i= new Intent (getApplicationContext(), ProfileUploadService.class);
-                            i.putExtra("userId",userId);
-                            i.setData(selected);
-                            startService(i);
-
-                        }
-                        if (ContextCompat.checkSelfPermission(RegistrationActivity.this,
-                                Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
-                            Intent chatList=new Intent(RegistrationActivity.this, MainActivity.class);
-                            startActivity(chatList);
-                            userNameTV.setEnabled(false);
-                        } else {
-                            requestContactsPermission();
-                        }
-//                        progressBar.setVisibility(View.GONE);
+                    updateUserDetails(userName,phoneNumber,userId);
+                    clickedDone=true;
+                    if(selected!=null){
+                        Intent i= new Intent (getApplicationContext(), ProfileUploadService.class);
+                        i.putExtra("userId",userId);
+                        i.setData(selected);
+                        startService(i);
 
                     }
+                    if (ContextCompat.checkSelfPermission(RegistrationActivity.this,
+                            Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+                        Intent chatList=new Intent(RegistrationActivity.this, MainActivity.class);
+                        startActivity(chatList);
+                        userNameTV.setEnabled(false);
+                    } else {
+                        requestContactsPermission();
+                    }
+//                        progressBar.setVisibility(View.GONE);
 
-                    return true;
                 }
-                return false;
+
+                return true;
             }
+            return false;
         });
 
         gallery_button.setOnClickListener(v -> {
@@ -238,8 +227,7 @@ public class RegistrationActivity extends AppCompatActivity {
         profilePic=findViewById(R.id.image_profile);
         progressBar=findViewById(R.id.progressBar1);
         profilePic.setClipToOutline(true);
-        layout_act_drag=findViewById(R.id.layout_actions_drag);
-        imageProgress=findViewById(R.id.progressBar4);
+
     }
 
 

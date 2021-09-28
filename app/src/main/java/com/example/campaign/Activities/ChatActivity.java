@@ -2,27 +2,22 @@ package com.example.campaign.Activities;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.AssetFileDescriptor;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.net.sip.SipSession;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -68,7 +63,6 @@ import com.example.campaign.Services.VideoUploadService;
 import com.example.campaign.Services.updateStatusService;
 import com.example.campaign.adapter.messageListAdapter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -78,15 +72,20 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.storage.FirebaseStorage;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
-
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.sql.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import javax.crypto.Cipher;
 
 import hani.momanii.supernova_emoji_library.Actions.EmojIconActions;
 import hani.momanii.supernova_emoji_library.Helper.EmojiconEditText;
@@ -97,48 +96,47 @@ import retrofit2.Response;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
+import static com.example.campaign.Common.Tools.AUDIOREQUEST;
+import static com.example.campaign.Common.Tools.IMAGEREQUEST;
+import static com.example.campaign.Common.Tools.VIDEOREQUEST;
 
 public class ChatActivity extends AppCompatActivity implements RecyclerViewInterface {
-
-    private String otherUserId, message, profileUrI,otherUserName,lastSeen;
+    public static final String TAG="Chat Activity";
+    private String otherUserId;
+    private String profileUrI;
+    private String otherUserName;
     private FirebaseDatabase database;
     private ArrayList<messageListModel> messageList = new ArrayList<>();
     private RecyclerView recyclerView ;
-    private ImageButton sendButton,attachButton,emojiButton;
+    private ImageButton sendButton;
+    private ImageButton attachButton;
     private TextView userName,onlineStatus,typing,msgGroupDate;
     private EmojiconEditText newMessage;
     private CircularImageView profilePic;
     private FirebaseUser user ;
-    private FirebaseStorage firebaseStorage;
-    private Uri selected;
-    private MenuInflater menuInflater;
     private ProgressBar progressBar;
     private messageListAdapter messageListAdapter;
     private ImageView backgroundImageView,onlineStatusView;
     private SharedPreferences settingsSharedPreferences;
     private LinearLayoutManager layoutManager;
-    private ArrayList<String> imageUrIList=new ArrayList<>();
     boolean notify=false;
     private FloatingActionButton imageButton,videoButton,audioButton;
     private MessageViewModel messageViewModel;
     private UserViewModel userViewModel;
-    final int IMAGEREQUEST =2;
-    final int AUDIOREQUEST=3;
-    final int VIDEOREQUEST=4;
-    private MenuItem profileDetails,settings,delete;
-    private View rootView,layoutActions,textArea;
+    private View layoutActions,textArea;
     private APIService apiService;
     private MediaPlayer mediaPlayer;
     private String uploadImageTId,uploadVideoTId,uploadAudioTId;
     private int uploadImageTP,uploadVideoTP,uploadAudioTP;
-    private  ActionBar actionBar;
-    private Map<String ,Integer> uploadImageData=new HashMap<>();
-    private Map<String ,Integer> uploadVideoData=new HashMap<>();
-    private Map<String ,Integer> uploadAudioData=new HashMap<>();
+    private final Map<String ,Integer> uploadImageData=new HashMap<>();
+    private final Map<String ,Integer> uploadVideoData=new HashMap<>();
+    private final Map<String ,Integer> uploadAudioData=new HashMap<>();
     private String date,time;
     private Tools tools;
     private String fPhoneNumber;
 
+
+    @SuppressWarnings("deprecation")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -198,11 +196,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         getCurrentWallpaper();
         try{
             Handler handler = new Handler(Looper.getMainLooper());
-            handler.post(new Runnable() {
-                public void run() {
-                    getMessages();
-                }
-            });
+            handler.post(this::getMessages);
 
         }catch (Exception e){
             Log.d("Error" ,e.getLocalizedMessage());
@@ -243,6 +237,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
 
     }
+
+
     private void loadAdapter(){
         if(messageList!=null){
             messageListAdapter=new messageListAdapter();
@@ -295,13 +291,16 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private void uploadTextMessage(){
         DatabaseReference sMessage_1=database.getReference().child("chats").child(otherUserId).child(user.getUid()).push();
         DatabaseReference sMessage_2=database.getReference().child("chats").child(user.getUid()).child(otherUserId);
-        message=newMessage.getText().toString();
+        String message = newMessage.getText().toString();
+
+        //noinspection deprecation
         updateToken(FirebaseInstanceId.getInstance().getToken());
         apiService= Client.getClient("https://fcm.googleapis.com").create(APIService.class);
         if(!message.equals(null)){
             String formattedDate = date;
             String formattedTime=time;
             messageListModel m=new messageListModel();
+            List encryptedMessage= tools.encryptMessage(message);
             m.setText(message);
             m.setReceiver(otherUserId);
             m.setDate(formattedDate);
@@ -312,7 +311,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             sMessage_2.child(messageKey).setValue(m);
             notify=true;
             if(notify){
-                sendNotification(otherUserId,fPhoneNumber,message);
+                sendNotification(otherUserId,fPhoneNumber, message);
             }
             newMessage.setText("");
         }
@@ -340,20 +339,15 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                             .enqueue(new Callback<MyResponse>(){
                                 @Override
                                 public void onResponse(Call<MyResponse> call, Response<MyResponse> response) {
-                                    if(response.code()==200){
-                                        if(response.body().success==1){
 
-                                        }else{
-
-                                        }
-                                    }
                                 }
 
                                 @Override
                                 public void onFailure(Call<MyResponse> call, Throwable t) {
-
+                                    Log.e(TAG, "onFailure: ",t.fillInStackTrace() );
                                 }
                             });
+
                     notify=false;
                 }
             }
@@ -367,11 +361,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     private HashMap<String,Object> updateTypingStatus(int count){
         HashMap<String,Object> typingStatus= new HashMap<>();
-        if (count>=1){
-            typingStatus.put("Typing",true);
-        }else{
-            typingStatus.put("Typing",false);
-        }
+        typingStatus.put("Typing", count >= 1);
         return typingStatus;
     }
 
@@ -442,7 +432,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
                         .into(backgroundImageView);
             }
-            ;
         }else{
             backgroundImageView.setImageResource(R.drawable.whatsapp_wallpaper_121);
         }
@@ -467,13 +456,10 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private void statusCheck(userModel user){
 
         if(user.getOnline()!=null && user.getShowOnlineState()!=null & user.getShowLastSeenState()!=null){
+            String lastSeen;
             if(user.getOnline() && user.getShowOnlineState()){
-//                            onlineStatus.setVisibility(View.VISIBLE);
-                lastSeen="online";
+                lastSeen ="online";
                 onlineStatusView.setVisibility(VISIBLE);
-//                profilePic.setBorderColorStart( Color.CYAN);
-//                profilePic.setBorderColorEnd( Color.MAGENTA);
-//                profilePic.setBorderColorStart(context.getColor(R.color.teal_200));
                 onlineStatus.setSelected(false);
 
             }else{
@@ -482,13 +468,12 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 String lastSeenDate=user.getLastSeenDate();
                 String lastSeenTime=user.getLastSeenTime();
                 if (lastSeenDate.equals(date)){
-                    lastSeen= "Last seen today at "+ lastSeenTime;
+                    lastSeen = "Last seen today at "+ lastSeenTime;
                 }else{
-                    lastSeen= "Last seen on " +lastSeenDate +" at "+ lastSeenTime;
+                    lastSeen = "Last seen on " +lastSeenDate +" at "+ lastSeenTime;
                 }
                 profilePic.setBorderColorStart(Color.WHITE);
                 profilePic.setBorderColorEnd( Color.WHITE);
-//                onlineStatus.setSelected(true);
 
             }
             profilePic.setBorderColorDirection(CircularImageView.GradientDirection.LEFT_TO_RIGHT);
@@ -526,7 +511,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     }
 
     private void InitialiseControllers() {
-        actionBar=getSupportActionBar();
+        ActionBar actionBar = getSupportActionBar();
         actionBar.setTitle("");
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowCustomEnabled(true);
@@ -568,15 +553,15 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                             msgGroupDate.setText(formatDate(messageList.get(Math.abs(firstElementPosition)).getDate()));
                         }
                     }catch(Exception e){
-
+                        Log.e(TAG, "onScrolled: ",e.fillInStackTrace());
                     }
                 }
             }
         });
         database = FirebaseDatabase.getInstance();
-        firebaseStorage= FirebaseStorage.getInstance();
-        emojiButton=findViewById(R.id.emoji_button);
-        rootView=findViewById(R.id.constraint_layout2);
+
+        ImageButton emojiButton = findViewById(R.id.emoji_button);
+//        rootView=findViewById(R.id.constraint_layout2);
         layoutActions=findViewById(R.id.layout_actions);
         imageButton=findViewById(R.id.att_image);
         videoButton=findViewById(R.id.att_vid);
@@ -584,9 +569,9 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         textArea=findViewById(R.id.constraint_layout2);
         messageViewModel = new ViewModelProvider(this).get(MessageViewModel.class);
         userViewModel=new ViewModelProvider(this).get(UserViewModel.class);
-        EmojIconActions emojIcon=new EmojIconActions(getApplicationContext(),rootView,newMessage,emojiButton,"#495C66","#DCE1E2","#0B1830");
-        emojIcon.setIconsIds(R.drawable.ic_action_keyboard,R.drawable.smiley);
-        emojIcon.ShowEmojIcon();
+        EmojIconActions emojiIcon=new EmojIconActions(getApplicationContext(),textArea,newMessage, emojiButton,"#495C66","#DCE1E2","#0B1830");
+        emojiIcon.setIconsIds(R.drawable.ic_action_keyboard,R.drawable.smiley);
+        emojiIcon.ShowEmojIcon();
     }
 
     private String formatDate(String date){
@@ -657,13 +642,10 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                         return false;
                     }
                 }).into(profilePic);
-                profilePic.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                   Intent intent =new Intent(getApplicationContext(), OtherUserActivity.class);
-                    intent.putExtra("otherUserId",otherUserId).putExtra("otherUserName",otherUserName);
-                    startActivity(intent);
-                    }
+                profilePic.setOnClickListener(v -> {
+               Intent intent =new Intent(getApplicationContext(), OtherUserActivity.class);
+                intent.putExtra("otherUserId",otherUserId).putExtra("otherUserName",otherUserName);
+                startActivity(intent);
                 });
 
             }else{
@@ -677,7 +659,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     }
 
     private void getMessages(){
-        imageUrIList.clear();
         messageViewModel.getMessages().observe(this, messageListLive -> {
             messageList=messageListLive;
             messageListAdapter.notifyDataSetChanged();
@@ -692,7 +673,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         super.onActivityResult(requestCode, resultCode, data);
 
         if(resultCode== Activity.RESULT_OK && data!=null) {
-            selected=data.getData();
+            Uri selected = data.getData();
             try{
                 if(tools.isFileLessThan2MB(selected)) {
                     if (requestCode == IMAGEREQUEST) {
@@ -724,10 +705,10 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                     }
                 }else{
                     Toast.makeText(this,"file size too large",Toast.LENGTH_SHORT).show();
-                    rootView.setVisibility(View.GONE);
+                    textArea.setVisibility(View.GONE);
                 }
             }catch(Exception e){
-
+                Log.e(TAG, "onActivityResult:",e.fillInStackTrace());
             }
         }
     }
@@ -752,28 +733,21 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menuInflater =getMenuInflater();
+        MenuInflater menuInflater = getMenuInflater();
         menuInflater.inflate(R.menu.chat_menu,menu);
-        profileDetails=menu.findItem(R.id.profileButton);
-        settings=menu.findItem(R.id.settingsButton);
-        delete=menu.findItem(R.id.delete);
-        profileDetails.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                Intent intent = new Intent(ChatActivity.this , UserProfileActivity.class)
-                        .putExtra("userName",otherUserName);
-                startActivity(intent);
+        MenuItem profileDetails = menu.findItem(R.id.profileButton);
+        MenuItem settings = menu.findItem(R.id.settingsButton);
+        profileDetails.setOnMenuItemClickListener(item -> {
+            Intent intent = new Intent(ChatActivity.this , UserProfileActivity.class)
+                    .putExtra("userName",otherUserName);
+            startActivity(intent);
 
-                return false;
-            }
+            return false;
         });
-        settings.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                Intent intent = new Intent(ChatActivity.this , SettingsActivity.class);
-                startActivity(intent);
-                return false;
-            }
+        settings.setOnMenuItemClickListener(item -> {
+            Intent intent = new Intent(ChatActivity.this , SettingsActivity.class);
+            startActivity(intent);
+            return false;
         });
         return true;
 
@@ -782,12 +756,10 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-
-                onBackPressed();
-                break;
+        if(item.getItemId()== android.R.id.home){
+            onBackPressed();
         }
+
         return true;
     }
 
@@ -819,6 +791,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             i.putExtra("videoUrI",messageList.get(position).getVideoUrI());
         }
         i.putExtra("otherUserName",otherUserName);
+//        List encryptedMessage=;
+//        Tools tools =new Tools();
         i.putExtra("caption",messageList.get(position).getText());
 
         if(messageList.get(position).getReceiver().equals(user.getUid())){
@@ -846,7 +820,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
          * {@link #onReceiveResult} method will be called from the thread running
          * <var>handler</var> if given, or from an arbitrary thread if null.
          *
-         * @param handler
+         *
          */
         public MyReceiver(Handler handler) {
             super(handler);

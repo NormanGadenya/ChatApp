@@ -44,5 +44,13 @@
     <string name="attachment_summary_on">Automatically download attachments for incoming emails
     </string>
     <string name="attachment_summary_off">Only download attachments when manually requested</string>
+    <string name="send_button">send Button</string>
+    <string name="attach_button">attach button</string>
+    <string name="phone_number_verification">Phone Number Verification</string>
+    <string name="profile_picture">profile picture</string>
+    <string name="name_change_description">This is your user name and will be visible to all your Chat contacts</string>
+    <string name="apply">Apply</string>
+    <string name="yesterday">Yesterday</string>
+    <string name="today">Today</string>
 
 </resources>

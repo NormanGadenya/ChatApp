@@ -1,11 +1,5 @@
 package com.example.campaign.Activities;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -14,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -24,57 +17,40 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.RadioGroup;
 import android.widget.SeekBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.GlideBuilder;
-import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
-import com.bumptech.glide.load.engine.Resource;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
-import com.bumptech.glide.request.target.ViewTarget;
 import com.example.campaign.Common.ServiceCheck;
-import com.example.campaign.Interfaces.RecyclerViewInterface;
-import com.example.campaign.Model.ChatViewModel;
 import com.example.campaign.Model.UserViewModel;
 import com.example.campaign.Model.messageListModel;
-import com.example.campaign.Model.userModel;
 import com.example.campaign.R;
 import com.example.campaign.Services.updateStatusService;
-import com.example.campaign.adapter.messageListAdapter;
 import com.example.campaign.adapter.messageSettingsAdapter;
-import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 import com.jgabrielfreitas.core.BlurImageView;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,25 +64,19 @@ import static android.view.View.GONE;
 public class SettingsActivity extends AppCompatActivity {
     Toolbar toolbar;
     RecyclerView recyclerView;
-    private messageSettingsAdapter messageSettingsAdapter;
     private static final int GALLERY_REQUEST = 100;
-    private List<messageListModel> messageList = new ArrayList<>();
+    private final List<messageListModel> messageList = new ArrayList<>();
     private Uri selected;
     private BlurImageView imageView;
     private SeekBar seekBar;
-    private Button applyButton;
     private ProgressBar progressBar;
     int seekBarProgress = 1;
     boolean changed = false;
     private String chatWallpaperUrI;
-    private FirebaseStorage firebaseStorage;
-    private StorageReference mStorageReference;
-    FirebaseDatabase database = FirebaseDatabase.getInstance();
-    FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-    private FloatingActionButton editWallpaper;
+    final FirebaseDatabase database = FirebaseDatabase.getInstance();
+    final FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
     UserViewModel userViewModel;
     private SharedPreferences sharedPreferences;
-    private CheckBox onlineStatus, lastSeenStatus;
     private boolean showOnline, showLastSeen;
 
     @Override
@@ -115,18 +85,18 @@ public class SettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_settings);
         sharedPreferences = getSharedPreferences("Settings", MODE_PRIVATE);
         toolbar = findViewById(R.id.toolbar);
-        applyButton = findViewById(R.id.done);
+        Button applyButton = findViewById(R.id.done);
         imageView = findViewById(R.id.imageView);
         imageView.setClipToOutline(true);
         imageView.setBackgroundResource(R.drawable.card_background3);
         seekBar = findViewById(R.id.seekBar);
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
-        onlineStatus = findViewById(R.id.onlineStatus);
-        lastSeenStatus = findViewById(R.id.lastSeenStatus);
+        CheckBox onlineStatus = findViewById(R.id.onlineStatus);
+        CheckBox lastSeenStatus = findViewById(R.id.lastSeenStatus);
         userViewModel.initFUserInfo();
         progressBar = findViewById(R.id.progressBarChatWallpaper);
-        firebaseStorage = FirebaseStorage.getInstance();
-        mStorageReference = firebaseStorage.getReference();
+
+
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
@@ -145,62 +115,34 @@ public class SettingsActivity extends AppCompatActivity {
         lastSeenStatus.setChecked(lastSeen);
 
         recyclerView = findViewById(R.id.recycler_view_wall);
-        editWallpaper = findViewById(R.id.editWallpaper);
+        FloatingActionButton editWallpaper = findViewById(R.id.editWallpaper);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        messageSettingsAdapter = new messageSettingsAdapter(messageList, getApplicationContext());
+        com.example.campaign.adapter.messageSettingsAdapter messageSettingsAdapter = new messageSettingsAdapter(messageList, getApplicationContext());
         recyclerView.setAdapter(messageSettingsAdapter);
-        messageList.add(new messageListModel(" ", "123", "17-04-2020", "02:00", "", "", "TEXT", ""));
-        messageList.add(new messageListModel(" ", firebaseUser.getUid(), "17-04-2020", "02:00", "", "", "TEXT", ""));
-        messageList.add(new messageListModel(" ", "firebaseUser.getUid()", "17-04-2020", "02:00", "", "", "TEXT", ""));
-        messageList.add(new messageListModel(" ", firebaseUser.getUid(), "17-04-2020", "02:00", "", "", "TEXT", ""));
-        messageList.add(new messageListModel(" ", "firebaseUser.getUid()", "17-04-2020", "02:00", "", "", "TEXT", ""));
-        messageList.add(new messageListModel(" ", firebaseUser.getUid(), "17-04-2020", "02:00", "", "", "TEXT", ""));
+        messageList.add(new messageListModel(null, "123", "17-04-2020", "02:00", "", "", "TEXT", ""));
+        messageList.add(new messageListModel(null, firebaseUser.getUid(), "17-04-2020", "02:00", "", "", "TEXT", ""));
+        messageList.add(new messageListModel(null, "firebaseUser.getUid()", "17-04-2020", "02:00", "", "", "TEXT", ""));
+        messageList.add(new messageListModel(null, firebaseUser.getUid(), "17-04-2020", "02:00", "", "", "TEXT", ""));
+        messageList.add(new messageListModel(null, "firebaseUser.getUid()", "17-04-2020", "02:00", "", "", "TEXT", ""));
+        messageList.add(new messageListModel(null, firebaseUser.getUid(), "17-04-2020", "02:00", "", "", "TEXT", ""));
 
         messageSettingsAdapter.notifyDataSetChanged();
 
-        editWallpaper.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (ContextCompat.checkSelfPermission(getApplicationContext(),
+        editWallpaper.setOnClickListener(v -> {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(),
 
-                        Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                    Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
 
-                    Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                    startActivityForResult(intent, GALLERY_REQUEST);
-                } else {
-                    requestStoragePermission();
-                }
+                Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                startActivityForResult(intent, GALLERY_REQUEST);
+            } else {
+                requestStoragePermission();
             }
         });
-        onlineStatus.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    showOnline = true;
-                } else {
-                    showOnline = false;
-                }
-            }
-        });
+        onlineStatus.setOnCheckedChangeListener((buttonView, isChecked) -> showOnline = isChecked);
 
-        lastSeenStatus.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    showLastSeen = true;
-
-                } else {
-                    showLastSeen = false;
-                }
-
-            }
-        });
-        applyButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setSettings(firebaseUser.getUid());
-            }
-        });
+        lastSeenStatus.setOnCheckedChangeListener((buttonView, isChecked) -> showLastSeen = isChecked);
+        applyButton.setOnClickListener(v -> setSettings(firebaseUser.getUid()));
     }
 
 
@@ -341,12 +283,13 @@ public class SettingsActivity extends AppCompatActivity {
             }
 
         }
-        editor.commit();
+        editor.apply();
 
         progressBar.setVisibility(View.GONE);
         Toast.makeText(getApplicationContext(), "Successfully updated", Toast.LENGTH_SHORT).show();
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -390,7 +333,6 @@ public class SettingsActivity extends AppCompatActivity {
                 Log.d("imageUri", String.valueOf(selected));
 
                 getOpacity();
-//                Glide.with(getApplicationContext()).load(selected.toString()).into(imageView);
 
 
             } catch (Exception e) {

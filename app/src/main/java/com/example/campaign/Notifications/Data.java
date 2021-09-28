@@ -3,7 +3,7 @@ package com.example.campaign.Notifications;
 public class Data {
     private String user;
     private int icon;
-//    private String body;
+
     private String sender;
     private String title;
     private String message;
@@ -12,9 +12,7 @@ public class Data {
         this.user = user;
         this.icon = icon;
         this.message = message;
-//        this.body = body;
         this.phoneNumber=phoneNumber;
-
         this.sender = sender;
         this.title=title;
 
@@ -37,22 +35,6 @@ public class Data {
         this.icon = icon;
     }
 
-//    public String getBody() {
-//        return body;
-//    }
-//
-//    public void setBody(String body) {
-//        this.body = body;
-//    }
-
-    public String getSender() {
-        return sender;
-    }
-
-    public void setSender(String sender) {
-        this.sender = sender;
-    }
-
     public String getPhoneNumber() {
         return phoneNumber;
     }
@@ -61,11 +43,4 @@ public class Data {
         this.phoneNumber = phoneNumber;
     }
 
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
 }

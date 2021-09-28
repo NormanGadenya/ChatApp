@@ -2,12 +2,10 @@ package com.example.campaign.Services;
 
 import android.app.Service;
 import android.content.Intent;
-import android.os.Build;
 import android.os.IBinder;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 
 import com.example.campaign.Common.Tools;
 import com.google.firebase.auth.FirebaseAuth;
@@ -15,15 +13,13 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
 public class updateStatusService extends Service {
-    private Tools tools=new Tools();
-    private String date= tools.getDate();
-    private String time= tools.getTime();
+    private final Tools tools=new Tools();
+    private final String date= tools.getDate();
+    private final String time= tools.getTime();
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {

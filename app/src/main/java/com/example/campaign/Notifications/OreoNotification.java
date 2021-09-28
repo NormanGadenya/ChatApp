@@ -11,11 +11,10 @@ import android.net.Uri;
 import android.os.Build;
 
 import androidx.annotation.RequiresApi;
-import androidx.core.app.NotificationCompat;
 
 public class OreoNotification extends ContextWrapper {
-    public static final String CHANNEL_ID ="com.example.campaign";
-    public static final String CHANNEL_NAME="chatApp";
+    public static final String CHANNEL_ID ="com.example.letsTalk";
+    public static final String CHANNEL_NAME="letsTalk";
     private NotificationManager notificationManager;
 
     public OreoNotification(Context base) {

@@ -1,5 +1,6 @@
 package com.example.campaign.adapter;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -7,7 +8,6 @@ import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.os.Build;
-import android.os.Handler;
 import android.util.Log;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
@@ -24,7 +24,6 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.lifecycle.ViewModelStoreOwner;
@@ -42,7 +41,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,16 +49,16 @@ import static android.view.View.VISIBLE;
 
 
 public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder> {
-    private List<userModel> list;
-    private Context context;
-    private FirebaseUser firebaseUser =FirebaseAuth.getInstance().getCurrentUser();
-    private FirebaseDatabase database = FirebaseDatabase.getInstance();
-    private Activity activity;
+    private final List<userModel> list;
+    private final Context context;
+    private final FirebaseUser firebaseUser =FirebaseAuth.getInstance().getCurrentUser();
+    private final FirebaseDatabase database = FirebaseDatabase.getInstance();
+    private final Activity activity;
     private ChatViewModel chatViewModel;
     boolean isSelected,isEnabled=false;
-    private ArrayList<userModel> selected=new ArrayList<>();
-    private ViewModelStoreOwner viewModelStoreOwner;
-    private LifecycleOwner lifecycleOwner;
+    private final ArrayList<userModel> selected=new ArrayList<>();
+    private final ViewModelStoreOwner viewModelStoreOwner;
+    private final LifecycleOwner lifecycleOwner;
     private  SharedPreferences contactsSharedPrefs;
 
 
@@ -85,7 +83,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
         chatViewModel= ViewModelProviders.of((FragmentActivity)activity).get(ChatViewModel.class);
 
         int[] attrs = new int[]{R.attr.selectableItemBackground};
-        TypedArray typedArray = activity.obtainStyledAttributes(attrs);
+        @SuppressLint("Recycle") TypedArray typedArray = activity.obtainStyledAttributes(attrs);
         int backgroundResource = typedArray.getResourceId(0, 0);
         view.setBackgroundResource(backgroundResource);
         return new Holder(view);
@@ -172,82 +170,72 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
             holder.itemView.setBackgroundColor(Color.TRANSPARENT);
         }
 
-        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                if(!isEnabled){
-                    ActionMode.Callback callback= new ActionMode.Callback() {
-                        @Override
-                        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                            MenuInflater menuInflater=mode.getMenuInflater();
-                            menuInflater.inflate(R.menu.action_menu,menu);
-                            return true;
-                        }
-                        @Override
-                        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-                            isEnabled=true;
-                            clickedItem(holder);
+        holder.itemView.setOnLongClickListener(v -> {
+            if(!isEnabled){
+                ActionMode.Callback callback= new ActionMode.Callback() {
+                    @Override
+                    public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                        MenuInflater menuInflater=mode.getMenuInflater();
+                        menuInflater.inflate(R.menu.action_menu,menu);
+                        return true;
+                    }
+                    @Override
+                    public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                        isEnabled=true;
+                        clickedItem(holder);
 
-                            chatViewModel.getText().observe((LifecycleOwner)activity,new Observer<String>(){
+                        chatViewModel.getText().observe((LifecycleOwner)activity, s -> mode.setTitle(String.format("%s selected",s)));
 
-                                @Override
-                                public void onChanged(String s) {
-                                    mode.setTitle(String.format("%s selected",s));
-                                }
-                            });
+                        return true;
+                    }
 
-                            return true;
-                        }
-
-                        @Override
-                        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-                            int id=item.getItemId();
-                            switch (id){
-                                case R.id.menu_delete:
-                                    DatabaseReference chatRef=database.getReference().child("chats").child(firebaseUser.getUid());
-                                    for(userModel c:selected){
-                                        chatRef.child(c.getUserId()).removeValue();
-                                        list.remove(c);
-                                        Log.d("the list",String.valueOf(list.size()));
-                                        notifyDataSetChanged();
-                                    }
-                                    mode.finish();
-                                    break;
-
-                                case R.id.menu_selectAll:
-                                    if(selected.size() ==list.size()){
-                                        isSelected=false;
-                                        selected.clear();
-                                    }else{
-                                        isSelected=true;
-                                        selected.clear();
-                                        selected.addAll(list);
-                                    }
-                                    chatViewModel.setText(String.valueOf(selected.size()));
+                    @Override
+                    public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                        int id=item.getItemId();
+                        switch (id){
+                            case R.id.menu_delete:
+                                DatabaseReference chatRef=database.getReference().child("chats").child(firebaseUser.getUid());
+                                for(userModel c:selected){
+                                    chatRef.child(c.getUserId()).removeValue();
+                                    list.remove(c);
+                                    Log.d("the list",String.valueOf(list.size()));
                                     notifyDataSetChanged();
-                                    break;
+                                }
+                                mode.finish();
+                                break;
 
-                            }
-                            return true;
+                            case R.id.menu_selectAll:
+                                if(selected.size() ==list.size()){
+                                    isSelected=false;
+                                    selected.clear();
+                                }else{
+                                    isSelected=true;
+                                    selected.clear();
+                                    selected.addAll(list);
+                                }
+                                chatViewModel.setText(String.valueOf(selected.size()));
+                                notifyDataSetChanged();
+                                break;
+
                         }
+                        return true;
+                    }
 
-                        @Override
-                        public void onDestroyActionMode(ActionMode mode) {
-                            isEnabled=false;
-                            isSelected=false;
-                            selected.clear();
-                            notifyDataSetChanged();
-                        }
-                    };
-                    ((AppCompatActivity)v.getContext()).startActionMode(callback);
+                    @Override
+                    public void onDestroyActionMode(ActionMode mode) {
+                        isEnabled=false;
+                        isSelected=false;
+                        selected.clear();
+                        notifyDataSetChanged();
+                    }
+                };
+                ((AppCompatActivity)v.getContext()).startActionMode(callback);
 
-                }else{
-                    clickedItem(holder);
+            }else{
+                clickedItem(holder);
 
-                }
-                return true;
             }
-
+            return true;
         });
 
 
@@ -274,12 +262,15 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     }
 
     public static class Holder extends RecyclerView.ViewHolder {
-        private TextView tvName, tvDesc, tvDate,tvTyping;
-        private CircularImageView profile;
-        private ImageView imageView;
-        private ImageView checkBox;
-        private ImageView messageStatus;
-        private View onlineStatus;
+        private final TextView tvName;
+        private final TextView tvDesc;
+        private final TextView tvDate;
+        private final TextView tvTyping;
+        private final CircularImageView profile;
+        private final ImageView imageView;
+        private final ImageView checkBox;
+        private final ImageView messageStatus;
+        private final View onlineStatus;
 
         public Holder(@NonNull View itemView) {
             super(itemView);
@@ -306,24 +297,25 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
         return text;
     }
 
-    private void getLastMessage(String userId,TextView description,TextView dateTime,ImageView imageView,ImageView messageStatus){
+    @SuppressLint("UseCompatLoadingForDrawables")
+    private void getLastMessage(String userId, TextView description, TextView dateTime, ImageView imageView, ImageView messageStatus){
         String localDate=new Tools().getDate();
         chatViewModel = new ViewModelProvider(viewModelStoreOwner).get(ChatViewModel.class);
         chatViewModel.initLastMessage(userId);
         chatViewModel.getLastMessage().observe(lifecycleOwner, lastMessage -> {
             if(lastMessage.containsKey(userId)){
-                Boolean messageChecked=lastMessage.get(userId).isChecked();;
+                Boolean messageChecked=lastMessage.get(userId).isChecked();
+                Tools tools=new Tools();
                 String textMessage=lastMessage.get(userId).getText();
                 String imageUrI=lastMessage.get(userId).getImageUrI();
                 String videoUrI=lastMessage.get(userId).getVideoUrI();
-                String receiver=lastMessage.get(userId).getReceiver();
                 String audioUrI=lastMessage.get(userId).getAudioUrI();
                 String time=lastMessage.get(userId).getTime();
                 String date=lastMessage.get(userId).getDate();
                 if (localDate.equals(date)){
                     dateTime.setText(time);
                 }else if(date.substring(6,10).equals(localDate.substring(6,10)) && date.substring(3,5).equals(localDate.substring(3,5)) && Integer.parseInt(date.substring(0,2))+1==Integer.parseInt(localDate.substring(0,2))){
-                    dateTime.setText("Yesterday");
+                    dateTime.setText(R.string.yesterday);
                 }else{
                     dateTime.setText(date);
                 }

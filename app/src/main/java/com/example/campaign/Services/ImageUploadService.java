@@ -1,15 +1,12 @@
 package com.example.campaign.Services;
 
 import android.app.Service;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ResultReceiver;
-import android.webkit.MimeTypeMap;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,7 +16,6 @@ import com.example.campaign.Interfaces.APIService;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.Notifications.Client;
 import com.example.campaign.Notifications.Data;
-import com.example.campaign.Notifications.MyResponse;
 import com.example.campaign.Notifications.Sender;
 import com.example.campaign.Notifications.Token;
 import com.example.campaign.R;
@@ -31,30 +27,25 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnPausedListener;
-import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 
-import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import static com.example.campaign.Common.Tools.getMimeType;
 
 public class ImageUploadService extends Service {
     private FirebaseDatabase database;
-    private FirebaseStorage storage,firebaseStorage;
     private StorageReference mStorageReference;
     boolean notify=false;
-    private static final String FORMAT = "%02d:%02d";
-    private String fPhoneNumber,userId,otherUserId;
+
+    private String fPhoneNumber;
+    private String userId;
     private ResultReceiver myResultReceiver;
-    private Bundle bundle = new Bundle();
-    private Uri uri;
+    private final Bundle bundle = new Bundle();
     private APIService apiService;
-    private String date=new Tools().getDate();
-    private String time=new Tools().getTime();
+    private final String date=new Tools().getDate();
+    private final String time=new Tools().getTime();
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -67,27 +58,22 @@ public class ImageUploadService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         database = FirebaseDatabase.getInstance();
-        firebaseStorage= FirebaseStorage.getInstance();
-        storage= FirebaseStorage.getInstance();
-        mStorageReference=firebaseStorage.getReference();
+        FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
+        mStorageReference= firebaseStorage.getReference();
         myResultReceiver =  intent.getParcelableExtra("receiver");
         fPhoneNumber=intent.getStringExtra("fPhoneNumber");
         userId=intent.getStringExtra("userId");
-        otherUserId=intent.getStringExtra("otherUserId");
+        String otherUserId = intent.getStringExtra("otherUserId");
         String caption =intent.getStringExtra("caption");
         String uriString=intent.getStringExtra("uri");
-
-        uri=Uri.parse(uriString);
-        uploadImage(userId,otherUserId,uri,getApplicationContext(),caption);
+        Uri uri = Uri.parse(uriString);
+        Tools tools=new Tools();
+        List<Object> array=tools.encryptMessage(caption);
+        uploadImage(userId, otherUserId, uri,getApplicationContext(),caption);
         return START_NOT_STICKY;
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-    }
-
-    private void uploadImage(String userId, String otherUserId, Uri uri, Context context,String caption){
+    private void uploadImage(String userId, String otherUserId, Uri uri, Context context, String caption){
 
         if(uri!=null){
             updateToken(FirebaseInstanceId.getInstance().getToken());
@@ -107,27 +93,19 @@ public class ImageUploadService extends Service {
             fileReference = mStorageReference.child(System.currentTimeMillis()
                     + getMimeType(context,uri));
 
-            fileReference.putFile(uri).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                    double progress = 100.0 * (taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
-                    System.out.println("Upload is " + progress + "% done");
-                    int currentProgress = (int) progress;
-                    currentProgress=(int)((float)(-0.25*currentProgress)+25);
-                    if(currentProgress==0){
-                        currentProgress=1;
-                    }
-                    bundle.putInt("uploadImagePercentage",currentProgress);
-                    bundle.putString("uploadImageTId",messageKey);
+            fileReference.putFile(uri).addOnProgressListener(taskSnapshot -> {
 
-                    myResultReceiver.send(100,bundle);
+                @SuppressWarnings("IntegerDivisionInFloatingPointContext") double progress = 100.0 * (taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
+                int currentProgress = (int) progress;
+                currentProgress=(int)((float)(-0.25*currentProgress)+25);
+                if(currentProgress==0){
+                    currentProgress=1;
                 }
-            }).addOnPausedListener(new OnPausedListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onPaused(UploadTask.TaskSnapshot taskSnapshot) {
-                    System.out.println("Upload is paused");
-                }
-            }).continueWithTask(task -> {
+                bundle.putInt("uploadImagePercentage",currentProgress);
+                bundle.putString("uploadImageTId",messageKey);
+
+                myResultReceiver.send(100,bundle);
+            }).addOnPausedListener(taskSnapshot -> System.out.println("Upload is paused")).continueWithTask(task -> {
                 if (!task.isSuccessful()) {
                     throw task.getException();
                 }
@@ -147,7 +125,7 @@ public class ImageUploadService extends Service {
                     messageRef.child(messageKey).setValue(messageOtherUser);
                     notify=true;
                     if(notify){
-                        sendNotification(otherUserId,fPhoneNumber,"IMAGE");
+                        sendNotification(otherUserId,fPhoneNumber);
                     }
                 }
             });
@@ -162,11 +140,8 @@ public class ImageUploadService extends Service {
         reference.child(userId).setValue(token1);
     }
 
-    private void showToast(String msg) {
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-    }
 
-    private void sendNotification(String otherUserId, String fPhoneNumber, String message) {
+    private void sendNotification(String otherUserId, String fPhoneNumber) {
         DatabaseReference tokens=database.getReference("Tokens");
         Query query=tokens.orderByKey().equalTo(otherUserId);
         query.addValueEventListener(new ValueEventListener() {
@@ -174,27 +149,9 @@ public class ImageUploadService extends Service {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for(DataSnapshot dataSnapshot:snapshot.getChildren()){
                     Token token=dataSnapshot.getValue(Token.class);
-                    Data data=new Data(userId, R.mipmap.ic_launcher2,message,fPhoneNumber,otherUserId,"New message");
+                    Data data=new Data(userId, R.mipmap.ic_launcher2, "IMAGE",fPhoneNumber,otherUserId,"New message");
                     Sender sender = new Sender(data,token.getToken());
-                    apiService.sendNotification(sender)
-                            .enqueue(new Callback<MyResponse>(){
-
-                                @Override
-                                public void onResponse(Call<MyResponse> call, Response<MyResponse> response) {
-                                    if(response.code()==200){
-                                        if(response.body().success==1){
-                                            showToast("failed");
-                                        }else{
-                                            showToast("achieved");
-                                        }
-                                    }
-                                }
-
-                                @Override
-                                public void onFailure(Call<MyResponse> call, Throwable t) {
-                                    showToast("failed2");
-                                }
-                            });
+                    apiService.sendNotification(sender);
                     notify=false;
                 }
             }
@@ -208,21 +165,6 @@ public class ImageUploadService extends Service {
 
 
 
-    public static String getMimeType(Context context, Uri uri) {
-        String extension;
 
-        //Check uri format to avoid null
-        if (uri.getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
-            //If scheme is a content
-            final MimeTypeMap mime = MimeTypeMap.getSingleton();
-            extension = mime.getExtensionFromMimeType(context.getContentResolver().getType(uri));
-        } else {
-            //If scheme is a File
-            //This will replace white spaces with %20 and also other special characters. This will avoid returning null values on file name with spaces and special characters.
-            extension = MimeTypeMap.getFileExtensionFromUrl(Uri.fromFile(new File(uri.getPath())).toString());
-
-        }
-        return extension;
-    }
 
 }

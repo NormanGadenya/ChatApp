@@ -5,24 +5,8 @@ public class chatListModel implements Comparable {
     private String userName;
     private String description,descriptionId;
     private String date,time;
-    private String phoneNumber, profileUrI;
-    private Boolean Typing,online;
+    private String phoneNumber;
 
-
-    public chatListModel() {
-
-    }
-
-    public chatListModel(String userId, String userName, String description, String date, String time, String profileUrI) {
-        this.userId = userId;
-        this.userName = userName;
-        this.description = description;
-        this.date = date;
-        this.time = time;
-        this.profileUrI=profileUrI;
-
-
-    }
 
     public String getUserId() {
         return userId;
@@ -40,13 +24,6 @@ public class chatListModel implements Comparable {
         this.userName = userName;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
 
     public String getDate() {
         return date;
@@ -57,13 +34,6 @@ public class chatListModel implements Comparable {
     }
 
 
-    public String getProfileUrI() {
-        return profileUrI;
-    }
-
-    public void setProfileUrI(String profileUrI) {
-        this.profileUrI = profileUrI;
-    }
 
     public String getPhoneNumber() {
         return phoneNumber;
@@ -88,27 +58,9 @@ public class chatListModel implements Comparable {
         return chatListModel.getDescriptionId().compareTo(this.descriptionId);
     }
 
-    public void setDescriptionId(String descriptionId) {
-        this.descriptionId = descriptionId;
-    }
 
     public String getDescriptionId() {
         return descriptionId;
     }
 
-    public Boolean getTyping() {
-        return Typing;
-    }
-
-    public void setTyping(Boolean typing) {
-        this.Typing = typing;
-    }
-
-    public Boolean getOnline() {
-        return online;
-    }
-
-    public void setOnline(Boolean online) {
-        this.online = online;
-    }
 }

@@ -69,6 +69,7 @@
                 android:layout_height="200dp"
                 android:background="@drawable/rounded_outlines"
                 android:scaleType="centerCrop"
+                android:contentDescription="@string/profile_picture"
                 android:src="@drawable/ic_male_avatar_svgrepo_com"
                 android:visibility="visible"
                 app:layout_constraintBottom_toTopOf="@+id/show_message"
@@ -81,6 +82,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginRight="8dp"
+                android:contentDescription="insert profile picture"
                 android:layout_marginBottom="8dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="@+id/image_profile"
@@ -119,11 +121,11 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <Button
-
             android:id="@+id/RegistrationButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/next"
+            android:contentDescription="submit button"
             android:textColor="@color/white"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/progressBar1"
@@ -135,7 +137,6 @@
             style="?android:attr/progressBarStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"

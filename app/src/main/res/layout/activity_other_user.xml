@@ -88,7 +88,6 @@
                 android:id="@+id/userName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Gadenya"
                 android:background="@drawable/personal_details_back"
                 android:padding="10dp"
                 android:textColor="?colorOnPrimary"
@@ -117,7 +116,6 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="+256771455801"
                 android:padding="10dp"
                 android:background="@drawable/personal_details_back"
                 android:id="@+id/phoneNumber"

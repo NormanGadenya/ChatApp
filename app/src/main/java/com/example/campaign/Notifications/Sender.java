@@ -9,13 +9,6 @@ public class Sender {
         this.to = to;
     }
 
-    public Data getData() {
-        return data;
-    }
-
-    public void setData(Data data) {
-        this.data = data;
-    }
 
     public String getTo() {
         return to;

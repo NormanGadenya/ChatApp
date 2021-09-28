@@ -1,28 +1,15 @@
 package com.example.campaign.Repository;
 
 import android.content.SharedPreferences;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.Log;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.lifecycle.MutableLiveData;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.DataSource;
-import com.bumptech.glide.load.engine.GlideException;
-import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.target.Target;
-import com.example.campaign.Model.chatListModel;
 import com.example.campaign.Model.messageListModel;
 import com.example.campaign.Model.userModel;
-import com.example.campaign.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -30,9 +17,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.mikhaellopez.circularimageview.CircularImageView;
 
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -42,28 +27,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jp.wasabeef.glide.transformations.BlurTransformation;
-
-import static android.view.View.GONE;
-
+@SuppressWarnings("unchecked")
 public class Repo {
     static Repo instance;
-    private MutableLiveData<ArrayList<userModel>> chatList=new MutableLiveData<>();
-    private MutableLiveData <HashMap<String,messageListModel>> lastMessage=new MutableLiveData<>();
-    private HashMap<String,messageListModel> messageSet=new HashMap<>();
-    private ArrayList<userModel> chats_List_Model= new ArrayList<>();
-    private ArrayList<userModel> user_List_Model= new ArrayList<>();
+    private final MutableLiveData<ArrayList<userModel>> chatList=new MutableLiveData<>();
+    private final MutableLiveData <HashMap<String,messageListModel>> lastMessage=new MutableLiveData<>();
+    private final HashMap<String,messageListModel> messageSet=new HashMap<>();
+    private final ArrayList<userModel> chats_List_Model= new ArrayList<>();
+    private final ArrayList<userModel> user_List_Model= new ArrayList<>();
 
-    private MutableLiveData<userModel> otherUserInfo=new MutableLiveData<>();
-    private MutableLiveData<userModel> fUserInfo=new MutableLiveData<>();
-    private MutableLiveData<ArrayList<userModel>> userList=new MutableLiveData<>();
-    private HashMap<String, String> messageArrange=new HashMap<>();
+    private final MutableLiveData<userModel> otherUserInfo=new MutableLiveData<>();
+    private final MutableLiveData<userModel> fUserInfo=new MutableLiveData<>();
+    private final MutableLiveData<ArrayList<userModel>> userList=new MutableLiveData<>();
+    private final HashMap<String, String> messageArrange=new HashMap<>();
     private ArrayList<String> arrangedChatListId, chatListId,chatUIds;
-    private MutableLiveData<ArrayList<messageListModel>> messageList=new MutableLiveData<>();
-
-    private FirebaseDatabase database=FirebaseDatabase.getInstance();
-    private FirebaseUser fUser= FirebaseAuth.getInstance().getCurrentUser();
-    private ArrayList<messageListModel> messageListModel=new ArrayList<>();
+    private final MutableLiveData<ArrayList<messageListModel>> messageList=new MutableLiveData<>();
+    private final FirebaseDatabase database=FirebaseDatabase.getInstance();
+    private final FirebaseUser fUser= FirebaseAuth.getInstance().getCurrentUser();
+    private final ArrayList<messageListModel> messageListModel=new ArrayList<>();
 
     public static Repo getInstance() {
         if(instance == null){
@@ -116,7 +97,6 @@ public class Repo {
             new Thread(getFUserInfo).start();
         }
 
-//        loadCurrentUserInfo();
         return fUserInfo;
     }
 
@@ -131,16 +111,11 @@ public class Repo {
     }
 
     Comparator comparator(){
-        Comparator<Map.Entry<String, String>> valueComparator = new Comparator<Map.Entry<String,String>>() {
-
-            @Override
-            public int compare(Map.Entry<String, String> e1, Map.Entry<String, String> e2) {
-                String v1 = e1.getValue();
-                String v2 = e2.getValue();
-                return v2.compareTo(v1);
-            }
+        return (Comparator<Map.Entry<String, String>>) (e1, e2) -> {
+            String v1 = e1.getValue();
+            String v2 = e2.getValue();
+            return v2.compareTo(v1);
         };
-        return valueComparator;
     }
 
     void arrangeIdList(){
@@ -244,8 +219,7 @@ public class Repo {
             @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                messageListModel message=new messageListModel();
-
+                messageListModel message;
                 for(DataSnapshot dataSnapshot:snapshot.getChildren()){
                     message=dataSnapshot.getValue(messageListModel.class);
                     messageSet.put(userId,message);
@@ -267,69 +241,58 @@ public class Repo {
     private void loadMessages(String otherUserId){
         DatabaseReference messageRef=database.getReference().child("chats").child(fUser.getUid()).child(otherUserId);
         DatabaseReference otherUserMRef=database.getReference().child("chats").child(otherUserId).child(fUser.getUid());
-        Thread getMessageThread= new Thread(new Runnable() {
+        Thread getMessageThread= new Thread(() -> messageRef.addValueEventListener(new ValueEventListener(){
             @Override
-            public void run() {
-                messageRef.addValueEventListener(new ValueEventListener(){
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        messageListModel.clear();
-                        ArrayList<String> mKeys=new ArrayList<>();
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                messageListModel.clear();
+                ArrayList<String> mKeys=new ArrayList<>();
 
-                        for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
-                            try{
-                                messageListModel message = snapshot.getValue(messageListModel.class);
-                                message.setMessageId(snapshot.getKey());
-                                String receiver = message.getReceiver();
-                                message.setReceiver(receiver);
-                                messageListModel.add(message);
-                                messageList.postValue(messageListModel);
-                                mKeys.add(snapshot.getKey());
+                for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
+                    try{
+                        messageListModel message = snapshot.getValue(messageListModel.class);
+                        message.setMessageId(snapshot.getKey());
+                        String receiver = message.getReceiver();
+                        message.setReceiver(receiver);
+                        messageListModel.add(message);
+                        messageList.postValue(messageListModel);
+                        mKeys.add(snapshot.getKey());
 
-                            }catch(Exception e){
-                                Log.d("error1",e.getMessage());
-                            }
-
-                        }
-                        Thread readMessageThread = new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                otherUserMRef.addValueEventListener(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(@NonNull DataSnapshot otherSnapshot) {
-
-                                        for(DataSnapshot s:otherSnapshot.getChildren()){
-
-                                            if(mKeys.contains(s.getKey())){
-                                                HashMap<String,Object> messageStatus=new HashMap<>();
-                                                messageStatus.put("checked",true);
-                                                Log.d("otherSnapshot",otherSnapshot.getKey() + "" + s.getKey());
-                                                otherUserMRef.child(s.getKey()).updateChildren(messageStatus);
-
-
-                                            }
-                                        }
-                                    }
-
-
-                                    @Override
-                                    public void onCancelled(@NonNull DatabaseError error) {
-
-                                    }
-                                });
-
-                            }
-                        });
-                        readMessageThread.start();
+                    }catch(Exception e){
+                        Log.d("error1",e.getMessage());
                     }
+
+                }
+                Thread readMessageThread = new Thread(() -> otherUserMRef.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot otherSnapshot) {
+
+                        for(DataSnapshot s:otherSnapshot.getChildren()){
+
+                            if(mKeys.contains(s.getKey())){
+                                HashMap<String,Object> messageStatus=new HashMap<>();
+                                messageStatus.put("checked",true);
+                                Log.d("otherSnapshot",otherSnapshot.getKey() + "" + s.getKey());
+                                otherUserMRef.child(s.getKey()).updateChildren(messageStatus);
+
+
+                            }
+                        }
+                    }
+
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
 
                     }
-                });
+                }));
+                readMessageThread.start();
             }
-        });
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        }));
         getMessageThread.start();
 
 
@@ -419,49 +382,6 @@ public class Repo {
         });
     }
 
-    private void loadAllUsers(){
-        DatabaseReference userDetails=database.getReference().child("UserDetails");
-        userDetails.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                List <String> phoneNumbersList=new ArrayList<>();
-                user_List_Model.clear();
-                for (DataSnapshot dataSnapshot: snapshot.getChildren()){
-                    userModel userListObj=new userModel();
-                    String id=dataSnapshot.getKey();
-                    userModel users=dataSnapshot.getValue(userModel.class);
-                    String phoneNumber=fUser.getPhoneNumber();
-                    phoneNumbersList.add(fUser.getPhoneNumber());
-
-                    userListObj.setUserName(users.getUserName());
-                    userListObj.setPhoneNumber(users.getPhoneNumber());
-                    userListObj.setProfileUrI(users.getProfileUrI());
-                    userListObj.setUserId(id);
-                    userListObj.setOnline(users.getOnline());
-                    user_List_Model.add(userListObj);
-                    Collections.sort(user_List_Model,userModel::compareTo);
-                    userList.postValue(user_List_Model);
-
-//                    int i= Collections.frequency(phoneNumbersList,users.getPhoneNumber());
-//                    if(contacts!=null && users!= null){
-//                        if ( !users.getPhoneNumber().equals(phoneNumber)) {
-//                            if (i <=1 && contacts.contains(phoneNumber)){
-//
-//                            }
-//                        }
-//
-//                    }
-
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
-    }
-
     class GetChatList implements Runnable {
         @Override
         public void run() {
@@ -470,7 +390,7 @@ public class Repo {
     }
 
     class GetLastMessage implements Runnable {
-        String userId;
+        final String userId;
 
         GetLastMessage(String userId){
             this.userId=userId;
@@ -483,7 +403,7 @@ public class Repo {
     }
 
     class GetMessages implements Runnable {
-        String otherUserId;
+        final String otherUserId;
          GetMessages(String otherUserId){
              this.otherUserId=otherUserId;
          }
@@ -494,7 +414,7 @@ public class Repo {
     }
 
     class GetOtherUserInfo implements Runnable {
-        String otherUserId;
+        final String otherUserId;
         GetOtherUserInfo(String otherUserId){
              this.otherUserId=otherUserId;
          }
@@ -513,7 +433,7 @@ public class Repo {
     }
 
     class GetAllUsers implements Runnable {
-         private SharedPreferences contactsSharedPrefs;
+         private final SharedPreferences contactsSharedPrefs;
         GetAllUsers(SharedPreferences contactsSharedPrefs){
             this.contactsSharedPrefs=contactsSharedPrefs;
         }

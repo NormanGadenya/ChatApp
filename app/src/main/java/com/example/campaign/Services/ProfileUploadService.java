@@ -1,41 +1,27 @@
 package com.example.campaign.Services;
 
 import android.app.Service;
-import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.net.Uri;
-import android.os.Build;
 import android.os.IBinder;
-import android.util.Log;
-import android.view.View;
-import android.webkit.MimeTypeMap;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 
-import com.example.campaign.Model.userModel;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import java.io.File;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.example.campaign.Common.Tools.getMimeType;
 
 
 public class ProfileUploadService extends Service {
-    private FirebaseDatabase database = FirebaseDatabase.getInstance();;
-    private StorageReference mStorageReference= FirebaseStorage.getInstance().getReference();;
+    private final FirebaseDatabase database = FirebaseDatabase.getInstance();
+    private final StorageReference mStorageReference= FirebaseStorage.getInstance().getReference();
 
     @Nullable
     @Override
@@ -51,7 +37,6 @@ public class ProfileUploadService extends Service {
         return START_NOT_STICKY;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     private void uploadFile( String userId,Uri selected) {
 
         if (selected != null) {
@@ -88,22 +73,6 @@ public class ProfileUploadService extends Service {
         }
 
     }
-    public static String getMimeType(Context context, Uri uri) {
-        String extension;
 
-        //Check uri format to avoid null
-        if (uri.getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
-            //If scheme is a content
-            final MimeTypeMap mime = MimeTypeMap.getSingleton();
-            extension = mime.getExtensionFromMimeType(context.getContentResolver().getType(uri));
-        } else {
-            //If scheme is a File
-            //This will replace white spaces with %20 and also other special characters. This will avoid returning null values on file name with spaces and special characters.
-            extension = MimeTypeMap.getFileExtensionFromUrl(Uri.fromFile(new File(uri.getPath())).toString());
-
-        }
-
-        return extension;
-    }
 
 }

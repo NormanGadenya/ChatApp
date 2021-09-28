@@ -2,7 +2,6 @@ package com.example.campaign.Activities;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
@@ -14,7 +13,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -41,7 +39,6 @@ import com.example.campaign.Model.UserViewModel;
 import com.example.campaign.R;
 import com.example.campaign.Services.ProfileUploadService;
 import com.example.campaign.Services.updateStatusService;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -50,13 +47,14 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.example.campaign.Common.Tools.GALLERY_REQUEST;
+
+@SuppressWarnings("ALL")
 public class UserProfileActivity extends AppCompatActivity {
-    private FirebaseUser firebaseUser= FirebaseAuth.getInstance().getCurrentUser();
+    private final FirebaseUser firebaseUser= FirebaseAuth.getInstance().getCurrentUser();
     private FirebaseDatabase database;
     private FirebaseStorage firebaseStorage;
     private  Toolbar toolbar;
@@ -71,7 +69,7 @@ public class UserProfileActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private StorageReference mStorageReference;
     private Uri selected;
-    private static final int GALLERY_REQUEST = 100;
+//    private static final int GALLERY_REQUEST = 100;
     private UserViewModel userViewModel;
 
     @Override
@@ -84,14 +82,11 @@ public class UserProfileActivity extends AppCompatActivity {
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         ServiceCheck serviceCheck= new ServiceCheck(updateStatusService.class,this,manager);
         serviceCheck.checkServiceRunning();
-        editUserNameBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                userName.setVisibility(View.GONE);
-                editUserNameBtn.setVisibility(View.GONE);
-                editUserName.setVisibility(View.VISIBLE);
-                
-            }
+        editUserNameBtn.setOnClickListener(v -> {
+            userName.setVisibility(View.GONE);
+            editUserNameBtn.setVisibility(View.GONE);
+            editUserName.setVisibility(View.VISIBLE);
+
         });
         editProfilePic.setOnClickListener(v -> {
             if (ContextCompat.checkSelfPermission(UserProfileActivity.this,
@@ -103,30 +98,25 @@ public class UserProfileActivity extends AppCompatActivity {
             }
         });
 
-        editUserName.setOnKeyListener(new View.OnKeyListener() {
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                // If the event is a key-down event on the "enter" button
-                if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
-                        (keyCode == KeyEvent.KEYCODE_ENTER)) {
-                    userName.setVisibility(View.VISIBLE);
-                    editUserNameBtn.setVisibility(View.VISIBLE);
-                    editedUserName=editUserName.getText().toString();
-                    userName.setText(editedUserName);
-                    editUserName.setVisibility(View.GONE);
-                    InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(editUserName.getWindowToken(), 0);
-                    return true;
-                }
-                return false;
+        editUserName.setOnKeyListener((v, keyCode, event) -> {
+            // If the event is a key-down event on the "enter" button
+            if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
+                    (keyCode == KeyEvent.KEYCODE_ENTER)) {
+                userName.setVisibility(View.VISIBLE);
+                editUserNameBtn.setVisibility(View.VISIBLE);
+                editedUserName=editUserName.getText().toString();
+                userName.setText(editedUserName);
+                editUserName.setVisibility(View.GONE);
+                InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(editUserName.getWindowToken(), 0);
+                return true;
             }
+            return false;
         });
 
-        doneButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                updateUserDetails(firebaseUser.getUid());
+        doneButton.setOnClickListener(v -> {
+            updateUserDetails(firebaseUser.getUid());
 //                uploadFile(firebaseUser.getUid());
-            }
         });
         setupToolBar();
     }
@@ -142,7 +132,7 @@ public class UserProfileActivity extends AppCompatActivity {
         editUserName=findViewById(R.id.editUserName);
         doneButton=findViewById(R.id.done);
         firebaseStorage=FirebaseStorage.getInstance();
-        mStorageReference= firebaseStorage.getInstance().getReference();
+        mStorageReference= FirebaseStorage.getInstance().getReference();
         editProfilePic=findViewById(R.id.editProfilePic);
         database=FirebaseDatabase.getInstance();
         imageView=findViewById(R.id.userProfilePic);
@@ -193,24 +183,21 @@ public class UserProfileActivity extends AppCompatActivity {
             }).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     if(profileUrI!=null){
-                        firebaseStorage.getReferenceFromUrl(profileUrI).delete().addOnSuccessListener(new OnSuccessListener<Void>() {
-                            @Override
-                            public void onSuccess(Void aVoid) {
-                                Uri downloadUri = task.getResult();
-                                DatabaseReference myRef = database.getReference().child("UserDetails").child(userId);
-                                Map<String ,Object> userDetail=new HashMap<>();
-                                if(editedUserName!=null){
-                                    userDetail.put("userName",editedUserName);
-                                }
-                                try{
-                                    userDetail.put("profileUrI",downloadUri.toString());
-                                    myRef.updateChildren(userDetail);
-                                }catch (Exception e){
-                                    Log.e("Error",e.getLocalizedMessage());
-                                }
-                                progressBar.setVisibility(View.GONE);
-                                Toast.makeText(getApplicationContext(), "Successfully updated", Toast.LENGTH_SHORT).show();
+                        firebaseStorage.getReferenceFromUrl(profileUrI).delete().addOnSuccessListener(aVoid -> {
+                            Uri downloadUri = task.getResult();
+                            DatabaseReference myRef = database.getReference().child("UserDetails").child(userId);
+                            Map<String ,Object> userDetail=new HashMap<>();
+                            if(editedUserName!=null){
+                                userDetail.put("userName",editedUserName);
                             }
+                            try{
+                                userDetail.put("profileUrI",downloadUri.toString());
+                                myRef.updateChildren(userDetail);
+                            }catch (Exception e){
+                                Log.e("Error",e.getLocalizedMessage());
+                            }
+                            progressBar.setVisibility(View.GONE);
+                            Toast.makeText(getApplicationContext(), "Successfully updated", Toast.LENGTH_SHORT).show();
                         });
 
                     }else{
@@ -295,14 +282,11 @@ public class UserProfileActivity extends AppCompatActivity {
                 try{
                     Bitmap bitmap=MediaStore.Images.Media.getBitmap(getContentResolver(),selectedUri);
                     imageView.setImageBitmap(bitmap);
-                    Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
-                        @Override
-                        public void onGenerated(@Nullable Palette palette) {
-                            if(palette!=null){
-                                Palette.Swatch vibrantSwatch = palette.getMutedSwatch();
-                                if(vibrantSwatch != null){
-                                    getResources().getDrawable(R.drawable.title_background).setTint(vibrantSwatch.getRgb());
-                                }
+                    Palette.from(bitmap).generate(palette -> {
+                        if(palette!=null){
+                            Palette.Swatch vibrantSwatch = palette.getMutedSwatch();
+                            if(vibrantSwatch != null){
+                                getResources().getDrawable(R.drawable.title_background).setTint(vibrantSwatch.getRgb());
                             }
                         }
                     });

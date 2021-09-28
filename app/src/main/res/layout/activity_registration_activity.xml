@@ -74,6 +74,7 @@
                     android:layout_height="200dp"
                     android:background="@drawable/rounded_outlines"
                     android:scaleType="centerCrop"
+                    android:contentDescription="@string/profile_picture"
                     android:visibility="visible"
                     app:layout_constraintBottom_toTopOf="@+id/show_message"
                     app:layout_constraintStart_toStartOf="parent"
@@ -89,6 +90,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp"
                     android:layout_marginRight="8dp"
+                    android:contentDescription="insert profile picture"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="@+id/image_profile"
                     app:srcCompat="@drawable/camera" />
@@ -133,6 +135,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="@color/white"
+                    android:contentDescription="submit button"
                     android:text="@string/next"
                     app:layout_constraintEnd_toStartOf="@+id/progressBar1"
                     app:layout_constraintHorizontal_bias="0.5"

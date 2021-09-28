@@ -2,10 +2,21 @@ package com.example.campaign.Model;
 
 import java.io.Serializable;
 
+import java.util.List;
+
 public class messageListModel implements Serializable {
-    private String text,profileUrI,videoUrI,audioUrI,audioDuration;
-    private int backgroundColor;
-    private String receiver,date,time,messageStatus, imageUrI,type,userName,messageId;
+    private String text;
+    private String videoUrI;
+    private String audioUrI;
+    private String audioDuration;
+
+    private String receiver;
+    private String date;
+    private String time;
+    private String imageUrI;
+    private String type;
+    private String userName;
+    private String messageId;
     private boolean checked;
 
 
@@ -20,7 +31,6 @@ public class messageListModel implements Serializable {
         this.receiver = sender;
         this.date= date;
         this.time= time;
-        this.messageStatus = messageStatus;
         this.imageUrI=imageUrI;
         this.type = type;
         this.userName=userName;
@@ -62,14 +72,6 @@ public class messageListModel implements Serializable {
         this.time = time;
     }
 
-    public String getMessageStatus() {
-        return messageStatus;
-    }
-
-    public void setMessageStatus(String messageStatus) {
-        this.messageStatus = messageStatus;
-    }
-
     public String getImageUrI() {
         return imageUrI;
     }
@@ -94,13 +96,7 @@ public class messageListModel implements Serializable {
         this.userName = userName;
     }
 
-    public String getProfileUrI() {
-        return profileUrI;
-    }
 
-    public void setProfileUrI(String profileUrI) {
-        this.profileUrI = profileUrI;
-    }
 
     public String getMessageId() {
         return messageId;
@@ -110,21 +106,11 @@ public class messageListModel implements Serializable {
         this.messageId = messageId;
     }
 
-    public int getBackgroundColor() {
-        return backgroundColor;
-    }
 
-    public void setBackgroundColor(int backgroundColor) {
-        this.backgroundColor = backgroundColor;
-    }
 
 
     public boolean isChecked() {
         return checked;
-    }
-
-    public void setChecked(boolean checked) {
-        this.checked = checked;
     }
 
     public String getVideoUrI() {

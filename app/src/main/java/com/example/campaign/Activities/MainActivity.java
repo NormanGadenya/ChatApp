@@ -1,45 +1,28 @@
 package com.example.campaign.Activities;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.ActivityOptionsCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.ContextCompat;
+
 import androidx.core.view.MenuItemCompat;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelStoreOwner;
-import androidx.recyclerview.widget.ItemTouchHelper;
+
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.Map.Entry;
-
-import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
-import android.os.Build;
+
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Vibrator;
-import android.provider.ContactsContract;
+
 import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
+
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -47,66 +30,32 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.SearchView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.campaign.Common.ServiceCheck;
-import com.example.campaign.Interfaces.RecyclerViewInterface;
+
 import com.example.campaign.Model.ChatViewModel;
-import com.example.campaign.Model.chatListModel;
-import com.example.campaign.Model.messageListModel;
+
 import com.example.campaign.Model.userModel;
-import com.example.campaign.Repository.Repo;
+
 import com.example.campaign.Services.updateStatusService;
 import com.example.campaign.adapter.chatListAdapter;
 import com.example.campaign.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
+import static com.example.campaign.Common.Tools.EXTRA_CIRCULAR_REVEAL_X;
+import static com.example.campaign.Common.Tools.EXTRA_CIRCULAR_REVEAL_Y;
 
 public class MainActivity extends AppCompatActivity   {
-    private List<String> chatListId,arrangedChatListId;
     private RecyclerView recyclerView;
     private FloatingActionButton newChat;
-    private TextView welcomeMsg;
-    private ImageView welcomeEmoji;
-    HashMap <String,String> messageArrange=new HashMap<>();
-    private Context context;
-    private FirebaseUser user;
-    private FirebaseDatabase database;
     private List<userModel> list=new ArrayList<>();
     private chatListAdapter chatListAdapter;
-    private Handler handler;
-    public  Map<String, String> namePhoneMap= new HashMap<String, String>(); ;
     private MenuInflater menuInflater;
-    private String userName,profileUrI;
-    private String TAG ="chatListAct";
-    private NotificationManagerCompat notificationManagerCompat;
-    private List<String> messageKeys=new ArrayList<>();
-    private Set<String> chatUIds=new HashSet<>();
-    private HashMap <String ,userModel>userInfo=new HashMap<>();
-    private HashMap <String ,messageListModel>messages=new HashMap<>();
-    private int CONTACTS_REQUEST=110;
-    private Set<String> contactsList=new HashSet<>();
     private ChatViewModel chatViewModel;
-    ActionBar actionBar;
-    Activity activity=this;
+    private ActionBar actionBar;
+    private final Activity activity=this;
     private ViewModelStoreOwner viewModelStoreOwner;
     private LifecycleOwner lifecycleOwner;
     private SharedPreferences contactsSharedPrefs;
@@ -123,18 +72,10 @@ public class MainActivity extends AppCompatActivity   {
         chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
         loadSharedPreferenceData();
         chatViewModel.initChatsList();
-        database = FirebaseDatabase.getInstance();
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         ServiceCheck serviceCheck= new ServiceCheck(updateStatusService.class,this,manager);
         serviceCheck.checkServiceRunning();
-
-
-        newChat.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                presentActivity(v);
-            }
-        });
+        newChat.setOnClickListener(this::presentActivity);
     }
 
     @Override
@@ -151,19 +92,14 @@ public class MainActivity extends AppCompatActivity   {
     }
 
     private void InitializeControllers() {
-        user= FirebaseAuth.getInstance().getCurrentUser();
+
         recyclerView=findViewById(R.id.recyclerViewChatList);
         newChat=findViewById(R.id.newChat);
         list=new ArrayList<>();
-        context=getApplicationContext();
-        chatListId =new ArrayList<>();
-        handler=new Handler();
-        welcomeEmoji=findViewById(R.id.welcomeEmoji);
-        welcomeMsg=findViewById(R.id.startNewChatMsg);
-        notificationManagerCompat=NotificationManagerCompat.from(context);
+        ImageView welcomeEmoji = findViewById(R.id.welcomeEmoji);
+        TextView welcomeMsg = findViewById(R.id.startNewChatMsg);
         lifecycleOwner=this;
         viewModelStoreOwner=this;
-
     }
 
     private void loadSharedPreferenceData() {
@@ -240,34 +176,20 @@ public class MainActivity extends AppCompatActivity   {
                 return false;
             }
         });
-        searchView.setOnSearchClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                actionBar.setTitle("");
-            }
+        searchView.setOnSearchClickListener(v -> actionBar.setTitle(""));
+        searchView.setOnCloseListener(() -> {
+            actionBar.setTitle("Messages");
+            return false;
         });
-        searchView.setOnCloseListener(new SearchView.OnCloseListener() {
-            @Override
-            public boolean onClose() {
-                actionBar.setTitle("Messages");
-                return false;
-            }
+        profileDetails.setOnMenuItemClickListener(item -> {
+            Intent intent=new Intent(getApplicationContext(), UserProfileActivity.class);
+            startActivity(intent);
+            return false;
         });
-        profileDetails.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                Intent intent=new Intent(getApplicationContext(), UserProfileActivity.class);
-                startActivity(intent);
-                return false;
-            }
-        });
-        settings.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                Intent intent = new Intent(getApplicationContext() , SettingsActivity.class);
-                startActivity(intent);
-                return false;
-            }
+        settings.setOnMenuItemClickListener(item -> {
+            Intent intent = new Intent(getApplicationContext() , SettingsActivity.class);
+            startActivity(intent);
+            return false;
         });
         return true;
     }
@@ -285,8 +207,8 @@ public class MainActivity extends AppCompatActivity   {
         int revealY = (int) (view.getY() + view.getHeight() / 2);
 
         Intent intent = new Intent(this, UserListActivity.class);
-        intent.putExtra(UserListActivity.EXTRA_CIRCULAR_REVEAL_X, revealX);
-        intent.putExtra(UserListActivity.EXTRA_CIRCULAR_REVEAL_Y, revealY);
+        intent.putExtra(EXTRA_CIRCULAR_REVEAL_X, revealX);
+        intent.putExtra(EXTRA_CIRCULAR_REVEAL_Y, revealY);
 
         ActivityCompat.startActivity(this, intent, options.toBundle());
     }

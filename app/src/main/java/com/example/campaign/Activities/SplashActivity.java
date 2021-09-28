@@ -1,11 +1,5 @@
 package com.example.campaign.Activities;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.lifecycle.ViewModelProvider;
-
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -14,46 +8,39 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.ContactsContract;
-import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.campaign.Model.ChatViewModel;
 import com.example.campaign.R;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
+
+import static com.example.campaign.Common.Tools.CONTACTS_REQUEST;
 
 public class SplashActivity extends AppCompatActivity {
-    private  Map<String, String> namePhoneMap= new HashMap<String, String>();;
+    private final Map<String, String> namePhoneMap= new HashMap<>();
     private Context context;
-    private int CONTACTS_REQUEST=110;
-    private Map<String,String> contactsList=new HashMap<>();
-    private Thread getContactsThread;
-    private FirebaseUser firebaseUser=FirebaseAuth.getInstance().getCurrentUser();
-    private ChatViewModel chatViewModel;
     private SharedPreferences contactsSharedPrefs;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
         context=getApplicationContext();
-        chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
+        ChatViewModel chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
         chatViewModel.initChatsList();
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
             getPhoneNumbers();
         }else{
             requestContactsPermission();
         }
-        if(getContactsThread!=null){
-            while(!getContactsThread.isAlive()){
 
-            }
-        }
 
 
     }
@@ -98,7 +85,11 @@ public class SplashActivity extends AppCompatActivity {
 
     private void getPhoneNumbers() {
 
-        getContactsThread= new Thread(() -> {
+        // Loop Through All The Numbers
+        // Cleanup the phone number
+        // Enter Into Hash Map
+        //                    phoneNumbers.put(phoneNumber,name);
+        Thread getContactsThread = new Thread(() -> {
             Cursor phones = context.getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
             // Loop Through All The Numbers
             while (phones.moveToNext()) {
@@ -111,21 +102,21 @@ public class SplashActivity extends AppCompatActivity {
                 namePhoneMap.put(phoneNumber, name);
 
             }
-            contactsSharedPrefs =getSharedPreferences("contactsSharedPreferences",MODE_PRIVATE);
-            SharedPreferences.Editor editor=contactsSharedPrefs.edit();
+            contactsSharedPrefs = getSharedPreferences("contactsSharedPreferences", MODE_PRIVATE);
+            SharedPreferences.Editor editor = contactsSharedPrefs.edit();
 
             for (Map.Entry<String, String> entry : namePhoneMap.entrySet()) {
                 String phoneNumber = entry.getKey();
-                String name=entry.getValue();
-                if (phoneNumber.contains("+")){
+                String name = entry.getValue();
+                if (phoneNumber.contains("+")) {
 //                    phoneNumbers.put(phoneNumber,name);
-                    editor.putString(phoneNumber,name);
-                }else{
-                    if(isAlphanumeric2(phoneNumber) ){
+                    editor.putString(phoneNumber, name);
+                } else {
+                    if (isAlphanumeric2(phoneNumber)) {
 
-                        Long i=Long.parseLong(phoneNumber);
-                        phoneNumber="+256"+i;
-                        editor.putString(phoneNumber,name);
+                        long i = Long.parseLong(phoneNumber);
+                        phoneNumber = "+256" + i;
+                        editor.putString(phoneNumber, name);
 
 
                     }
@@ -135,7 +126,7 @@ public class SplashActivity extends AppCompatActivity {
             editor.apply();
 
 
-            Intent mainIntent = new Intent(SplashActivity.this , SignUpActivity.class);
+            Intent mainIntent = new Intent(SplashActivity.this, SignUpActivity.class);
             startActivity(mainIntent);
             finish();
 

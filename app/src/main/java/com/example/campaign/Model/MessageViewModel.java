@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel;
 import com.example.campaign.Repository.Repo;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class MessageViewModel extends ViewModel {
     private MutableLiveData<ArrayList<messageListModel>> messageList;

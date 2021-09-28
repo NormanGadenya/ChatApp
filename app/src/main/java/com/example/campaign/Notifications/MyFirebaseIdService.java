@@ -18,10 +18,5 @@ public class MyFirebaseIdService  extends FirebaseMessagingService {
         super.onMessageReceived(remoteMessage);
     }
 
-    private  void updateToken(String refreshToken){
-        FirebaseUser firebaseUser= FirebaseAuth.getInstance().getCurrentUser();
-        DatabaseReference reference= FirebaseDatabase.getInstance().getReference("Tokens");
-        Token token =new Token(refreshToken);
-        reference.child(firebaseUser.getUid()).setValue(token);
-    }
+
 }

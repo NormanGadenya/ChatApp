@@ -7,8 +7,6 @@ public class userModel implements Comparable{
     private Boolean online;
     private String lastSeenDate;
     private String lastSeenTime;
-    private String chatWallpaper;
-    private int chatBlur;
     private Boolean Typing,showLastSeenState,showOnlineState;
 
 
@@ -79,21 +77,7 @@ public class userModel implements Comparable{
         this.lastSeenTime = lastSeenTime;
     }
 
-    public String getChatWallpaper() {
-        return chatWallpaper;
-    }
 
-    public void setChatWallpaper(String chatWallpaper) {
-        this.chatWallpaper = chatWallpaper;
-    }
-
-    public int getChatBlur() {
-        return chatBlur;
-    }
-
-    public void setChatBlur(int chatBlur) {
-        this.chatBlur = chatBlur;
-    }
 
     public Boolean getTyping() {
         return Typing;

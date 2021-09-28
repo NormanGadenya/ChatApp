@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 public class SignUpActivity extends AppCompatActivity {
     private FirebaseAuth Auth;
     private OtpEditText phoneNumberEdit;
-    private PhoneAuthProvider.OnVerificationStateChangedCallbacks mCallBacks;
+
     private ProgressBar progressBar;
 
     @Override
@@ -44,11 +44,8 @@ public class SignUpActivity extends AppCompatActivity {
         progressBar=findViewById(R.id.progressBar1);
         sendOTPBtn=findViewById(R.id.button);
         phoneNumberEdit=findViewById(R.id.editTextPhone);
-        phoneNumberEdit.setOnCompleteListener(new OnCompleteListener() {
-            @Override
-            public void onComplete(String value) {
+        phoneNumberEdit.setOnCompleteListener(value -> {
 
-            }
         });
         progressBar.setVisibility(View.GONE);
         Auth = FirebaseAuth.getInstance();
@@ -56,68 +53,38 @@ public class SignUpActivity extends AppCompatActivity {
             String phone="+256"+Integer.parseInt(phoneNumberEdit.getText().toString());
             progressBar.setVisibility(View.VISIBLE);
 
-            if (!phone.isEmpty() || phone.length()==10){
+            if (phone.length() != 0){
                 Intent otpIntent = new Intent(SignUpActivity.this , OtpActivity.class);
                 otpIntent.putExtra("phoneNumber",phone);
                 startActivity(otpIntent);
-//                PhoneAuthOptions options = PhoneAuthOptions.newBuilder(Auth)
-//                        .setPhoneNumber(phone)
-//                        .setTimeout(60L , TimeUnit.SECONDS)
-//                        .setActivity(SignUpActivity.this)
-//                        .setCallbacks(mCallBacks)
-//                        .build();
-//                PhoneAuthProvider.verifyPhoneNumber(options);
+
             }else{
                 Toast.makeText(SignUpActivity.this,"please enter valid phone Number",Toast.LENGTH_LONG).show();
             }
         });
 
-        phoneNumberEdit.setOnKeyListener(new View.OnKeyListener() {
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                // If the event is a key-down event on the "enter" button
-                if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
-                        (keyCode == KeyEvent.KEYCODE_ENTER)) {
-                    String phone="+256"+Integer.parseInt(phoneNumberEdit.getOtpValue());
-                    Log.d("phoneNumber",phone);
-                    progressBar.setVisibility(View.VISIBLE);
+        phoneNumberEdit.setOnKeyListener((v, keyCode, event) -> {
+            // If the event is a key-down event on the "enter" button
+            if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
+                    (keyCode == KeyEvent.KEYCODE_ENTER)) {
+                String phone="+256"+Integer.parseInt(phoneNumberEdit.getOtpValue());
+                Log.d("phoneNumber",phone);
+                progressBar.setVisibility(View.VISIBLE);
 
-                    if (!phone.isEmpty()){
-                        Intent otpIntent = new Intent(SignUpActivity.this , OtpActivity.class);
-                        otpIntent.putExtra("phoneNumber",phone);
-                        startActivity(otpIntent);
-                        progressBar.setVisibility(View.GONE);
+                if (!phone.isEmpty()){
+                    Intent otpIntent = new Intent(SignUpActivity.this , OtpActivity.class);
+                    otpIntent.putExtra("phoneNumber",phone);
+                    startActivity(otpIntent);
+                    progressBar.setVisibility(View.GONE);
 
-//                        PhoneAuthOptions options = PhoneAuthOptions.newBuilder(Auth)
-//                                .setPhoneNumber(phone)
-//                                .setTimeout(60L , TimeUnit.SECONDS)
-//                                .setActivity(SignUpActivity.this)
-//                                .setCallbacks(mCallBacks)
-//                                .build();
-//                        PhoneAuthProvider.verifyPhoneNumber(options);
-
-                    }else{
-                        Toast.makeText(SignUpActivity.this,"please enter valid phone Number",Toast.LENGTH_LONG).show();
-                    }
-                    return true;
+                }else{
+                    Toast.makeText(SignUpActivity.this,"please enter valid phone Number",Toast.LENGTH_LONG).show();
                 }
-                return false;
+                return true;
             }
+            return false;
         });
 
-        mCallBacks = new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-            @Override
-            public void onVerificationCompleted(@NonNull PhoneAuthCredential phoneAuthCredential) {
-                signIn(phoneAuthCredential);
-
-            }
-
-            @Override
-            public void onVerificationFailed(@NonNull FirebaseException e) {
-                Toast.makeText(SignUpActivity.this,e.getMessage(),Toast.LENGTH_LONG).show();
-                progressBar.setVisibility(View.GONE);
-            }
-            
-        };
     }
 
     @Override
@@ -134,20 +101,4 @@ public class SignUpActivity extends AppCompatActivity {
         finish();
     }
 
-    private void signIn(PhoneAuthCredential credential){
-        Auth.signInWithCredential(credential).addOnCompleteListener(task -> {
-            if (task.isSuccessful()){
-                Intent registration = new Intent(SignUpActivity.this , RegistrationActivity.class);
-                startActivity(registration);
-                progressBar.setVisibility(View.GONE);
-                finish();
-            }else{
-                Intent otpIntent = new Intent(SignUpActivity.this , OtpActivity.class);
-                startActivity(otpIntent);
-                Toast.makeText(SignUpActivity.this,task.getException().getMessage(),Toast.LENGTH_LONG).show();
-                progressBar.setVisibility(View.GONE);
-
-            }
-        });
-    }
 }

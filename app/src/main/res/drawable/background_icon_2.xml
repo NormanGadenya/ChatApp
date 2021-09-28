@@ -11,6 +11,6 @@
         android:startColor="@color/purple_500"
         android:endColor="@color/BLUE_NCS"
 
-        ></gradient>
+        />
 
 </shape>
