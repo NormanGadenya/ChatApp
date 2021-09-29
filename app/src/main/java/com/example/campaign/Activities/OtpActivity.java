@@ -23,7 +23,7 @@ import com.google.firebase.auth.PhoneAuthProvider;
 
 import java.util.concurrent.TimeUnit;
 
-import static android.media.MediaExtractor.MetricsConstants.FORMAT;
+
 
 public class OtpActivity extends AppCompatActivity {
     private Button mVerifyCodeBtn,resendCodeBtn;
@@ -35,6 +35,7 @@ public class OtpActivity extends AppCompatActivity {
     private Handler handler=new Handler();
     private Runnable runnable;
     public static final String TAG="OTPActivity";
+    private static final String FORMAT = "%02d:%02d";
     private TextView countDownTimer;
 
 
@@ -71,11 +72,13 @@ public class OtpActivity extends AppCompatActivity {
         runnable= () -> new CountDownTimer(120000, 1000) { // adjust the milli seconds here
 
             public void onTick(long millisUntilFinished) {
-                countDownTimer.setText(String.format(FORMAT,
+
+                countDownTimer.setText(""+String.format(FORMAT,
                         TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished) - TimeUnit.HOURS.toMinutes(
                                 TimeUnit.MILLISECONDS.toHours(millisUntilFinished)),
                         TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished) - TimeUnit.MINUTES.toSeconds(
                                 TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished))));
+                Log.d(TAG, "onTick: ");
             }
 
             public void onFinish() {
