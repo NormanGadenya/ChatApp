@@ -5,8 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?colorPrimary"
-
-    tools:context=".Activities.RegistrationActivity">
+    tools:context="com.example.letStalk.Activities.RegistrationActivity">
 
 <LinearLayout
     android:layout_width="match_parent"
@@ -161,123 +160,6 @@
     </RelativeLayout>
 
 </LinearLayout>
+    <include layout="@layout/layout_actions"/>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="bottom"
-        android:elevation="5dp"
-        >
-
-        <androidx.cardview.widget.CardView
-
-            android:id="@+id/layout_actions"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginBottom="8dp"
-            android:visibility="gone"
-            app:cardCornerRadius="15dp"
-            app:cardElevation="5dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-
-                >
-
-                <ImageView
-                    android:id="@+id/layout_actions_drag"
-                    android:layout_width="50dp"
-                    android:layout_height="8dp"
-
-                    android:layout_marginHorizontal="200dp"
-                    android:layout_marginTop="2dp"
-                    android:background="@drawable/background_icon"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"/>
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:id="@+id/btn_doc"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:orientation="vertical">
-
-                    <com.google.android.material.floatingactionbutton.FloatingActionButton
-                        android:id="@+id/remove_button"
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
-                        android:src="@drawable/remove" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Remove" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/btn_camera_x"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginTop="16dp"
-                    android:gravity="center"
-                    android:orientation="vertical">
-
-                    <com.google.android.material.floatingactionbutton.FloatingActionButton
-                        android:id="@+id/camera_button"
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
-                        android:src="@drawable/camera" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Camera" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/btn_gallery"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginTop="16dp"
-                    android:gravity="center"
-                    android:orientation="vertical">
-
-                    <com.google.android.material.floatingactionbutton.FloatingActionButton
-                        android:id="@+id/gallery_button"
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
-                        android:src="@drawable/gallery" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Gallery" />
-
-                </LinearLayout>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:id="@+id/root_layout"
     android:background="?colorPrimaryVariant"
-    tools:context=".Activities.UserListActivity">
+    tools:context="com.example.letStalk.Activities.UserListActivity">
 
     <com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
         android:id="@+id/recyclerViewUserList"

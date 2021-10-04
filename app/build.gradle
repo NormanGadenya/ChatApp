@@ -4,11 +4,19 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        release {
+            storeFile file('/home/another-one/letsTalkKeyStore.jks')
+            storePassword 'normaneg'
+            keyAlias 'letsTalk'
+            keyPassword 'normaneg'
+        }
+    }
     compileSdkVersion 30
     buildToolsVersion "30.0.2"
 
     defaultConfig {
-        applicationId "com.example.campaign"
+        applicationId 'com.example.campaign'
         minSdkVersion 23
         targetSdkVersion 30
         versionCode 1
@@ -22,6 +30,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {
@@ -86,6 +95,11 @@ dependencies {
     implementation 'com.simplecityapps:recyclerview-fastscroll:2.0.1'
     implementation "com.github.JagarYousef:ChatVoicePlayer:1.0.7"
     implementation "org.jetbrains.kotlin:kotlin-script-runtime:1.3.72"
+    implementation 'com.virgilsecurity:ethree:2.0.10'
+    implementation platform('com.google.firebase:firebase-bom:28.4.1')
+    implementation 'com.google.firebase:firebase-functions'
+
+
 
 
 }

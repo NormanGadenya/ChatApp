@@ -9,7 +9,7 @@
     android:id="@+id/motionLayout"
 
     app:layoutDescription="@xml/activity_splash_scene"
-    tools:context=".Activities.SplashActivity">
+    tools:context="com.example.letStalk.Activities.SplashActivity">
 
 
     <ImageView

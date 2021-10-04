@@ -13,23 +13,21 @@
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
-        android:name=".App"
+        android:name="com.example.letStalk.App"
         android:allowBackup="true"
         android:appCategory="social"
-        android:icon="@mipmap/ic_launcher2"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher2_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Campaign">
         <activity
-            android:name=".Activities.OtherUserActivity"
-            android:parentActivityName=".Activities.ChatActivity"
+            android:name="com.example.letStalk.Activities.OtherUserActivity"
+            android:parentActivityName="com.example.letStalk.Activities.ChatActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity
-            android:name=".Activities.ViewVideoActivity"
-            android:parentActivityName=".Activities.ChatActivity" />
+            android:name="com.example.letStalk.Activities.ViewVideoActivity"
+            android:parentActivityName="com.example.letStalk.Activities.ChatActivity" />
         <activity
-            android:name=".Activities.SplashActivity"
+            android:name="com.example.letStalk.Activities.SplashActivity"
             android:theme="@style/Theme.Campaign.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -38,43 +36,43 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".Activities.sendVideo"
-            android:parentActivityName=".Activities.ChatActivity" />
+            android:name="com.example.letStalk.Activities.sendVideo"
+            android:parentActivityName="com.example.letStalk.Activities.ChatActivity" />
         <activity
-            android:name=".Activities.sendImage"
-            android:parentActivityName=".Activities.ChatActivity" />
+            android:name="com.example.letStalk.Activities.sendImage"
+            android:parentActivityName="com.example.letStalk.Activities.ChatActivity" />
         <activity
-            android:name=".Activities.SettingsActivity"
-            android:parentActivityName=".Activities.MainActivity"
+            android:name="com.example.letStalk.Activities.SettingsActivity"
+            android:parentActivityName="com.example.letStalk.Activities.MainActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity
-            android:name=".Activities.UserProfileActivity"
-            android:parentActivityName=".Activities.ChatActivity"
+            android:name="com.example.letStalk.Activities.UserProfileActivity"
+            android:parentActivityName="com.example.letStalk.Activities.ChatActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
-        <activity android:name=".Activities.MainActivity" />
+        <activity android:name="com.example.letStalk.Activities.MainActivity" />
         <activity
-            android:name=".Activities.UserListActivity"
-            android:parentActivityName=".Activities.MainActivity"
+            android:name="com.example.letStalk.Activities.UserListActivity"
+            android:parentActivityName="com.example.letStalk.Activities.MainActivity"
             android:theme="@style/AppTheme.Transparent" />
         <activity
-            android:name=".Activities.ChatActivity"
-            android:parentActivityName=".Activities.MainActivity" />
+            android:name="com.example.letStalk.Activities.ChatActivity"
+            android:parentActivityName="com.example.letStalk.Activities.MainActivity" />
         <activity
-            android:name=".Activities.ViewImageActivity"
-            android:parentActivityName=".Activities.ChatActivity"
+            android:name="com.example.letStalk.Activities.ViewImageActivity"
+            android:parentActivityName="com.example.letStalk.Activities.ChatActivity"
             android:theme="@style/Theme.Campaign" />
         <activity
-            android:name=".Activities.RegistrationActivity"
+            android:name="com.example.letStalk.Activities.RegistrationActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity
-            android:name=".Activities.OtpActivity"
+            android:name="com.example.letStalk.Activities.OtpActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity
-            android:name=".Activities.SignUpActivity"
+            android:name="com.example.letStalk.Activities.SignUpActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
 
         <service
-            android:name=".Notifications.MyFirebaseIdService"
+            android:name="com.example.letStalk.Notifications.MyFirebaseIdService"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -82,18 +80,18 @@
             </intent-filter>
         </service>
         <service
-            android:name=".Notifications.MyFirebaseMessaging"
+            android:name="com.example.letStalk.Notifications.MyFirebaseMessaging"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-        <service android:name=".Services.updateStatusService" />
-        <service android:name=".Services.AudioUploadService" />
-        <service android:name=".Services.ProfileUploadService" />
-        <service android:name=".Services.ImageUploadService" />
-        <service android:name=".Services.VideoUploadService" />
+        <service android:name="com.example.letStalk.Services.updateStatusService" />
+        <service android:name="com.example.letStalk.Services.AudioUploadService" />
+        <service android:name="com.example.letStalk.Services.ProfileUploadService" />
+        <service android:name="com.example.letStalk.Services.ImageUploadService" />
+        <service android:name="com.example.letStalk.Services.VideoUploadService" />
     </application>
 
 </manifest>

@@ -95,6 +95,7 @@
             android:layout_width="200dp"
             android:layout_height="200dp"
             android:background="@drawable/rounded_outlines"
+            android:scaleType="centerCrop"
             android:visibility="gone"
             app:layout_constraintBottom_toTopOf="@+id/show_message"
             app:layout_constraintStart_toStartOf="parent"

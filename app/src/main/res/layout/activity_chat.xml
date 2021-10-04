@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="?colorPrimaryVariant"
     android:animateLayoutChanges="true"
-    tools:context=".Activities.ChatActivity">
+    tools:context="com.example.letStalk.Activities.ChatActivity">
 
 
     <ImageView

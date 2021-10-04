@@ -4,7 +4,14 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="app/src/main/res/drawable/title_background.xml" value="0.10520833333333333" />
+        <entry key="app/src/main/res/layout-land/activity_registration_activity.xml" value="0.33" />
         <entry key="app/src/main/res/layout/activity_other_user.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/activity_registration_activity.xml" value="0.5" />
+        <entry key="app/src/main/res/layout/chat_item_left.xml" value="0.340625" />
+        <entry key="app/src/main/res/layout/chat_item_right.xml" value="0.340625" />
+        <entry key="app/src/main/res/layout/layout_actions.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/layout_chat_list.xml" value="0.34132581100141046" />
+        <entry key="app/src/main/res/layout/user_item.xml" value="0.5" />
       </map>
     </option>
   </component>
