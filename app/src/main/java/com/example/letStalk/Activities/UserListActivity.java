@@ -67,20 +67,17 @@ public class UserListActivity extends AppCompatActivity {
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         ServiceCheck serviceCheck=new ServiceCheck(updateStatusService.class,this,manager);
         serviceCheck.checkServiceRunning();
+        loadSharedPreferenceData();
+        userViewModel.initUserList(contactsSharedPrefs);
+        list=userViewModel.getAllUsers().getValue();
+        try{
+            userListAdapter=new userListAdapter(list, UserListActivity.this);
+            recyclerView.setAdapter(userListAdapter);
+        }catch(Exception e){
+            Log.e("Exception",e.getMessage());
+        }
 
-            handler.post(() -> {
-                loadSharedPreferenceData();
-                userViewModel.initUserList(contactsSharedPrefs);
-                list=userViewModel.getAllUsers().getValue();
-                try{
-                    userListAdapter=new userListAdapter(list, UserListActivity.this);
-                    recyclerView.setAdapter(userListAdapter);
-                }catch(Exception e){
-                    Log.e("Exception",e.getMessage());
-                }
-
-                loadUsers();
-            });
+        loadUsers();
 
 
         final Intent intent = getIntent();

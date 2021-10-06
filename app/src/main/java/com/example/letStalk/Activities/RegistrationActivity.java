@@ -165,7 +165,7 @@ public class RegistrationActivity extends AppCompatActivity {
             KeyPairGenerator kpg = KeyPairGenerator.getInstance(
                     KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore");
             kpg.initialize(new KeyGenParameterSpec.Builder(
-                    "letstalk",
+                    ALIAS,
                     KeyProperties.PURPOSE_DECRYPT | KeyProperties.PURPOSE_ENCRYPT)
                     .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
                     .setUserAuthenticationRequired(false)

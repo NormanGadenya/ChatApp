@@ -44,6 +44,7 @@ import com.example.letStalk.Model.messageListModel;
 import com.example.campaign.R;
 import com.example.letStalk.Services.updateStatusService;
 import com.example.letStalk.adapter.messageSettingsAdapter;
+import com.firebase.ui.auth.AuthUI;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -62,22 +63,23 @@ import jp.wasabeef.glide.transformations.BlurTransformation;
 import static android.view.View.GONE;
 
 public class SettingsActivity extends AppCompatActivity {
-    Toolbar toolbar;
-    RecyclerView recyclerView;
+    private Toolbar toolbar;
+    private RecyclerView recyclerView;
     private static final int GALLERY_REQUEST = 100;
     private final List<messageListModel> messageList = new ArrayList<>();
     private Uri selected;
     private BlurImageView imageView;
     private SeekBar seekBar;
     private ProgressBar progressBar;
-    int seekBarProgress = 1;
-    boolean changed = false;
+    private int seekBarProgress = 1;
+    private boolean changed = false;
     private String chatWallpaperUrI;
-    final FirebaseDatabase database = FirebaseDatabase.getInstance();
-    final FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-    UserViewModel userViewModel;
+    private final FirebaseDatabase database = FirebaseDatabase.getInstance();
+    private final FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+    private UserViewModel userViewModel;
     private SharedPreferences sharedPreferences;
     private boolean showOnline, showLastSeen;
+    private Button logout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,13 +92,12 @@ public class SettingsActivity extends AppCompatActivity {
         imageView.setClipToOutline(true);
         imageView.setBackgroundResource(R.drawable.card_background3);
         seekBar = findViewById(R.id.seekBar);
+        logout=findViewById(R.id.logout);
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
         CheckBox onlineStatus = findViewById(R.id.onlineStatus);
         CheckBox lastSeenStatus = findViewById(R.id.lastSeenStatus);
         userViewModel.initFUserInfo();
         progressBar = findViewById(R.id.progressBarChatWallpaper);
-
-
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
@@ -143,6 +144,23 @@ public class SettingsActivity extends AppCompatActivity {
 
         lastSeenStatus.setOnCheckedChangeListener((buttonView, isChecked) -> showLastSeen = isChecked);
         applyButton.setOnClickListener(v -> setSettings(firebaseUser.getUid()));
+        logout.setOnClickListener(v->{
+            new AlertDialog.Builder(this)
+                    .setTitle("Log out")
+                    .setMessage("Are you sure you want to sign out")
+                    .setPositiveButton("Yes", (dialog, which) -> signOut())
+                    .setNegativeButton("cancel", (dialog, which) -> dialog.dismiss())
+                    .create().show();
+        });
+    }
+
+    private void signOut() {
+        AuthUI.getInstance().signOut(this).addOnSuccessListener(I->{
+            moveTaskToBack(true);
+            android.os.Process.killProcess(android.os.Process.myPid());
+            System.exit(1);
+        });
+
     }
 
 

@@ -41,11 +41,19 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
+import java.io.IOException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.UnrecoverableEntryException;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
+import static com.example.letStalk.Common.Tools.ALIAS;
 
 
 public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder> {
@@ -92,10 +100,20 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
-
+        PrivateKey privateKey;
         final userModel chatList = list.get(position);
 
-        getLastMessage(chatList.getUserId(),holder.tvDesc,holder.tvDate,holder.imageView,holder.messageStatus);
+        try {
+            KeyStore keyStore= KeyStore.getInstance("AndroidKeyStore");
+            keyStore.load(null);
+            KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry)keyStore.getEntry(ALIAS, null);
+            privateKey=privateKeyEntry.getPrivateKey();
+            getLastMessage(chatList.getUserId(),holder.tvDesc,holder.tvDate,holder.imageView,holder.messageStatus,privateKey);
+
+        } catch (IOException | KeyStoreException | CertificateException | NoSuchAlgorithmException | UnrecoverableEntryException e) {
+            e.printStackTrace();
+        }
+
         String userName=contactsSharedPrefs.getString(chatList.getPhoneNumber(),null);
         if(userName!=null){
             holder.tvName.setText(userName);
@@ -294,7 +312,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     }
 
     @SuppressLint("UseCompatLoadingForDrawables")
-    private void getLastMessage(String userId, TextView description, TextView dateTime, ImageView imageView, ImageView messageStatus){
+    private void getLastMessage(String userId, TextView description, TextView dateTime, ImageView imageView, ImageView messageStatus,PrivateKey privateKey){
         String localDate=new Tools().getDate();
         chatViewModel = new ViewModelProvider(viewModelStoreOwner).get(ChatViewModel.class);
         chatViewModel.initLastMessage(userId);
@@ -305,15 +323,29 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                 String imageUrI=lastMessage.get(userId).getImageUrI();
                 String videoUrI=lastMessage.get(userId).getVideoUrI();
                 String audioUrI=lastMessage.get(userId).getAudioUrI();
+                Tools tools = new Tools();
+                try {
+                    textMessage= tools.decrypt(textMessage,privateKey);
+                    imageUrI= tools.decrypt(imageUrI,privateKey);
+                    videoUrI= tools.decrypt(videoUrI,privateKey);
+                    audioUrI= tools.decrypt(audioUrI,privateKey);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
                 String time=lastMessage.get(userId).getTime();
                 String date=lastMessage.get(userId).getDate();
-                if (localDate.equals(date)){
-                    dateTime.setText(time);
-                }else if(date.substring(6,10).equals(localDate.substring(6,10)) && date.substring(3,5).equals(localDate.substring(3,5)) && Integer.parseInt(date.substring(0,2))+1==Integer.parseInt(localDate.substring(0,2))){
-                    dateTime.setText(R.string.yesterday);
-                }else{
-                    dateTime.setText(date);
+                if(date!=null){
+                    if (localDate.equals(date)){
+                        dateTime.setText(time);
+                    }else if(date.substring(6,10).equals(localDate.substring(6,10)) && date.substring(3,5).equals(localDate.substring(3,5)) && Integer.parseInt(date.substring(0,2))+1==Integer.parseInt(localDate.substring(0,2))){
+                        dateTime.setText(R.string.yesterday);
+                    }else{
+                        dateTime.setText(date);
+                    }
                 }
+
                 if (messageChecked != null) {
 
 

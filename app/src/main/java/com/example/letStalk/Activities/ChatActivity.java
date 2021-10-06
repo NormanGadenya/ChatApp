@@ -74,6 +74,15 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
+import java.io.IOException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.UnrecoverableEntryException;
+import java.security.cert.CertificateException;
+import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -88,6 +97,7 @@ import retrofit2.Response;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
+import static com.example.letStalk.Common.Tools.ALIAS;
 import static com.example.letStalk.Common.Tools.AUDIOREQUEST;
 import static com.example.letStalk.Common.Tools.IMAGEREQUEST;
 import static com.example.letStalk.Common.Tools.VIDEOREQUEST;
@@ -97,6 +107,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private String otherUserId;
     private String profileUrI;
     private String otherUserName;
+    private String otherUserPK;
     private FirebaseDatabase database;
     private ArrayList<messageListModel> messageList = new ArrayList<>();
     private RecyclerView recyclerView ;
@@ -126,6 +137,10 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private String date,time;
     private Tools tools;
     private String fPhoneNumber;
+    private KeyStore keyStore;
+    private PublicKey fUserPublicKey;
+
+
 
 
     @SuppressWarnings("deprecation")
@@ -213,7 +228,14 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         }
         sendButton.setOnClickListener(view -> {
             if(tools.checkInternetConnection()){
-                uploadTextMessage();
+                try{
+                    if(otherUserPK!=null){
+                        uploadTextMessage();
+                    }
+
+                }catch (Exception e){
+                    e.fillInStackTrace();
+                }
             }else{
                 Toast.makeText(this,"No internet connection",Toast.LENGTH_SHORT).show();
             }
@@ -247,12 +269,14 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     }
 
     private void loadUserDetails(){
-        if(otherUserId==null){
-            loadSharedPreferenceData();
-        }
         if(otherUserId!=null){
             getOtherUserDetails(otherUserId);
+            saveSharedPreferenceData();
+
+        }else{
+            loadSharedPreferenceData();
         }
+
     }
 
     private void uploadVideo(String videoUrI,String caption){
@@ -263,6 +287,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 .putExtra("userId",user.getUid())
                 .putExtra("otherUserId",otherUserId)
                 .putExtra("caption",caption)
+                .putExtra("otherUserPk",otherUserPK)
                 .putExtra("receiver",myResultReceiver);
         startService(intent);
     }
@@ -270,19 +295,21 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private void uploadImage(String imageUrI,String caption){
         Intent intent =new Intent(this, ImageUploadService.class);
         ResultReceiver myResultReceiver=new MyReceiver(null);
+
         intent.putExtra("fPhoneNumber",fPhoneNumber)
                 .putExtra("uri",imageUrI)
                 .putExtra("userId",user.getUid())
                 .putExtra("otherUserId",otherUserId)
                 .putExtra("caption",caption)
+                .putExtra("otherUserPk",otherUserPK)
                 .putExtra("receiver",myResultReceiver);
 
         startService(intent);
     }
 
-    private void uploadTextMessage(){
-        DatabaseReference sMessage_1=database.getReference().child("chats").child(otherUserId).child(user.getUid()).push();
-        DatabaseReference sMessage_2=database.getReference().child("chats").child(user.getUid()).child(otherUserId);
+    private void uploadTextMessage() throws Exception {
+        DatabaseReference otherUserBranch=database.getReference().child("chats").child(otherUserId).child(user.getUid()).push();
+        DatabaseReference fUserBranch=database.getReference().child("chats").child(user.getUid()).child(otherUserId);
         String message = newMessage.getText().toString();
 
         //noinspection deprecation
@@ -292,15 +319,22 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             String formattedDate = date;
             String formattedTime=time;
             messageListModel m=new messageListModel();
-            List encryptedMessage= tools.encryptMessage(message);
             m.setText(message);
+            if(!otherUserPK.isEmpty()){
+
+                m.setText(tools.encrypt(message, tools.initPublic(otherUserPK)));
+            }
             m.setReceiver(otherUserId);
             m.setDate(formattedDate);
             m.setTime(formattedTime);
             m.setType("TEXT");
-            sMessage_1.setValue(m);
-            String messageKey= sMessage_1.getKey();
-            sMessage_2.child(messageKey).setValue(m);
+            otherUserBranch.setValue(m);
+            String messageKey= otherUserBranch.getKey();
+            if(fUserPublicKey!=null){
+                m.setText(tools.encrypt(message, fUserPublicKey));
+            }
+
+            fUserBranch.child(messageKey).setValue(m);
             notify=true;
             if(notify){
                 sendNotification(otherUserId,fPhoneNumber, message);
@@ -484,6 +518,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         otherUserId=sharedPreferences.getString("otherUserId",null);
         profileUrI=sharedPreferences.getString("profileUrI",null);
         otherUserName=sharedPreferences.getString("otherUserName",null);
+        otherUserPK=sharedPreferences.getString("otherUserPK",null);
+        getOtherUserDetails(otherUserId);
 
     }
 
@@ -493,6 +529,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         editor.putString("otherUserId",otherUserId);
         editor.putString("profileUrI",profileUrI);
         editor.putString("otherUserName",otherUserName);
+        editor.putString("otherUserPK",otherUserPK);
         editor.apply();
     }
 
@@ -524,9 +561,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         otherUserId=getIntent().getStringExtra("userId");
         otherUserName=getIntent().getStringExtra("userName");
         fPhoneNumber=user.getPhoneNumber();
-        if(otherUserId!=null){
-            saveSharedPreferenceData();
-        }
         userName=findViewById(R.id.userName);
         recyclerView=findViewById(R.id.recyclerView1);
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -564,6 +598,15 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         EmojIconActions emojiIcon=new EmojIconActions(getApplicationContext(),textArea,newMessage, emojiButton,"#495C66","#DCE1E2","#0B1830");
         emojiIcon.setIconsIds(R.drawable.ic_action_keyboard,R.drawable.smiley);
         emojiIcon.ShowEmojIcon();
+        try {
+            keyStore=KeyStore.getInstance("AndroidKeyStore");
+            keyStore.load(null);
+            KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry)keyStore.getEntry(ALIAS, null);
+            fUserPublicKey = (RSAPublicKey) privateKeyEntry.getCertificate().getPublicKey();
+        } catch (KeyStoreException | CertificateException | IOException | NoSuchAlgorithmException | UnrecoverableEntryException e) {
+            e.printStackTrace();
+        }
+
     }
 
     private String formatDate(String date){
@@ -617,6 +660,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         userViewModel.getOtherUserInfo().observe(this,otherUserInfo ->{
             profileUrI=otherUserInfo.getProfileUrI();
             userName.setText(otherUserName);
+            otherUserPK=otherUserInfo.getPublicKey();
             statusCheck(otherUserInfo);
             getTypingStatus(otherUserInfo);
             if(profileUrI!=null){
@@ -692,7 +736,9 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                                 .putExtra("receiver", myResultReceiver)
                                 .putExtra("userId", user.getUid())
                                 .putExtra("otherUserId", otherUserId)
+                                .putExtra("otherUserPK",otherUserPK)
                                 .putExtra("audioDuration", duration);
+
                         startService(intent);
                     }
                 }else{
@@ -707,6 +753,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     @Override
     protected void onPause() {
+
+        saveSharedPreferenceData();
         super.onPause();
         releaseMediaPlayer();
     }
@@ -774,18 +822,39 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     @Override
     public void onItemClick(int position) {
         Intent i= new Intent();
-        if(messageList.get(position).getImageUrI()!=null){
-            i=new Intent(this,ViewImageActivity.class);
-            i.putExtra("imageUrI",messageList.get(position).getImageUrI());
+        PrivateKey privateKey;
+        String imageUrI=messageList.get(position).getImageUrI();
+        String videoUrI=messageList.get(position).getVideoUrI();
+        String caption =messageList.get(position).getText();
+        try {
+            KeyStore keyStore= KeyStore.getInstance("AndroidKeyStore");
+            keyStore.load(null);
+            KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry)keyStore.getEntry(ALIAS, null);
+            privateKey=privateKeyEntry.getPrivateKey();
+            if(caption!=null){
+                caption=tools.decrypt(caption,privateKey);
+            }
+            if(imageUrI!=null){
+                imageUrI=tools.decrypt(imageUrI,privateKey);
+            }else if(videoUrI!=null){
+                videoUrI=tools.decrypt(videoUrI,privateKey);
+            }
+
+        } catch (IOException | KeyStoreException | CertificateException | NoSuchAlgorithmException | UnrecoverableEntryException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        else if ((messageList.get(position).getVideoUrI())!=null){
+        if(imageUrI!=null){
+            i=new Intent(this,ViewImageActivity.class);
+            i.putExtra("imageUrI",imageUrI);
+        }
+        else if (videoUrI!=null){
             i=new Intent(this,ViewVideoActivity.class);
-            i.putExtra("videoUrI",messageList.get(position).getVideoUrI());
+            i.putExtra("videoUrI",videoUrI);
         }
         i.putExtra("otherUserName",otherUserName);
-//        List encryptedMessage=;
-//        Tools tools =new Tools();
-        i.putExtra("caption",messageList.get(position).getText());
+        i.putExtra("caption",caption);
 
         if(messageList.get(position).getReceiver().equals(user.getUid())){
             i.putExtra("direction","from");
@@ -867,6 +936,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
         return uploadAudioData;
     }
+
+
 
 
 }

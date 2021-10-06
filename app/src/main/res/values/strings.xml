@@ -52,5 +52,7 @@
     <string name="apply">Apply</string>
     <string name="yesterday">Yesterday</string>
     <string name="today">Today</string>
+    <string name="logout">Logout</string>
+    <string name="exitMessage">Press the logout button if you want to exit from the application</string>
 
 </resources>

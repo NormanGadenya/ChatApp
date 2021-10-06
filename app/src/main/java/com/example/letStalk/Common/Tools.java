@@ -12,11 +12,14 @@ import android.webkit.MimeTypeMap;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.text.SimpleDateFormat;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
@@ -43,7 +46,7 @@ public class Tools {
     public static final int  MESSAGE_LEFT = 0;
     public static final int  MESSAGE_RIGHT = 1;
     public static final String KEY_STORE="ANDROID_KEY_STORE";
-    public static final String ALIAS ="LETSTALK";
+    public static final String ALIAS="letsTalk";
 
     public String getTime(){
         Date dateTime = Calendar.getInstance().getTime();
@@ -101,7 +104,18 @@ public class Tools {
         return  encode(encryptedBytes);
     }
 
+    public PublicKey initPublic (String publicKeyString)throws Exception{
+        X509EncodedKeySpec keySpecPublic= new X509EncodedKeySpec(decode(publicKeyString));
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        return keyFactory.generatePublic(keySpecPublic);
 
+    }
+
+    public PrivateKey initPrivate (String privateKeyString) throws Exception{
+        PKCS8EncodedKeySpec keySpecPrivate= new PKCS8EncodedKeySpec(decode(privateKeyString));
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        return keyFactory.generatePrivate(keySpecPrivate);
+    }
     public String encode (byte [] data ){
         String encodedString;
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) {

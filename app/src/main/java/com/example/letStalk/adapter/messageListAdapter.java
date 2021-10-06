@@ -53,6 +53,12 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.zolad.zoominimageview.ZoomInImageView;
 
 import java.io.IOException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.UnrecoverableEntryException;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -61,6 +67,7 @@ import java.util.Map;
 import hani.momanii.supernova_emoji_library.Helper.EmojiconTextView;
 import jp.wasabeef.glide.transformations.BlurTransformation;
 
+import static com.example.letStalk.Common.Tools.ALIAS;
 import static com.example.letStalk.Common.Tools.MESSAGE_LEFT;
 import static com.example.letStalk.Common.Tools.MESSAGE_RIGHT;
 
@@ -83,6 +90,8 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     private final ArrayList<messageListModel> selected=new ArrayList<>();
     private final FirebaseUser firebaseUser=FirebaseAuth.getInstance().getCurrentUser();
     private Handler mHandler = new Handler();
+
+
 
 
 
@@ -126,10 +135,15 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
+        PrivateKey privateKey;
 
         try {
-            holder.bind(list.get(position));
-        } catch (IOException e) {
+            KeyStore keyStore= KeyStore.getInstance("AndroidKeyStore");
+            keyStore.load(null);
+            KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry)keyStore.getEntry(ALIAS, null);
+            privateKey=privateKeyEntry.getPrivateKey();
+            holder.bind(list.get(position),privateKey);
+        } catch (IOException | KeyStoreException | CertificateException | NoSuchAlgorithmException | UnrecoverableEntryException e) {
             e.printStackTrace();
         }
 
@@ -271,6 +285,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         private final TextView duration;
         private final SeekBar audioSeekBar;
         private final ImageView checkBox;
+        private String audioUrI;
 
         public Holder(@NonNull View itemView) {
             super(itemView);
@@ -290,15 +305,22 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         }
 
         @SuppressLint({"ClickableViewAccessibility", "SetTextI18n"})
-        private void bind(final messageListModel messageList) throws IOException {
-
+        private void bind(final messageListModel messageList, PrivateKey privateKey) throws IOException {
             if(messageList.getReceiver()!=null){
 
                 switch(messageList.getType()){
                     case "TEXT":
                         videoPlayButton.setVisibility(View.GONE);
-
-                        message.setText(messageList.getText());
+                        if(privateKey!=null){
+                            try {
+                                message.setText(tools.decrypt(messageList.getText(),privateKey));
+                            } catch (Exception e) {
+                                message.setText(messageList.getText());
+                                e.printStackTrace();
+                            }
+                        }else{
+                            message.setText(messageList.getText());
+                        }
                         imageView.setVisibility(View.GONE);
                         audioLoadProgress.setVisibility(View.GONE);
                         message.setVisibility(View.VISIBLE);
@@ -329,23 +351,45 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         if(messageList.getText()==null){
                             message.setVisibility(View.GONE);
                         }else{
-                            message.setText(messageList.getText());
+                            if(privateKey!=null){
+                                try {
+                                    message.setText(tools.decrypt(messageList.getText(),privateKey));
+                                } catch (Exception e) {
+                                    message.setText(messageList.getText());
+                                    e.printStackTrace();
+                                }
+                            }else{
+                                message.setText(messageList.getText());
+                            }
                             message.setVisibility(View.VISIBLE);
                         }
 
                         imageView.setClipToOutline(true);
 
                         time.setText(messageList.getTime());
+                        String imageUri=messageList.getImageUrI();
+                        if(privateKey!=null){
+                            try {
+                                imageUri=tools.decrypt(imageUri,privateKey);
+                            } catch (Exception e) {
+
+                                e.printStackTrace();
+                            }
+                        }
+
                         if(uploadImageData.containsKey(messageList.getMessageId()) && uploadImageData!=null){
                             progressBar.setVisibility(View.VISIBLE);
                             if(uploadImageData.get(messageList.getMessageId())==1){
                                 progressBar.setVisibility(View.GONE);
                             }
 
-                            Glide.with(context).load(messageList.getImageUrI()).transform(new BlurTransformation(uploadImageData.get(messageList.getMessageId()))).listener(new RequestListener<Drawable>() {
+
+                            Glide.with(context).load(Uri.parse(imageUri)).transform(new BlurTransformation(uploadImageData.get(messageList.getMessageId()))).listener(new RequestListener<Drawable>() {
                                 @Override
                                 public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
 //                                    progressBar.setVisibility(View.GONE);
+
+                                    e.printStackTrace();
                                     return false;
                                 }
 
@@ -358,10 +402,11 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                             }).into(imageView);
 //                            progressBar.setVisibility(View.GONE);
                         }else{
-                            Glide.with(context).load(messageList.getImageUrI()).listener(new RequestListener<Drawable>() {
+                            Glide.with(context).load(imageUri).listener(new RequestListener<Drawable>() {
                                 @Override
                                 public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
                                     progressBar.setVisibility(View.GONE);
+                                    e.printStackTrace();
                                     return false;
                                 }
 
@@ -387,8 +432,13 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         if(messageList.getText()==null){
                             message.setVisibility(View.GONE);
                         }else{
+                            try {
+                                message.setText(tools.decrypt(messageList.getText(),privateKey));
 
-                            message.setText(messageList.getText());
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+
                             message.setVisibility(View.VISIBLE);
                         }
                         imageView.setClipToOutline(true);
@@ -396,6 +446,14 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         videoPlayButton.setOnClickListener(V-> recyclerViewInterface.onItemClick(getAdapterPosition()));
                         time.setText(messageList.getTime());
                         String videoUrI=messageList.getVideoUrI();
+                        if(privateKey!=null){
+                            try {
+                                videoUrI=tools.decrypt(videoUrI,privateKey);
+
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
                         if(videoUrI!=null){
                             Glide.with(context)
                                     .load(videoUrI)
@@ -427,6 +485,16 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         message.setVisibility(View.VISIBLE);
                         time.setText(messageList.getTime());
                         progressBar.setVisibility(View.GONE);
+
+                        audioUrI=messageList.getAudioUrI();
+                        if(privateKey!=null){
+                            try {
+                                audioUrI=tools.decrypt(audioUrI,privateKey);
+                            } catch (Exception e) {
+
+                                e.printStackTrace();
+                            }
+                        }
                         if(uploadAudioData.containsKey(messageList.getMessageId()) && uploadAudioData!=null){
                             audioLoadProgress.setVisibility(View.VISIBLE);
                             playButton.setVisibility(View.GONE);
@@ -473,9 +541,9 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         });
                         if(!messageList.getReceiver().equals(user.getUid())){
 
-                            prepareMediaPlayer(messageList.getAudioUrI());
+                            prepareMediaPlayer(audioUrI);
                         }else{
-                            prepareMediaPlayerOther(messageList.getAudioUrI());
+                            prepareMediaPlayerOther(audioUrI);
                         }
                         mediaPlayer.setOnBufferingUpdateListener((mp, percent) -> audioSeekBar.setSecondaryProgress(percent));
                         mediaPlayer.setOnCompletionListener(mp -> {
@@ -487,9 +555,9 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                             mediaPlayer.reset();
                             mediaPlayer.release();
                             if(!messageList.getReceiver().equals(user.getUid())){
-                                prepareMediaPlayer(messageList.getAudioUrI());
+                                prepareMediaPlayer(audioUrI);
                             }else{
-                                prepareMediaPlayerOther(messageList.getAudioUrI());
+                                prepareMediaPlayerOther(audioUrI);
 
                             }
                         });

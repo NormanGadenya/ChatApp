@@ -29,8 +29,12 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.security.KeyStore;
+import java.security.PublicKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.List;
 
+import static com.example.letStalk.Common.Tools.ALIAS;
 import static com.example.letStalk.Common.Tools.getMimeType;
 
 public class VideoUploadService extends Service {
@@ -42,8 +46,10 @@ public class VideoUploadService extends Service {
     private ResultReceiver myResultReceiver;
     private final Bundle bundle = new Bundle();
     private APIService apiService;
-    private final String time=new Tools().getTime();
-    private final String date=new Tools().getDate();
+    private Tools tools;
+    private String date;
+    private String time;
+    private String otherUserPK;
 
     @Nullable
     @Override
@@ -56,6 +62,9 @@ public class VideoUploadService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         database = FirebaseDatabase.getInstance();
+        tools=new Tools();
+        date= tools.getDate();
+        time=tools.getTime();
         FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
         mStorageReference= firebaseStorage.getReference();
         myResultReceiver =  intent.getParcelableExtra("receiver");
@@ -63,10 +72,9 @@ public class VideoUploadService extends Service {
         userId=intent.getStringExtra("userId");
         String otherUserId = intent.getStringExtra("otherUserId");
         String caption =intent.getStringExtra("caption");
+        otherUserPK =intent.getStringExtra("otherUserPk");
         String uriString=intent.getStringExtra("uri");
         Uri uri = Uri.parse(uriString);
-        Tools tools=new Tools();
-        List<Object> array=tools.encryptMessage(caption);
         uploadVideo(userId, otherUserId, uri,getApplicationContext(),caption);
         return START_NOT_STICKY;
     }
@@ -74,31 +82,51 @@ public class VideoUploadService extends Service {
     private void uploadVideo(String userId, String otherUserId, Uri uri, Context context, String caption){
 
         if(uri!=null){
+            PublicKey fUserPublicKey;
             updateToken(FirebaseInstanceId.getInstance().getToken());
             apiService= Client.getClient("https://fcm.googleapis.com").create(APIService.class);
-            DatabaseReference myRef = database.getReference();
-            DatabaseReference fUserChatRef= myRef.child("chats").child(userId).child(otherUserId).push();
-            messageListModel message=new messageListModel();
-            message.setTime(time);
-            message.setDate(date);
-            message.setType("VIDEO");
-            message.setText(caption);
-            message.setVideoUrI(String.valueOf(uri));
-            message.setReceiver(otherUserId);
-            fUserChatRef.setValue(message);
+
+
+            DatabaseReference otherUserRef= database.getReference().child("chats").child(otherUserId).child(userId);
+            DatabaseReference fUserChatRef= database.getReference().child("chats").child(userId).child(otherUserId).push();
+            messageListModel fUserMessage=new messageListModel();
+            fUserMessage.setTime(time);
+            fUserMessage.setDate(date);
+            fUserMessage.setType("VIDEO");
+            fUserMessage.setText(caption);
+            fUserMessage.setVideoUrI(String.valueOf(uri));
+            try {
+                KeyStore keyStore=KeyStore.getInstance("AndroidKeyStore");
+                keyStore.load(null);
+                KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry)keyStore.getEntry(ALIAS, null);
+                fUserPublicKey = (RSAPublicKey) privateKeyEntry.getCertificate().getPublicKey();
+                fUserMessage.setVideoUrI(tools.encrypt(String.valueOf(uri),fUserPublicKey));
+                if(caption!=null){
+                    fUserMessage.setText(tools.encrypt(caption,fUserPublicKey));
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            fUserMessage.setReceiver(otherUserId);
+            fUserChatRef.setValue(fUserMessage);
             String messageKey=fUserChatRef.getKey();
             StorageReference fileReference;
             fileReference = mStorageReference.child(System.currentTimeMillis()
                     + getMimeType(context,uri));
 
             fileReference.putFile(uri).addOnProgressListener(taskSnapshot -> {
+
                 @SuppressWarnings("IntegerDivisionInFloatingPointContext") double progress = 100.0 * (taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
-                System.out.println("Upload is " + progress + "% done");
                 int currentProgress = (int) progress;
+                currentProgress=(int)((float)(-0.25*currentProgress)+25);
+                if(currentProgress==0){
+                    currentProgress=1;
+                }
                 bundle.putInt("uploadVideoPercentage",currentProgress);
                 bundle.putString("uploadVideoTId",messageKey);
 
-                myResultReceiver.send(200,bundle);
+                myResultReceiver.send(100,bundle);
             }).addOnPausedListener(taskSnapshot -> System.out.println("Upload is paused")).continueWithTask(task -> {
                 if (!task.isSuccessful()) {
                     throw task.getException();
@@ -108,14 +136,35 @@ public class VideoUploadService extends Service {
                 if (task.isSuccessful()) {
                     Uri downloadUri = task.getResult();
                     messageListModel messageOtherUser=new messageListModel();
-                    messageOtherUser.setVideoUrI(downloadUri.toString());
+                    try {
+                        messageOtherUser.setVideoUrI(tools.encrypt(downloadUri.toString(), tools.initPublic(otherUserPK)));
+                    } catch (Exception e) {
+                        messageOtherUser.setVideoUrI(downloadUri.toString());
+                        e.printStackTrace();
+                    }
                     messageOtherUser.setTime(time);
                     messageOtherUser.setDate(date);
                     messageOtherUser.setType("VIDEO");
-                    message.setAudioUrI(uri.toString());
+                    try {
+                        messageOtherUser.setText(tools.encrypt(caption, tools.initPublic(otherUserPK)));
+                    } catch (Exception e) {
+                        messageOtherUser.setText(caption);
+                        e.printStackTrace();
+                    }
                     messageOtherUser.setReceiver(otherUserId);
-                    DatabaseReference messageRef= myRef.child("chats").child(otherUserId).child(userId);
-                    messageRef.child(messageKey).setValue(messageOtherUser);
+                    try {
+                        if (caption != null) {
+
+                            messageOtherUser.setText(tools.encrypt(caption,tools.initPublic(otherUserPK)));
+
+                        }
+                    } catch (Exception e) {
+
+                        e.printStackTrace();
+                    }
+
+
+                    otherUserRef.child(messageKey).setValue(messageOtherUser);
                     notify=true;
                     if(notify){
                         sendNotification(otherUserId,fPhoneNumber);
@@ -123,7 +172,9 @@ public class VideoUploadService extends Service {
                 }
             });
         }
+
     }
+
 
     private void updateToken(String token) {
         DatabaseReference reference= FirebaseDatabase.getInstance().getReference("Tokens");
