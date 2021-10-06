@@ -6,6 +6,7 @@ import android.content.res.AssetFileDescriptor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 
@@ -13,15 +14,21 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.text.SimpleDateFormat;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
 import javax.crypto.Cipher;
+import javax.security.cert.Certificate;
+import javax.security.cert.CertificateException;
 
 public class Tools {
     public Context context;
@@ -35,6 +42,8 @@ public class Tools {
     public static final String  EXTRA_CIRCULAR_REVEAL_Y = "EXTRA_CIRCULAR_REVEAL_Y";
     public static final int  MESSAGE_LEFT = 0;
     public static final int  MESSAGE_RIGHT = 1;
+    public static final String KEY_STORE="ANDROID_KEY_STORE";
+    public static final String ALIAS ="LETSTALK";
 
     public String getTime(){
         Date dateTime = Calendar.getInstance().getTime();
@@ -84,6 +93,44 @@ public class Tools {
         return extension;
     }
 
+    public String encrypt(String message,PublicKey publicKey) throws Exception{
+        byte[] messageToBytes = message.getBytes();
+        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        cipher.init(Cipher.ENCRYPT_MODE,publicKey);
+        byte[] encryptedBytes = cipher.doFinal(messageToBytes);
+        return  encode(encryptedBytes);
+    }
+
+
+    public String encode (byte [] data ){
+        String encodedString;
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) {
+            encodedString = Base64.getEncoder().encodeToString(data);
+        }else{
+            encodedString=android.util.Base64.encodeToString(data,android.util.Base64.DEFAULT);
+        }
+        return encodedString;
+
+    }
+
+    public  String decrypt (String encryptedMessage, PrivateKey privateKey) throws Exception{
+        byte [] encryptedBytes = decode(encryptedMessage);
+        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        cipher.init(Cipher.DECRYPT_MODE,privateKey);
+        byte [] decryptedMessage =cipher.doFinal(encryptedBytes);
+        return  new String(decryptedMessage,"UTF8");
+    }
+
+    public byte[] decode(String encryptedMessage) {
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O){
+            return  Base64.getDecoder().decode(encryptedMessage);
+        }else {
+            return  android.util.Base64.decode(encryptedMessage,android.util.Base64.DEFAULT);
+        }
+    }
+
+
+
     public List encryptMessage(String text)  {
         List<Object> array=new ArrayList();
         try{
@@ -103,6 +150,7 @@ public class Tools {
 
             //Creating a Cipher object
             Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+
 
             //Initializing a Cipher object
             cipher.init(Cipher.ENCRYPT_MODE, publicKey);

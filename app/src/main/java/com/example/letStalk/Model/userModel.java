@@ -7,6 +7,7 @@ public class userModel implements Comparable{
     private Boolean online;
     private String lastSeenDate;
     private String lastSeenTime;
+    private String publicKey;
     private Boolean Typing,showLastSeenState,showOnlineState;
 
 
@@ -107,5 +108,13 @@ public class userModel implements Comparable{
 
     public void setShowOnlineState(Boolean showOnline) {
         this.showOnlineState = showOnline;
+    }
+
+    public String getPublicKey() {
+        return publicKey;
+    }
+
+    public void setPublicKey(String publicKey) {
+        this.publicKey = publicKey;
     }
 }

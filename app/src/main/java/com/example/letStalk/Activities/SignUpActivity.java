@@ -84,7 +84,7 @@ public class SignUpActivity extends AppCompatActivity {
         }
     }
     private void sendToChats(){
-        Intent mainIntent = new Intent(SignUpActivity.this , MainActivity.class);
+        Intent mainIntent = new Intent(SignUpActivity.this , RegistrationActivity.class);
         startActivity(mainIntent);
         finish();
     }

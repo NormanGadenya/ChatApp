@@ -69,7 +69,6 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
         this.activity = activity;
         this.viewModelStoreOwner=viewModelStoreOwner;
 
-
     }
 
     public void setContactsSharedPrefs(SharedPreferences contactsSharedPrefs){
@@ -94,25 +93,22 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
 
-        final userModel chatlist = list.get(position);
+        final userModel chatList = list.get(position);
 
-
-        getLastMessage(chatlist.getUserId(),holder.tvDesc,holder.tvDate,holder.imageView,holder.messageStatus);
-        String userName=contactsSharedPrefs.getString(chatlist.getPhoneNumber(),null);
+        getLastMessage(chatList.getUserId(),holder.tvDesc,holder.tvDate,holder.imageView,holder.messageStatus);
+        String userName=contactsSharedPrefs.getString(chatList.getPhoneNumber(),null);
         if(userName!=null){
             holder.tvName.setText(userName);
         }else{
-            holder.tvName.setText(chatlist.getUserName());
+            holder.tvName.setText(chatList.getUserName());
         }
-
-
-        if (chatlist.getProfileUrI()==null){
+        if (chatList.getProfileUrI()==null){
             holder.profile.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
         } else {
-            Glide.with(context).load(chatlist.getProfileUrI()).into(holder.profile);
+            Glide.with(context).load(chatList.getProfileUrI()).into(holder.profile);
         }
 
-        if(chatlist.getOnline()){
+        if(chatList.getOnline()){
 
             holder.onlineStatus.setVisibility( VISIBLE);
 
@@ -122,8 +118,8 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
 
         }
 
-        if(chatlist.getTyping()!=null){
-            if(chatlist.getTyping()){
+        if(chatList.getTyping()!=null){
+            if(chatList.getTyping()){
                 holder.tvTyping.setVisibility(VISIBLE);
                 holder.tvDesc.setVisibility(GONE);
                 holder.messageStatus.setVisibility(GONE);

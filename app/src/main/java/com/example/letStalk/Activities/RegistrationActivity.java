@@ -7,8 +7,11 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -38,11 +41,22 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.zolad.zoominimageview.ZoomInImageView;
 
 import java.io.ByteArrayOutputStream;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.util.Base64;
 
 import static android.view.View.GONE;
+import static com.example.letStalk.Common.Tools.ALIAS;
 import static com.example.letStalk.Common.Tools.CAMERA_REQUEST;
 import static com.example.letStalk.Common.Tools.CONTACTS_REQUEST;
 import static com.example.letStalk.Common.Tools.GALLERY_REQUEST;
+import static com.example.letStalk.Common.Tools.KEY_STORE;
+
+import javax.security.cert.X509Certificate;
 
 public class RegistrationActivity extends AppCompatActivity {
     private Button submit_button;
@@ -51,6 +65,8 @@ public class RegistrationActivity extends AppCompatActivity {
     private FloatingActionButton selProfilePic,gallery_button,camera_button,remove_button;
     private String userId;
     private String phoneNumber;
+    private PublicKey publicKey;
+    private PrivateKey privateKey;
     private ConstraintLayout wrapper;
     public static final String TAG="Registration";
     private Uri selected;
@@ -58,8 +74,9 @@ public class RegistrationActivity extends AppCompatActivity {
     private ZoomInImageView profilePic;
     private BottomSheetBehavior bottomSheet;
     private boolean clickedDone=false;
-    private final String date=new Tools().getDate();
-    private final String time=new Tools().getTime();
+    private String date;
+    private String time;
+    private Tools tools =new Tools();
 
 
     @Override
@@ -67,8 +84,8 @@ public class RegistrationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_registration_activity);
         database = FirebaseDatabase.getInstance();
-
         InitializeControllers();
+        initKeys();
         bottomSheet= BottomSheetBehavior.from(wrapper);
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         bottomSheet.setState(BottomSheetBehavior.STATE_HIDDEN);
@@ -76,7 +93,6 @@ public class RegistrationActivity extends AppCompatActivity {
             wrapper.setVisibility(View.VISIBLE);
             showLayoutActions();
         });
-
         submit_button.setOnClickListener(v -> {
             String userName = userNameTV.getText().toString();
             progressBar.setVisibility(View.VISIBLE);
@@ -131,18 +147,37 @@ public class RegistrationActivity extends AppCompatActivity {
             }
             return false;
         });
-
         gallery_button.setOnClickListener(v -> {
             getImageFromGallery();
         });
         camera_button.setOnClickListener(v -> {
             getImageFromCamera();
-
         });
         remove_button.setOnClickListener(v -> {
             removeImage();
         });
 
+    }
+
+
+    private void initKeys() {
+        try{
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance(
+                    KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore");
+            kpg.initialize(new KeyGenParameterSpec.Builder(
+                    "letstalk",
+                    KeyProperties.PURPOSE_DECRYPT | KeyProperties.PURPOSE_ENCRYPT)
+                    .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+                    .setUserAuthenticationRequired(false)
+                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
+                    .build());
+
+            KeyPair kp = kpg.generateKeyPair();
+            privateKey= kp.getPrivate();
+            publicKey= kp.getPublic();
+        }catch (Exception e){
+            Log.e(TAG, "initKeys: ",e );
+        }
     }
 
     private void removeImage() {
@@ -200,6 +235,7 @@ public class RegistrationActivity extends AppCompatActivity {
             userModel.setLastSeenDate(date);
             userModel.setLastSeenTime(time);
             userModel.setOnline(true);
+            userModel.setPublicKey(tools.encode(publicKey.getEncoded()));
             userModel.setShowLastSeen(true);
             userModel.setShowOnlineState(true);
             DatabaseReference myRef = database.getReference();
@@ -217,6 +253,8 @@ public class RegistrationActivity extends AppCompatActivity {
         profilePic=findViewById(R.id.image_profile);
         progressBar=findViewById(R.id.progressBar1);
         profilePic.setClipToOutline(true);
+        time=tools.getTime();
+        date=tools.getDate();
 
     }
 
