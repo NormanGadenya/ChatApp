@@ -85,7 +85,6 @@ import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import hani.momanii.supernova_emoji_library.Actions.EmojIconActions;
@@ -116,7 +115,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private TextView userName,onlineStatus,typing,msgGroupDate;
     private EmojiconEditText newMessage;
     private CircularImageView profilePic;
-    private FirebaseUser user ;
+    private FirebaseUser fUser;
     private ProgressBar progressBar;
     private messageListAdapter messageListAdapter;
     private ImageView backgroundImageView,onlineStatusView;
@@ -148,7 +147,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
-        user= FirebaseAuth.getInstance().getCurrentUser();
+        fUser = FirebaseAuth.getInstance().getCurrentUser();
         tools = new Tools();
         date=tools.getDate();
         time=tools.getTime();
@@ -284,7 +283,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         ResultReceiver myResultReceiver=new MyReceiver(null);
         intent.putExtra("fPhoneNumber",fPhoneNumber)
                 .putExtra("uri",videoUrI)
-                .putExtra("userId",user.getUid())
+                .putExtra("userId", fUser.getUid())
                 .putExtra("otherUserId",otherUserId)
                 .putExtra("caption",caption)
                 .putExtra("otherUserPk",otherUserPK)
@@ -298,7 +297,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
         intent.putExtra("fPhoneNumber",fPhoneNumber)
                 .putExtra("uri",imageUrI)
-                .putExtra("userId",user.getUid())
+                .putExtra("userId", fUser.getUid())
                 .putExtra("otherUserId",otherUserId)
                 .putExtra("caption",caption)
                 .putExtra("otherUserPk",otherUserPK)
@@ -308,8 +307,12 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     }
 
     private void uploadTextMessage() throws Exception {
-        DatabaseReference otherUserBranch=database.getReference().child("chats").child(otherUserId).child(user.getUid()).push();
-        DatabaseReference fUserBranch=database.getReference().child("chats").child(user.getUid()).child(otherUserId);
+        DatabaseReference otherUserBranch=database.getReference().child("chats").child(otherUserId).child(fUser.getUid()).push();
+        DatabaseReference fUserBranch=database.getReference().child("chats").child(fUser.getUid()).child(otherUserId);
+        DatabaseReference fLMBranch=database.getReference().child("lastMessage").child(fUser.getUid()).child(otherUserId);
+        DatabaseReference otherLMBranch=database.getReference().child("lastMessage").child(otherUserId).child(fUser.getUid());
+        date=tools.getDate();
+        time=tools.getTime();
         String message = newMessage.getText().toString();
 
         //noinspection deprecation
@@ -321,19 +324,19 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             messageListModel m=new messageListModel();
             m.setText(message);
             if(!otherUserPK.isEmpty()){
-
                 m.setText(tools.encrypt(message, tools.initPublic(otherUserPK)));
             }
             m.setReceiver(otherUserId);
             m.setDate(formattedDate);
             m.setTime(formattedTime);
             m.setType("TEXT");
+            otherLMBranch.setValue(m);
             otherUserBranch.setValue(m);
             String messageKey= otherUserBranch.getKey();
             if(fUserPublicKey!=null){
                 m.setText(tools.encrypt(message, fUserPublicKey));
             }
-
+            fLMBranch.setValue(m);
             fUserBranch.child(messageKey).setValue(m);
             notify=true;
             if(notify){
@@ -359,7 +362,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for(DataSnapshot dataSnapshot:snapshot.getChildren()){
                     Token token=dataSnapshot.getValue(Token.class);
-                    Data data=new Data(user.getUid(),R.mipmap.ic_launcher2,message,fPhoneNumber,otherUserId,"New message");
+                    Data data=new Data(fUser.getUid(),R.mipmap.ic_launcher2,message,fPhoneNumber,otherUserId,"New message");
                     Sender sender = new Sender(data,token.getToken());
                     apiService.sendNotification(sender)
                             .enqueue(new Callback<MyResponse>(){
@@ -385,23 +388,27 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         });
     }
 
-    private HashMap<String,Object> updateTypingStatus(int count){
+    private HashMap<String,Object> updateTypingStatus(int count,String otherUserId){
         HashMap<String,Object> typingStatus= new HashMap<>();
-        typingStatus.put("Typing", count >= 1);
+        if(count>=1){
+            typingStatus.put("Typing", otherUserId);
+        }else{
+            typingStatus.put("Typing",null);
+        }
         return typingStatus;
     }
 
     private void setTypingStatus(){
-        DatabaseReference typingRef=database.getReference().child("UserDetails").child(user.getUid());
+        DatabaseReference typingRef=database.getReference().child("UserDetails").child(fUser.getUid());
         newMessage.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                typingRef.updateChildren(updateTypingStatus(count));
+                typingRef.updateChildren(updateTypingStatus(count,otherUserId));
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                typingRef.updateChildren(updateTypingStatus(count));
+                typingRef.updateChildren(updateTypingStatus(count,otherUserId));
             }
 
             @Override
@@ -466,7 +473,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     private void getTypingStatus(userModel user){
         if(user.getTyping()!=null){
-            if(user.getTyping()){
+            if(user.getTyping().equals(fUser.getUid())){
                 onlineStatus.setVisibility(GONE);
                 typing.setVisibility(VISIBLE);
 
@@ -536,7 +543,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private void updateToken(String token) {
         DatabaseReference reference= FirebaseDatabase.getInstance().getReference("Tokens");
         Token token1 =new Token(token);
-        reference.child(user.getUid()).setValue(token1);
+        reference.child(fUser.getUid()).setValue(token1);
     }
 
     private void InitialiseControllers() {
@@ -560,7 +567,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         onlineStatusView=findViewById(R.id.onlineStatusView);
         otherUserId=getIntent().getStringExtra("userId");
         otherUserName=getIntent().getStringExtra("userName");
-        fPhoneNumber=user.getPhoneNumber();
+        fPhoneNumber= fUser.getPhoneNumber();
         userName=findViewById(R.id.userName);
         recyclerView=findViewById(R.id.recyclerView1);
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -734,7 +741,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                         intent.putExtra("fPhoneNumber", fPhoneNumber)
                                 .putExtra("uri", uri)
                                 .putExtra("receiver", myResultReceiver)
-                                .putExtra("userId", user.getUid())
+                                .putExtra("userId", fUser.getUid())
                                 .putExtra("otherUserId", otherUserId)
                                 .putExtra("otherUserPK",otherUserPK)
                                 .putExtra("audioDuration", duration);
@@ -856,7 +863,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         i.putExtra("otherUserName",otherUserName);
         i.putExtra("caption",caption);
 
-        if(messageList.get(position).getReceiver().equals(user.getUid())){
+        if(messageList.get(position).getReceiver().equals(fUser.getUid())){
             i.putExtra("direction","from");
         }else{
             i.putExtra("direction","to");

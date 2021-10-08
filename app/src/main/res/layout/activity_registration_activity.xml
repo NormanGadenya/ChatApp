@@ -75,7 +75,6 @@
                     android:scaleType="centerCrop"
                     android:contentDescription="@string/profile_picture"
                     android:visibility="visible"
-                    app:layout_constraintBottom_toTopOf="@+id/show_message"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     android:src="@drawable/ic_male_avatar_svgrepo_com"

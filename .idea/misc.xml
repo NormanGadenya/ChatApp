@@ -13,6 +13,7 @@
         <entry key="app/src/main/res/layout/layout_actions.xml" value="0.1" />
         <entry key="app/src/main/res/layout/layout_chat_list.xml" value="0.34132581100141046" />
         <entry key="app/src/main/res/layout/settings_chat_left.xml" value="0.2966485507246377" />
+        <entry key="app/src/main/res/layout/settings_chat_right.xml" value="0.384375" />
         <entry key="app/src/main/res/layout/user_item.xml" value="0.5" />
       </map>
     </option>

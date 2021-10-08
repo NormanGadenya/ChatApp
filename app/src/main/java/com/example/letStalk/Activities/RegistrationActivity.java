@@ -231,7 +231,6 @@ public class RegistrationActivity extends AppCompatActivity {
             userModel userModel =new userModel();
             userModel.setUserName(userName);
             userModel.setPhoneNumber(phoneNumber);
-            userModel.setTyping(false);
             userModel.setLastSeenDate(date);
             userModel.setLastSeenTime(time);
             userModel.setOnline(true);

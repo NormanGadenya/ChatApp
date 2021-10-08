@@ -97,21 +97,23 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
 
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
         PrivateKey privateKey;
         final userModel chatList = list.get(position);
 
         try {
-            KeyStore keyStore= KeyStore.getInstance("AndroidKeyStore");
-            keyStore.load(null);
-            KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry)keyStore.getEntry(ALIAS, null);
-            privateKey=privateKeyEntry.getPrivateKey();
-            getLastMessage(chatList.getUserId(),holder.tvDesc,holder.tvDate,holder.imageView,holder.messageStatus,privateKey);
+            
+                KeyStore keyStore= KeyStore.getInstance("AndroidKeyStore");
+                keyStore.load(null);
+                KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry)keyStore.getEntry(ALIAS, null);
+                privateKey=privateKeyEntry.getPrivateKey();
+                getLastMessage(chatList.getUserId(),holder.tvDesc,holder.tvDate,holder.imageView,holder.messageStatus,privateKey);
+
+
 
         } catch (IOException | KeyStoreException | CertificateException | NoSuchAlgorithmException | UnrecoverableEntryException e) {
-            e.printStackTrace();
+            Log.e("ChatList", "onBindViewHolder: ", e);
         }
 
         String userName=contactsSharedPrefs.getString(chatList.getPhoneNumber(),null);
@@ -137,7 +139,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
         }
 
         if(chatList.getTyping()!=null){
-            if(chatList.getTyping()){
+            if(chatList.getTyping().equals(firebaseUser.getUid())){
                 holder.tvTyping.setVisibility(VISIBLE);
                 holder.tvDesc.setVisibility(GONE);
                 holder.messageStatus.setVisibility(GONE);
@@ -212,7 +214,6 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                                 for(userModel c:selected){
                                     chatRef.child(c.getUserId()).removeValue();
                                     list.remove(c);
-                                    Log.d("the list",String.valueOf(list.size()));
                                     notifyDataSetChanged();
                                 }
                                 mode.finish();
@@ -265,7 +266,6 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
             holder.checkBox.setVisibility(GONE);
             holder.itemView.setBackgroundColor(Color.TRANSPARENT);
             selected.remove(chatListModel);
-            Log.d("item_count",String.valueOf(selected.size()));
         }
         chatViewModel.setText(String.valueOf(selected.size()));
     }
@@ -325,10 +325,11 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                 String audioUrI=lastMessage.get(userId).getAudioUrI();
                 Tools tools = new Tools();
                 try {
-                    textMessage= tools.decrypt(textMessage,privateKey);
-                    imageUrI= tools.decrypt(imageUrI,privateKey);
-                    videoUrI= tools.decrypt(videoUrI,privateKey);
-                    audioUrI= tools.decrypt(audioUrI,privateKey);
+                    textMessage=(textMessage!=null) ? tools.decrypt(textMessage,privateKey) : null;
+                    imageUrI= (imageUrI!=null) ? tools.decrypt(imageUrI,privateKey) : null;
+                    videoUrI= (videoUrI!=null) ? tools.decrypt(videoUrI,privateKey) : null;
+                    audioUrI= (audioUrI!=null) ? tools.decrypt(audioUrI,privateKey) : null;
+
 
                 } catch (Exception e) {
                     e.printStackTrace();

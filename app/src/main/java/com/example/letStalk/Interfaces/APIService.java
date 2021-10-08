@@ -11,9 +11,8 @@ import retrofit2.http.POST;
 public interface APIService {
     @Headers(
             {
-                    "Content-Type:application/json",
-                    "Authorization:key=AAAAYbC3jHI:APA91bFCwc_4xNvBWrStAlWfnbNaBkZnmXHSeecOvwVaAYHW6EYAwLP6guLnJk-f33KnSk2L190jaCogNBq3JyPfpCFN-1Zy2plrWV9Vz2V5_TKGGuxWFQZVktXTpj5VrZmmsNrxIkTP"
-
+                "Content-Type:application/json",
+                "Authorization:key=AAAAYbC3jHI:APA91bFCwc_4xNvBWrStAlWfnbNaBkZnmXHSeecOvwVaAYHW6EYAwLP6guLnJk-f33KnSk2L190jaCogNBq3JyPfpCFN-1Zy2plrWV9Vz2V5_TKGGuxWFQZVktXTpj5VrZmmsNrxIkTP"
             }
     )
 

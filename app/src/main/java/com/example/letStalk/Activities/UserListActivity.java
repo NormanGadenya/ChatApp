@@ -50,7 +50,6 @@ public class UserListActivity extends AppCompatActivity {
     private FastScrollRecyclerView recyclerView;
     private List<userModel> list;
     private com.example.letStalk.adapter.userListAdapter userListAdapter;
-    private Handler handler;
     private ProgressBar progressBar;
     private UserViewModel userViewModel;
     private SharedPreferences contactsSharedPrefs;
@@ -68,9 +67,10 @@ public class UserListActivity extends AppCompatActivity {
         ServiceCheck serviceCheck=new ServiceCheck(updateStatusService.class,this,manager);
         serviceCheck.checkServiceRunning();
         loadSharedPreferenceData();
-        userViewModel.initUserList(contactsSharedPrefs);
-        list=userViewModel.getAllUsers().getValue();
+
         try{
+            userViewModel.initUserList(contactsSharedPrefs);
+            list=userViewModel.getAllUsers().getValue();
             userListAdapter=new userListAdapter(list, UserListActivity.this);
             recyclerView.setAdapter(userListAdapter);
         }catch(Exception e){
@@ -111,7 +111,6 @@ public class UserListActivity extends AppCompatActivity {
         recyclerView=findViewById(R.id.recyclerViewUserList);
         progressBar=findViewById(R.id.progressBarUserList);
         list=new ArrayList<>();
-        handler=new Handler();
         ActionBar actionBar=getSupportActionBar();
         actionBar.setTitle("Select Contact");
         actionBar.setDisplayHomeAsUpEnabled(true);
@@ -142,8 +141,11 @@ public class UserListActivity extends AppCompatActivity {
 
     private void loadUsers(){
         userViewModel.getAllUsers().observe(this, userModels -> {
-            userListAdapter.notifyDataSetChanged();
-            progressBar.setVisibility(View.GONE);
+            if(userModels.size()>0){
+                userListAdapter.notifyDataSetChanged();
+                progressBar.setVisibility(View.GONE);
+            }
+
         });
 
     }

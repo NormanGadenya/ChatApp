@@ -23,6 +23,7 @@ import android.os.Bundle;
 
 import android.text.TextUtils;
 
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -81,7 +82,8 @@ public class MainActivity extends AppCompatActivity   {
     protected void onStart() {
         super.onStart();
         list=chatViewModel.getChatListData().getValue();
-        if(list!=null){
+        Log.d("ksks", "onStart: "+ list.size());
+        if(list!=null && list.size()>0){
             chatListAdapter=new chatListAdapter(list, MainActivity.this,this,viewModelStoreOwner,lifecycleOwner);
             chatListAdapter.setContactsSharedPrefs(contactsSharedPrefs);
             chatViewModel.getChatListData().observe(this, chatList -> chatListAdapter.notifyDataSetChanged());

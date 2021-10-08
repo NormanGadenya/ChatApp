@@ -1,11 +1,9 @@
 package com.example.letStalk.Repository;
 
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.letStalk.Model.messageListModel;
@@ -35,7 +33,6 @@ public class Repo {
     private final HashMap<String,messageListModel> messageSet=new HashMap<>();
     private final ArrayList<userModel> chats_List_Model= new ArrayList<>();
     private final ArrayList<userModel> user_List_Model= new ArrayList<>();
-
     private final MutableLiveData<userModel> otherUserInfo=new MutableLiveData<>();
     private final MutableLiveData<userModel> fUserInfo=new MutableLiveData<>();
     private final MutableLiveData<ArrayList<userModel>> userList=new MutableLiveData<>();
@@ -215,19 +212,13 @@ public class Repo {
 
     private void loadLastMessage(String userId){
         DatabaseReference messageRef=database.getReference();
-        messageRef.child("chats").child(fUser.getUid()).child(userId).orderByKey().limitToLast(1).addValueEventListener(new ValueEventListener() {
-            @RequiresApi(api = Build.VERSION_CODES.O)
+        messageRef.child("lastMessage").child(fUser.getUid()).child(userId).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 messageListModel message;
-                for(DataSnapshot dataSnapshot:snapshot.getChildren()){
-                    message=dataSnapshot.getValue(messageListModel.class);
-                    messageSet.put(userId,message);
-                }
-
+                message=snapshot.getValue(messageListModel.class);
+                messageSet.put(userId,message);
                 lastMessage.postValue(messageSet);
-
-
 
             }
 
@@ -238,10 +229,13 @@ public class Repo {
         });
     }
 
+
     private void loadMessages(String otherUserId){
-        DatabaseReference messageRef=database.getReference().child("chats").child(fUser.getUid()).child(otherUserId);
+        DatabaseReference fMRef=database.getReference().child("chats").child(fUser.getUid()).child(otherUserId);
         DatabaseReference otherUserMRef=database.getReference().child("chats").child(otherUserId).child(fUser.getUid());
-        Thread getMessageThread= new Thread(() -> messageRef.addValueEventListener(new ValueEventListener(){
+        DatabaseReference otherUserLMRef=database.getReference().child("lastMessage").child(otherUserId).child(fUser.getUid());
+
+        Thread getMessageThread= new Thread(() -> fMRef.addValueEventListener(new ValueEventListener(){
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 messageListModel.clear();
@@ -273,8 +267,7 @@ public class Repo {
                                 messageStatus.put("checked",true);
                                 Log.d("otherSnapshot",otherSnapshot.getKey() + "" + s.getKey());
                                 otherUserMRef.child(s.getKey()).updateChildren(messageStatus);
-
-
+                                otherUserLMRef.updateChildren(messageStatus);
                             }
                         }
                     }
@@ -382,6 +375,8 @@ public class Repo {
         });
     }
 
+
+
     class GetChatList implements Runnable {
         @Override
         public void run() {
@@ -442,6 +437,8 @@ public class Repo {
             loadAllUsers(contactsSharedPrefs);
         }
     }
+
+
 
 
 

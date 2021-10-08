@@ -59,7 +59,7 @@ public class userListAdapter extends RecyclerView.Adapter<userListAdapter.Holder
         System.out.println(userList.getProfileUrI());
 
         try{
-            if (userList.getProfileUrI().equals("")){
+            if (userList.getProfileUrI()==null){
                 holder.profile.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);  // set  default image when profile user is null
             } else {
                 Glide.with(context).load(userList.getProfileUrI()).into(holder.profile);

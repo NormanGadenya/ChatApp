@@ -8,8 +8,8 @@ public class userModel implements Comparable{
     private String lastSeenDate;
     private String lastSeenTime;
     private String publicKey;
-    private Boolean Typing,showLastSeenState,showOnlineState;
-
+    private Boolean showLastSeenState,showOnlineState;
+    private String Typing;
 
 
     public userModel(){
@@ -80,11 +80,11 @@ public class userModel implements Comparable{
 
 
 
-    public Boolean getTyping() {
+    public String getTyping() {
         return Typing;
     }
 
-    public void setTyping(Boolean Typing) {
+    public void setTyping(String Typing) {
         this.Typing = Typing;
     }
 
