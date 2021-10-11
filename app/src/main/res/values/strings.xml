@@ -2,48 +2,22 @@
     <string name="app_name">Let\'s talk</string>
     <string name="Welcome">Hi there</string>
     <string name="WelcomeMessage">Welcome to our community</string>
-    <string name="Enter_phone">Insert your phone Number here in the format (+256*********)</string>
     <string name="About_phone"> An SMS text message has been sent to your phone number</string>
     <string name="phone_number">Phone Number (07*)</string>
-    <string name="Logo_desc">Logo description</string>
     <string name="next">Next</string>
     <string name="Enter_otp">Insert the verification code</string>
-    <string name="verification"> Verification code</string>
-    <string name="title_activity_main2">MainActivity</string>
-    <string name="avatar">Avatar</string>
     <string name="name">User name</string>
-    <string name="about_person">About</string>
-    <string name="phoneNumber">Phone Number</string>
     <string name="getStarted">Let\'s get Started</string>
     <string name="aboutSelf">Tell us more about yourself</string>
 
     <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="previous">Previous</string>
-    <string name="send">send</string>
     <string name="TypeMessage">Type message</string>
 
-    <string name="hello_first_fragment">Hello first fragment</string>
-    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
-    <string name="tab_text_1">Chats</string>
-    <string name="tab_text_2">Contacts</string>
-    <string name="title_activity_settings2">SettingsActivity2</string>
-
     <!-- Preference Titles -->
-    <string name="messages_header">Messages</string>
-    <string name="sync_header">Sync</string>
 
     <!-- Messages Preferences -->
-    <string name="signature_title">Your signature</string>
-    <string name="reply_title">Default reply action</string>
 
     <!-- Sync Preferences -->
-    <string name="sync_title">Sync email periodically</string>
-    <string name="attachment_title">Download incoming attachments</string>
-    <string name="attachment_summary_on">Automatically download attachments for incoming emails
-    </string>
-    <string name="attachment_summary_off">Only download attachments when manually requested</string>
     <string name="send_button">send Button</string>
     <string name="attach_button">attach button</string>
     <string name="phone_number_verification">Phone Number Verification</string>
@@ -52,7 +26,6 @@
     <string name="apply">Apply</string>
     <string name="yesterday">Yesterday</string>
     <string name="today">Today</string>
-    <string name="logout">Logout</string>
     <string name="exitMessage">Press the logout button if you want to exit from the application</string>
 
 </resources>

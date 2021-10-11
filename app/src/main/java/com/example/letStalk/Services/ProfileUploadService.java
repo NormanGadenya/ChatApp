@@ -7,6 +7,7 @@ import android.os.IBinder;
 
 import androidx.annotation.Nullable;
 
+import com.example.letStalk.Common.Tools;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
@@ -22,6 +23,7 @@ import static com.example.letStalk.Common.Tools.getMimeType;
 public class ProfileUploadService extends Service {
     private final FirebaseDatabase database = FirebaseDatabase.getInstance();
     private final StorageReference mStorageReference= FirebaseStorage.getInstance().getReference();
+
 
     @Nullable
     @Override
@@ -40,7 +42,7 @@ public class ProfileUploadService extends Service {
     private void uploadFile( String userId,Uri selected) {
 
         if (selected != null) {
-            StorageReference fileReference = mStorageReference.child(System.currentTimeMillis()
+            StorageReference fileReference = mStorageReference.child("profilePic").child(System.currentTimeMillis()
                     + getMimeType(getApplicationContext(),selected));
 
             UploadTask uploadTask =fileReference.putFile(selected);
@@ -58,9 +60,10 @@ public class ProfileUploadService extends Service {
                     Uri downloadUri = task.getResult();
 
                     try{
+                        Tools tools = new Tools();
                         DatabaseReference myRef = database.getReference().child("UserDetails").child(userId);
                         Map<String ,Object> profileUrI=new HashMap<>();
-                        profileUrI.put("profileUrI",downloadUri.toString());
+                        profileUrI.put("profileUrI",tools.encryptText(downloadUri.toString()));
                         myRef.updateChildren(profileUrI);
 
                     }catch(Exception e){

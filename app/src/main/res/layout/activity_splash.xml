@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     android:background="@drawable/background_icon_2"
     android:theme="@style/AppTheme.Transparent"
-    android:id="@+id/motionLayout"
 
     app:layoutDescription="@xml/activity_splash_scene"
     tools:context="com.example.letStalk.Activities.SplashActivity">

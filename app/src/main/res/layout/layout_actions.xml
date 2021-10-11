@@ -35,7 +35,6 @@
             >
 
             <ImageView
-                android:id="@+id/layout_actions_drag"
                 android:layout_width="50dp"
                 android:layout_height="8dp"
 
@@ -56,7 +55,6 @@
             android:orientation="horizontal">
 
             <LinearLayout
-                android:id="@+id/btn_doc"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
@@ -79,7 +77,6 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/btn_camera_x"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -102,7 +99,6 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/btn_gallery"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"

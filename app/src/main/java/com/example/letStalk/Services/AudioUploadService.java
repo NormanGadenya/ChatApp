@@ -70,7 +70,7 @@ public class AudioUploadService extends Service {
         tools=new Tools();
         date= tools.getDate();
         time=tools.getTime();
-        mStorageReference= firebaseStorage.getReference();
+        mStorageReference= firebaseStorage.getReference().child("messageAudios");
         myResultReceiver =  intent.getParcelableExtra("receiver");
         fPhoneNumber=intent.getStringExtra("fPhoneNumber");
         userId=intent.getStringExtra("userId");
@@ -89,6 +89,8 @@ public class AudioUploadService extends Service {
             PublicKey fUserPublicKey;
             updateToken(FirebaseInstanceId.getInstance().getToken());
             apiService= Client.getClient("https://fcm.googleapis.com").create(APIService.class);
+            DatabaseReference fLMBranch=database.getReference().child("lastMessage").child(userId).child(otherUserId);
+            DatabaseReference otherLMBranch=database.getReference().child("lastMessage").child(otherUserId).child(userId);
             DatabaseReference otherUserRef= database.getReference().child("chats").child(otherUserId).child(userId);
             DatabaseReference fUserChatRef= database.getReference().child("chats").child(userId).child(otherUserId).push();
             messageListModel fUserMessage=new messageListModel();
@@ -100,17 +102,15 @@ public class AudioUploadService extends Service {
 
 
             try {
-                KeyStore keyStore=KeyStore.getInstance("AndroidKeyStore");
-                keyStore.load(null);
-                KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry)keyStore.getEntry(ALIAS, null);
-                fUserPublicKey = (RSAPublicKey) privateKeyEntry.getCertificate().getPublicKey();
-                fUserMessage.setAudioUrI(tools.encrypt(String.valueOf(uri),fUserPublicKey));
+
+                fUserMessage.setAudioUrI(tools.encryptText(String.valueOf(uri)));
 
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
             fUserMessage.setReceiver(otherUserId);
+            fUserChatRef.setValue(fUserMessage);
             fUserChatRef.setValue(fUserMessage);
             String messageKey=fUserChatRef.getKey();
             StorageReference fileReference;
@@ -138,7 +138,6 @@ public class AudioUploadService extends Service {
                 if (task.isSuccessful()) {
                     Uri downloadUri = task.getResult();
                     messageListModel messageOtherUser=new messageListModel();
-                    messageOtherUser.setAudioUrI(downloadUri.toString());
                     messageOtherUser.setType("AUDIO");
                     messageOtherUser.setAudioDuration(duration);
                     messageOtherUser.setTime(time);
@@ -146,7 +145,7 @@ public class AudioUploadService extends Service {
 
                     messageOtherUser.setReceiver(otherUserId);
                     try {
-                        messageOtherUser.setAudioUrI(tools.encrypt(downloadUri.toString(), tools.initPublic(otherUserPK)));
+                        messageOtherUser.setAudioUrI(tools.encryptText(downloadUri.toString()));
 
                     } catch (Exception e) {
 
@@ -155,6 +154,7 @@ public class AudioUploadService extends Service {
 
 
                     otherUserRef.child(messageKey).setValue(messageOtherUser);
+                    otherLMBranch.setValue(messageOtherUser);
                     notify=true;
                     if(notify){
                         sendNotification(otherUserId,fPhoneNumber);
@@ -164,59 +164,6 @@ public class AudioUploadService extends Service {
         }
 
     }
-
-
-//    private void uploadAudio(String userId, String otherUserId, Uri uri, Context context, String duration){
-//
-//        if(uri!=null){
-//            updateToken(FirebaseInstanceId.getInstance().getToken());
-//            apiService= Client.getClient("https://fcm.googleapis.com").create(APIService.class);
-//            DatabaseReference myRef = database.getReference();
-//            DatabaseReference fUserChatRef= myRef.child("chats").child(userId).child(otherUserId).push();
-//            messageListModel message=new messageListModel();
-//            message.setTime(time);
-//            message.setDate(date);
-//            message.setType("AUDIO");
-//            message.setAudioUrI(String.valueOf(uri));
-//            message.setAudioDuration(duration);
-//            message.setReceiver(otherUserId);
-//            fUserChatRef.setValue(message);
-//            String messageKey=fUserChatRef.getKey();
-//            StorageReference fileReference;
-//            fileReference = mStorageReference.child(System.currentTimeMillis()
-//                    + getMimeType(context,uri));
-//            fileReference.putFile(uri).addOnProgressListener(taskSnapshot -> {
-//                double progress = 100.0 * (taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
-//                int currentProgress = (int) progress;
-//                bundle.putInt("uploadAudioPercentage",currentProgress);
-//                bundle.putString("uploadAudioTId",messageKey);
-//                myResultReceiver.send(300,bundle);
-//            }).addOnPausedListener(taskSnapshot -> System.out.println("Upload is paused")).continueWithTask(task -> {
-//                if (!task.isSuccessful()) {
-//                    throw task.getException();
-//                }
-//                return fileReference.getDownloadUrl();
-//            }).addOnCompleteListener(task -> {
-//                if (task.isSuccessful()) {
-//                    Uri downloadUri = task.getResult();
-//                    messageListModel messageOtherUser=new messageListModel();
-//                    messageOtherUser.setAudioUrI(downloadUri.toString());
-//                    messageOtherUser.setTime(time);
-//                    messageOtherUser.setDate(date);
-//                    messageOtherUser.setType("AUDIO");
-//                    messageOtherUser.setAudioDuration(duration);
-//                    messageOtherUser.setReceiver(otherUserId);
-//                    DatabaseReference messageRef= myRef.child("chats").child(otherUserId).child(userId);
-//                    messageRef.child(messageKey).setValue(messageOtherUser);
-//                    notify=true;
-//                    if(notify){
-//                        sendNotification(otherUserId,fPhoneNumber);
-//                    }
-//                }
-//            });
-//        }
-//
-//    }
 
 
     private void updateToken(String token) {

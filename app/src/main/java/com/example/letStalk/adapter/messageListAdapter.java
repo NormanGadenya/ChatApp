@@ -311,16 +311,16 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                 switch(messageList.getType()){
                     case "TEXT":
                         videoPlayButton.setVisibility(View.GONE);
-                        if(privateKey!=null){
+
                             try {
-                                message.setText(tools.decrypt(messageList.getText(),privateKey));
+                                message.setText(tools.decryptText(messageList.getText()));
                             } catch (Exception e) {
-                                message.setText(messageList.getText());
+
                                 e.printStackTrace();
                             }
-                        }else{
-                            message.setText(messageList.getText());
-                        }
+
+
+
                         imageView.setVisibility(View.GONE);
                         audioLoadProgress.setVisibility(View.GONE);
                         message.setVisibility(View.VISIBLE);
@@ -353,7 +353,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         }else{
                             if(privateKey!=null){
                                 try {
-                                    message.setText(tools.decrypt(messageList.getText(),privateKey));
+                                    message.setText(tools.decryptText(messageList.getText()));
                                 } catch (Exception e) {
                                     message.setText(messageList.getText());
                                     e.printStackTrace();
@@ -370,7 +370,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         String imageUri=messageList.getImageUrI();
                         if(privateKey!=null){
                             try {
-                                imageUri=tools.decrypt(imageUri,privateKey);
+                                imageUri=tools.decryptText(imageUri);
                             } catch (Exception e) {
 
                                 e.printStackTrace();
@@ -387,7 +387,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                             Glide.with(context).load(Uri.parse(imageUri)).transform(new BlurTransformation(uploadImageData.get(messageList.getMessageId()))).listener(new RequestListener<Drawable>() {
                                 @Override
                                 public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-//                                    progressBar.setVisibility(View.GONE);
 
                                     e.printStackTrace();
                                     return false;
@@ -433,7 +432,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                             message.setVisibility(View.GONE);
                         }else{
                             try {
-                                message.setText(tools.decrypt(messageList.getText(),privateKey));
+                                message.setText(tools.decryptText(messageList.getText()));
 
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -448,7 +447,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         String videoUrI=messageList.getVideoUrI();
                         if(privateKey!=null){
                             try {
-                                videoUrI=tools.decrypt(videoUrI,privateKey);
+                                videoUrI=tools.decryptText(videoUrI);
 
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -489,7 +488,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         audioUrI=messageList.getAudioUrI();
                         if(privateKey!=null){
                             try {
-                                audioUrI=tools.decrypt(audioUrI,privateKey);
+                                audioUrI=tools.decryptText(audioUrI);
                             } catch (Exception e) {
 
                                 e.printStackTrace();

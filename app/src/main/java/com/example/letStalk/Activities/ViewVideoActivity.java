@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat;
 
 import com.example.letStalk.Common.DownloadFromUrl;
 import com.example.campaign.R;
+import com.example.letStalk.Common.Tools;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -38,8 +39,16 @@ public class ViewVideoActivity extends AppCompatActivity {
         View captionBox = findViewById(R.id.captionBox);
         EmojiconTextView emojiconTextView = findViewById(R.id.caption);
         videoUrI=getIntent().getStringExtra("videoUrI");
+        Tools tools = new Tools();
         otherUserName=getIntent().getStringExtra("otherUserName");
         String caption = getIntent().getStringExtra("caption");
+
+        try {
+            videoUrI=tools.decryptText(videoUrI);
+            caption= tools.decryptText(caption);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         String direction = getIntent().getStringExtra("direction");
         progressBar=findViewById(R.id.progressBar);
         ActionBar actionBar=getSupportActionBar();
@@ -87,7 +96,6 @@ public class ViewVideoActivity extends AppCompatActivity {
             d.execute(videoUrI);
             return false;
 
-//
         });
         return super.onCreateOptionsMenu(menu);
     }

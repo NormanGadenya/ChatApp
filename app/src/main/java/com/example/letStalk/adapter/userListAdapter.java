@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.letStalk.Activities.ChatActivity;
+import com.example.letStalk.Common.Tools;
 import com.example.letStalk.Model.userModel;
 import com.example.campaign.R;
 import com.mikhaellopez.circularimageview.CircularImageView;
@@ -56,13 +57,13 @@ public class userListAdapter extends RecyclerView.Adapter<userListAdapter.Holder
         }
 
         holder.phoneNumber.setText(userList.getPhoneNumber());
-        System.out.println(userList.getProfileUrI());
 
+        Tools tools = new Tools();
         try{
             if (userList.getProfileUrI()==null){
                 holder.profile.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);  // set  default image when profile user is null
             } else {
-                Glide.with(context).load(userList.getProfileUrI()).into(holder.profile);
+                Glide.with(context).load(tools.decryptText(userList.getProfileUrI())).into(holder.profile);
             }
         }catch(Exception e){
             Log.e(TAG, "onBindViewHolder: ",e.fillInStackTrace() );

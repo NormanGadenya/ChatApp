@@ -12,6 +12,7 @@ import android.webkit.MimeTypeMap;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -30,6 +31,7 @@ import java.util.Date;
 import java.util.List;
 
 import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
 import javax.security.cert.Certificate;
 import javax.security.cert.CertificateException;
 
@@ -47,7 +49,8 @@ public class Tools {
     public static final int  MESSAGE_RIGHT = 1;
     public static final String KEY_STORE="ANDROID_KEY_STORE";
     public static final String ALIAS="letsTalk";
-
+    private static final String PASS ="Bar12345Bar12345";
+    private static Cipher cipher ;
     public String getTime(){
         Date dateTime = Calendar.getInstance().getTime();
         SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm");
@@ -96,26 +99,42 @@ public class Tools {
         return extension;
     }
 
-    public String encrypt(String message,PublicKey publicKey) throws Exception{
-        byte[] messageToBytes = message.getBytes();
+
+    public String encryptText(String text) throws Exception  {
+        Key aesKey =  new SecretKeySpec(PASS.getBytes(), "AES");
+        cipher = Cipher.getInstance("AES");
+        // encrypt the text
+        cipher.init(Cipher.ENCRYPT_MODE, aesKey);
+        byte[] encrypted = cipher.doFinal(text.getBytes());
+        return encode(encrypted);
+    }
+
+    public String decryptText(String encrypted) throws Exception{
+        Key aesKey =  new SecretKeySpec(PASS.getBytes(), "AES");
+        byte [] encryptedBytes = decode(encrypted);
+
+        cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.DECRYPT_MODE,aesKey);
+        byte [] decryptedMessage =cipher.doFinal(encryptedBytes);
+        return  new String(decryptedMessage,"UTF8");
+
+
+    }
+    public  String decrypt (String encryptedMessage, PrivateKey privateKey) throws Exception{
+        byte [] encryptedBytes = decode(encryptedMessage);
         Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        cipher.init(Cipher.ENCRYPT_MODE,publicKey);
-        byte[] encryptedBytes = cipher.doFinal(messageToBytes);
-        return  encode(encryptedBytes);
+        cipher.init(Cipher.DECRYPT_MODE,privateKey);
+        byte [] decryptedMessage =cipher.doFinal(encryptedBytes);
+        return  new String(decryptedMessage,"UTF8");
+    }
+    public byte[] decode(String encryptedMessage) {
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O){
+            return  Base64.getDecoder().decode(encryptedMessage);
+        }else {
+            return  android.util.Base64.decode(encryptedMessage,android.util.Base64.DEFAULT);
+        }
     }
 
-    public PublicKey initPublic (String publicKeyString)throws Exception{
-        X509EncodedKeySpec keySpecPublic= new X509EncodedKeySpec(decode(publicKeyString));
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        return keyFactory.generatePublic(keySpecPublic);
-
-    }
-
-    public PrivateKey initPrivate (String privateKeyString) throws Exception{
-        PKCS8EncodedKeySpec keySpecPrivate= new PKCS8EncodedKeySpec(decode(privateKeyString));
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        return keyFactory.generatePrivate(keySpecPrivate);
-    }
     public String encode (byte [] data ){
         String encodedString;
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) {
@@ -127,74 +146,5 @@ public class Tools {
 
     }
 
-    public  String decrypt (String encryptedMessage, PrivateKey privateKey) throws Exception{
-        byte [] encryptedBytes = decode(encryptedMessage);
-        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        cipher.init(Cipher.DECRYPT_MODE,privateKey);
-        byte [] decryptedMessage =cipher.doFinal(encryptedBytes);
-        return  new String(decryptedMessage,"UTF8");
-    }
 
-    public byte[] decode(String encryptedMessage) {
-        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O){
-            return  Base64.getDecoder().decode(encryptedMessage);
-        }else {
-            return  android.util.Base64.decode(encryptedMessage,android.util.Base64.DEFAULT);
-        }
-    }
-
-
-
-    public List encryptMessage(String text)  {
-        List<Object> array=new ArrayList();
-        try{
-            Signature sign = Signature.getInstance("SHA256withRSA");
-
-            KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
-
-            keyPairGen.initialize(2048);
-
-
-            //Generate the pair of keys
-            KeyPair pair = keyPairGen.generateKeyPair();
-
-            //Getting the public key from the key pair
-
-            PublicKey publicKey = pair.getPublic();
-
-            //Creating a Cipher object
-            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-
-
-            //Initializing a Cipher object
-            cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-
-            //Add data to the cipher
-            byte[] input = text.getBytes();
-            cipher.update(input);
-            byte[] cipherText = cipher.doFinal();
-            array.add(cipherText);
-            array.add(pair);
-        }catch(Exception e){
-            Log.e( "encryptMessage: ",e.getLocalizedMessage() );
-        }
-
-        return array;
-
-    }
-
-    public String decryptMessage(List<Object> array){
-        byte[] encryptedText=(byte[])array.get(0);
-        KeyPair pair=(KeyPair)array.get(1);
-        try{
-            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-            cipher.init(Cipher.DECRYPT_MODE, pair.getPrivate());
-            byte[] decryptedText = cipher.doFinal(encryptedText);
-            return new String(decryptedText);
-        }catch(Exception e){
-            Log.e( "decryptMessage: ",e.getLocalizedMessage() );
-        }
-        return null;
-
-    }
 }

@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.os.Build;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
@@ -35,6 +36,7 @@ import com.example.letStalk.Common.Tools;
 import com.example.letStalk.Model.ChatViewModel;
 import com.example.letStalk.Model.userModel;
 import com.example.campaign.R;
+import com.example.letStalk.Services.DeleteStorageFile;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
@@ -99,24 +101,19 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
 
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
-        PrivateKey privateKey;
+
         final userModel chatList = list.get(position);
 
         try {
-            
-                KeyStore keyStore= KeyStore.getInstance("AndroidKeyStore");
-                keyStore.load(null);
-                KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry)keyStore.getEntry(ALIAS, null);
-                privateKey=privateKeyEntry.getPrivateKey();
-                getLastMessage(chatList.getUserId(),holder.tvDesc,holder.tvDate,holder.imageView,holder.messageStatus,privateKey);
 
+            getLastMessage(chatList.getUserId(),holder.tvDesc,holder.tvDate,holder.imageView,holder.messageStatus);
 
-
-        } catch (IOException | KeyStoreException | CertificateException | NoSuchAlgorithmException | UnrecoverableEntryException e) {
+        } catch (Exception e) {
             Log.e("ChatList", "onBindViewHolder: ", e);
         }
 
         String userName=contactsSharedPrefs.getString(chatList.getPhoneNumber(),null);
+
         if(userName!=null){
             holder.tvName.setText(userName);
         }else{
@@ -210,12 +207,20 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                         int id=item.getItemId();
                         switch (id){
                             case R.id.menu_delete:
-                                DatabaseReference chatRef=database.getReference().child("chats").child(firebaseUser.getUid());
+
+                                ArrayList<String> deletedChatIds = new ArrayList<String>();
                                 for(userModel c:selected){
-                                    chatRef.child(c.getUserId()).removeValue();
+                                    deletedChatIds.add(c.getUserId());
                                     list.remove(c);
                                     notifyDataSetChanged();
                                 }
+
+                                Bundle b = new Bundle();
+                                b.putStringArrayList("deletedChatsList",deletedChatIds);
+                                Intent i = new Intent(context, DeleteStorageFile.class);
+                                i.putExtras(b);
+
+                                activity.startService(i);
                                 mode.finish();
                                 break;
 
@@ -312,7 +317,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     }
 
     @SuppressLint("UseCompatLoadingForDrawables")
-    private void getLastMessage(String userId, TextView description, TextView dateTime, ImageView imageView, ImageView messageStatus,PrivateKey privateKey){
+    private void getLastMessage(String userId, TextView description, TextView dateTime, ImageView imageView, ImageView messageStatus){
         String localDate=new Tools().getDate();
         chatViewModel = new ViewModelProvider(viewModelStoreOwner).get(ChatViewModel.class);
         chatViewModel.initLastMessage(userId);
@@ -325,10 +330,10 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                 String audioUrI=lastMessage.get(userId).getAudioUrI();
                 Tools tools = new Tools();
                 try {
-                    textMessage=(textMessage!=null) ? tools.decrypt(textMessage,privateKey) : null;
-                    imageUrI= (imageUrI!=null) ? tools.decrypt(imageUrI,privateKey) : null;
-                    videoUrI= (videoUrI!=null) ? tools.decrypt(videoUrI,privateKey) : null;
-                    audioUrI= (audioUrI!=null) ? tools.decrypt(audioUrI,privateKey) : null;
+                    textMessage=(textMessage!=null) ? tools.decryptText(textMessage) : null;
+                    imageUrI= (imageUrI!=null) ? tools.decryptText(imageUrI) : null;
+                    videoUrI= (videoUrI!=null) ? tools.decryptText(videoUrI) : null;
+                    audioUrI= (audioUrI!=null) ? tools.decryptText(audioUrI) : null;
 
 
                 } catch (Exception e) {

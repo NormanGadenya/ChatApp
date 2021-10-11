@@ -106,7 +106,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private String otherUserId;
     private String profileUrI;
     private String otherUserName;
-    private String otherUserPK;
     private FirebaseDatabase database;
     private ArrayList<messageListModel> messageList = new ArrayList<>();
     private RecyclerView recyclerView ;
@@ -136,8 +135,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private String date,time;
     private Tools tools;
     private String fPhoneNumber;
-    private KeyStore keyStore;
-    private PublicKey fUserPublicKey;
+
 
 
 
@@ -228,9 +226,9 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         sendButton.setOnClickListener(view -> {
             if(tools.checkInternetConnection()){
                 try{
-                    if(otherUserPK!=null){
-                        uploadTextMessage();
-                    }
+
+                    uploadTextMessage();
+
 
                 }catch (Exception e){
                     e.fillInStackTrace();
@@ -286,7 +284,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 .putExtra("userId", fUser.getUid())
                 .putExtra("otherUserId",otherUserId)
                 .putExtra("caption",caption)
-                .putExtra("otherUserPk",otherUserPK)
                 .putExtra("receiver",myResultReceiver);
         startService(intent);
     }
@@ -300,7 +297,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 .putExtra("userId", fUser.getUid())
                 .putExtra("otherUserId",otherUserId)
                 .putExtra("caption",caption)
-                .putExtra("otherUserPk",otherUserPK)
                 .putExtra("receiver",myResultReceiver);
 
         startService(intent);
@@ -323,9 +319,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             String formattedTime=time;
             messageListModel m=new messageListModel();
             m.setText(message);
-            if(!otherUserPK.isEmpty()){
-                m.setText(tools.encrypt(message, tools.initPublic(otherUserPK)));
-            }
+            m.setText(tools.encryptText(message));
             m.setReceiver(otherUserId);
             m.setDate(formattedDate);
             m.setTime(formattedTime);
@@ -333,9 +327,9 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             otherLMBranch.setValue(m);
             otherUserBranch.setValue(m);
             String messageKey= otherUserBranch.getKey();
-            if(fUserPublicKey!=null){
-                m.setText(tools.encrypt(message, fUserPublicKey));
-            }
+
+            m.setText(tools.encryptText(message));
+
             fLMBranch.setValue(m);
             fUserBranch.child(messageKey).setValue(m);
             notify=true;
@@ -393,7 +387,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         if(count>=1){
             typingStatus.put("Typing", otherUserId);
         }else{
-            typingStatus.put("Typing",null);
+            typingStatus.put("Typing","none");
         }
         return typingStatus;
     }
@@ -505,12 +499,10 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 }else{
                     lastSeen = "Last seen on " +lastSeenDate +" at "+ lastSeenTime;
                 }
-                profilePic.setBorderColorStart(Color.WHITE);
-                profilePic.setBorderColorEnd( Color.WHITE);
+
 
             }
-            profilePic.setBorderColorDirection(CircularImageView.GradientDirection.LEFT_TO_RIGHT);
-            profilePic.setBorderWidth(10);
+
             if(user.getShowLastSeenState()){
                 onlineStatus.setText(lastSeen);
             }
@@ -525,7 +517,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         otherUserId=sharedPreferences.getString("otherUserId",null);
         profileUrI=sharedPreferences.getString("profileUrI",null);
         otherUserName=sharedPreferences.getString("otherUserName",null);
-        otherUserPK=sharedPreferences.getString("otherUserPK",null);
+
         getOtherUserDetails(otherUserId);
 
     }
@@ -536,7 +528,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         editor.putString("otherUserId",otherUserId);
         editor.putString("profileUrI",profileUrI);
         editor.putString("otherUserName",otherUserName);
-        editor.putString("otherUserPK",otherUserPK);
+
         editor.apply();
     }
 
@@ -605,14 +597,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         EmojIconActions emojiIcon=new EmojIconActions(getApplicationContext(),textArea,newMessage, emojiButton,"#495C66","#DCE1E2","#0B1830");
         emojiIcon.setIconsIds(R.drawable.ic_action_keyboard,R.drawable.smiley);
         emojiIcon.ShowEmojIcon();
-        try {
-            keyStore=KeyStore.getInstance("AndroidKeyStore");
-            keyStore.load(null);
-            KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry)keyStore.getEntry(ALIAS, null);
-            fUserPublicKey = (RSAPublicKey) privateKeyEntry.getCertificate().getPublicKey();
-        } catch (KeyStoreException | CertificateException | IOException | NoSuchAlgorithmException | UnrecoverableEntryException e) {
-            e.printStackTrace();
-        }
+
 
     }
 
@@ -667,24 +652,33 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         userViewModel.getOtherUserInfo().observe(this,otherUserInfo ->{
             profileUrI=otherUserInfo.getProfileUrI();
             userName.setText(otherUserName);
-            otherUserPK=otherUserInfo.getPublicKey();
             statusCheck(otherUserInfo);
             getTypingStatus(otherUserInfo);
+
+            try {
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             if(profileUrI!=null){
-                Glide.with(getApplicationContext()).load(profileUrI).listener(new RequestListener<Drawable>() {
-                    @Override
-                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                        progressBar.setVisibility(GONE);
-                        return false;
+                try {
+                    Glide.with(getApplicationContext()).load(tools.decryptText(profileUrI)).listener(new RequestListener<Drawable>() {
+                        @Override
+                        public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                            progressBar.setVisibility(GONE);
+                            return false;
 
-                    }
+                        }
 
-                    @Override
-                    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                        progressBar.setVisibility(GONE);
-                        return false;
-                    }
-                }).into(profilePic);
+                        @Override
+                        public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                            progressBar.setVisibility(GONE);
+                            return false;
+                        }
+                    }).into(profilePic);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 profilePic.setOnClickListener(v -> {
                Intent intent =new Intent(getApplicationContext(), OtherUserActivity.class);
                 intent.putExtra("otherUserId",otherUserId).putExtra("otherUserName",otherUserName);
@@ -743,7 +737,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                                 .putExtra("receiver", myResultReceiver)
                                 .putExtra("userId", fUser.getUid())
                                 .putExtra("otherUserId", otherUserId)
-                                .putExtra("otherUserPK",otherUserPK)
                                 .putExtra("audioDuration", duration);
 
                         startService(intent);
@@ -834,21 +827,16 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         String videoUrI=messageList.get(position).getVideoUrI();
         String caption =messageList.get(position).getText();
         try {
-            KeyStore keyStore= KeyStore.getInstance("AndroidKeyStore");
-            keyStore.load(null);
-            KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry)keyStore.getEntry(ALIAS, null);
-            privateKey=privateKeyEntry.getPrivateKey();
+
             if(caption!=null){
-                caption=tools.decrypt(caption,privateKey);
+                caption=tools.decryptText(caption);
             }
             if(imageUrI!=null){
-                imageUrI=tools.decrypt(imageUrI,privateKey);
+                imageUrI=tools.decryptText(imageUrI);
             }else if(videoUrI!=null){
-                videoUrI=tools.decrypt(videoUrI,privateKey);
+                videoUrI=tools.decryptText(videoUrI);
             }
 
-        } catch (IOException | KeyStoreException | CertificateException | NoSuchAlgorithmException | UnrecoverableEntryException e) {
-            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -883,13 +871,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     }
 
     public class MyReceiver extends ResultReceiver{
-        /**
-         * Create a new ResultReceive to receive results.  Your
-         * {@link #onReceiveResult} method will be called from the thread running
-         * <var>handler</var> if given, or from an arbitrary thread if null.
-         *
-         *
-         */
         public MyReceiver(Handler handler) {
             super(handler);
         }

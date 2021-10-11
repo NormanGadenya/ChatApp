@@ -97,6 +97,7 @@
         <service android:name="com.example.letStalk.Services.ProfileUploadService" />
         <service android:name="com.example.letStalk.Services.ImageUploadService" />
         <service android:name="com.example.letStalk.Services.VideoUploadService" />
+        <service android:name="com.example.letStalk.Services.DeleteStorageFile"/>
     </application>
 
 </manifest>

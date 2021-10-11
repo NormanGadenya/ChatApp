@@ -57,7 +57,6 @@ public class ImageUploadService extends Service {
     private String date;
     private String time;
     public static final String TAG="MAGEUPLOAD";
-    private String otherUserPK;
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -74,15 +73,14 @@ public class ImageUploadService extends Service {
         date= tools.getDate();
         time=tools.getTime();
         FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
-        mStorageReference= firebaseStorage.getReference();
+        mStorageReference= firebaseStorage.getReference().child("messageImages");
         myResultReceiver =  intent.getParcelableExtra("receiver");
         fPhoneNumber=intent.getStringExtra("fPhoneNumber");
         userId=intent.getStringExtra("userId");
         String otherUserId = intent.getStringExtra("otherUserId");
         String caption =intent.getStringExtra("caption");
         String uriString=intent.getStringExtra("uri");
-        otherUserPK =intent.getStringExtra("otherUserPk");
-        Log.d(TAG, "onStartCommand: "+ otherUserPK);
+
         Uri uri = Uri.parse(uriString);
         uploadImage(userId, otherUserId, uri,getApplicationContext(),caption);
         return START_NOT_STICKY;
@@ -91,25 +89,22 @@ public class ImageUploadService extends Service {
     private void uploadImage(String userId, String otherUserId, Uri uri, Context context, String caption){
 
         if(uri!=null){
-            PublicKey fUserPublicKey;
             updateToken(FirebaseInstanceId.getInstance().getToken());
             apiService= Client.getClient("https://fcm.googleapis.com").create(APIService.class);
-
-
             DatabaseReference otherUserRef= database.getReference().child("chats").child(otherUserId).child(userId);
             DatabaseReference fUserChatRef= database.getReference().child("chats").child(userId).child(otherUserId).push();
+            DatabaseReference fLMBranch=database.getReference().child("lastMessage").child(userId).child(otherUserId);
+            DatabaseReference otherLMBranch=database.getReference().child("lastMessage").child(otherUserId).child(userId);
+
             messageListModel fUserMessage=new messageListModel();
             fUserMessage.setTime(time);
             fUserMessage.setDate(date);
             fUserMessage.setType("IMAGE");
             try {
-                KeyStore keyStore=KeyStore.getInstance("AndroidKeyStore");
-                keyStore.load(null);
-                KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry)keyStore.getEntry(ALIAS, null);
-                fUserPublicKey = (RSAPublicKey) privateKeyEntry.getCertificate().getPublicKey();
-                fUserMessage.setImageUrI(tools.encrypt(String.valueOf(uri),fUserPublicKey));
+
+                fUserMessage.setImageUrI(tools.encryptText(String.valueOf(uri)));
                 if(!caption.isEmpty()){
-                    fUserMessage.setText(tools.encrypt(caption,fUserPublicKey));
+                    fUserMessage.setText(tools.encryptText(caption));
                 }
 
             } catch (Exception e) {
@@ -117,6 +112,7 @@ public class ImageUploadService extends Service {
             }
             fUserMessage.setReceiver(otherUserId);
             fUserChatRef.setValue(fUserMessage);
+            fLMBranch.setValue(fUserMessage);
             String messageKey=fUserChatRef.getKey();
             StorageReference fileReference;
             fileReference = mStorageReference.child(System.currentTimeMillis()
@@ -148,9 +144,9 @@ public class ImageUploadService extends Service {
                     messageOtherUser.setType("IMAGE");
                     messageOtherUser.setReceiver(otherUserId);
                     try {
-                        messageOtherUser.setImageUrI(tools.encrypt(downloadUri.toString(), tools.initPublic(otherUserPK)));
+                        messageOtherUser.setImageUrI(tools.encryptText(downloadUri.toString()));
                         if(!caption.isEmpty()){
-                            messageOtherUser.setText(tools.encrypt(caption,tools.initPublic(otherUserPK)));
+                            messageOtherUser.setText(tools.encryptText(caption));
                         }
 
                     } catch (Exception e) {
@@ -158,6 +154,7 @@ public class ImageUploadService extends Service {
                         Log.e("ImageUpload", "uploadImage: ", e);
                     }
                     otherUserRef.child(messageKey).setValue(messageOtherUser);
+                    otherLMBranch.setValue(messageOtherUser);
                     notify=true;
                     if(notify){
                         sendNotification(otherUserId,fPhoneNumber);

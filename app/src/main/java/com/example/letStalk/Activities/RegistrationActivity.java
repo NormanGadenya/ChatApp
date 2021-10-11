@@ -3,18 +3,21 @@ package com.example.letStalk.Activities;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -31,6 +34,7 @@ import com.example.letStalk.Common.Tools;
 import com.example.letStalk.Model.userModel;
 import com.example.campaign.R;
 import com.example.letStalk.Services.ProfileUploadService;
+
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
@@ -39,24 +43,13 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import com.zolad.zoominimageview.ZoomInImageView;
-
 import java.io.ByteArrayOutputStream;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.util.Base64;
 
 import static android.view.View.GONE;
-import static com.example.letStalk.Common.Tools.ALIAS;
 import static com.example.letStalk.Common.Tools.CAMERA_REQUEST;
 import static com.example.letStalk.Common.Tools.CONTACTS_REQUEST;
 import static com.example.letStalk.Common.Tools.GALLERY_REQUEST;
-import static com.example.letStalk.Common.Tools.KEY_STORE;
 
-import javax.security.cert.X509Certificate;
 
 public class RegistrationActivity extends AppCompatActivity {
     private Button submit_button;
@@ -65,8 +58,7 @@ public class RegistrationActivity extends AppCompatActivity {
     private FloatingActionButton selProfilePic,gallery_button,camera_button,remove_button;
     private String userId;
     private String phoneNumber;
-    private PublicKey publicKey;
-    private PrivateKey privateKey;
+
     private ConstraintLayout wrapper;
     public static final String TAG="Registration";
     private Uri selected;
@@ -76,7 +68,7 @@ public class RegistrationActivity extends AppCompatActivity {
     private boolean clickedDone=false;
     private String date;
     private String time;
-    private Tools tools =new Tools();
+    private Tools tools;
 
 
     @Override
@@ -84,12 +76,14 @@ public class RegistrationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_registration_activity);
         database = FirebaseDatabase.getInstance();
+        tools =new Tools();
         InitializeControllers();
-        initKeys();
         bottomSheet= BottomSheetBehavior.from(wrapper);
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
         bottomSheet.setState(BottomSheetBehavior.STATE_HIDDEN);
         selProfilePic.setOnClickListener(v -> {
+            closeKeyboard();
             wrapper.setVisibility(View.VISIBLE);
             showLayoutActions();
         });
@@ -120,7 +114,6 @@ public class RegistrationActivity extends AppCompatActivity {
             }
         });
         userNameTV.setOnKeyListener((v, keyCode, event) -> {
-            // If the event is a key-down event on the "enter" button
             clickedDone=false;
             if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
                     (keyCode == KeyEvent.KEYCODE_ENTER)) {
@@ -160,25 +153,7 @@ public class RegistrationActivity extends AppCompatActivity {
     }
 
 
-    private void initKeys() {
-        try{
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance(
-                    KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore");
-            kpg.initialize(new KeyGenParameterSpec.Builder(
-                    ALIAS,
-                    KeyProperties.PURPOSE_DECRYPT | KeyProperties.PURPOSE_ENCRYPT)
-                    .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-                    .setUserAuthenticationRequired(false)
-                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
-                    .build());
 
-            KeyPair kp = kpg.generateKeyPair();
-            privateKey= kp.getPrivate();
-            publicKey= kp.getPublic();
-        }catch (Exception e){
-            Log.e(TAG, "initKeys: ",e );
-        }
-    }
 
     private void removeImage() {
         selected=null;
@@ -234,9 +209,9 @@ public class RegistrationActivity extends AppCompatActivity {
             userModel.setLastSeenDate(date);
             userModel.setLastSeenTime(time);
             userModel.setOnline(true);
-            userModel.setPublicKey(tools.encode(publicKey.getEncoded()));
             userModel.setShowLastSeen(true);
             userModel.setShowOnlineState(true);
+            userModel.setTyping("none");
             DatabaseReference myRef = database.getReference();
             myRef.child("UserDetails").child(userId).setValue(userModel);
     }
@@ -361,6 +336,13 @@ public class RegistrationActivity extends AppCompatActivity {
             userNameTV.setEnabled(true);
         }
 
+    }
+    private void closeKeyboard(){
+        View view=this.getCurrentFocus();
+        if (view!=null){
+            InputMethodManager im=(InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            im.hideSoftInputFromWindow(view.getWindowToken(),0);
+        }
     }
 
     @Override

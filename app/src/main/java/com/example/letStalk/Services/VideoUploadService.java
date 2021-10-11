@@ -49,7 +49,7 @@ public class VideoUploadService extends Service {
     private Tools tools;
     private String date;
     private String time;
-    private String otherUserPK;
+
 
     @Nullable
     @Override
@@ -66,13 +66,13 @@ public class VideoUploadService extends Service {
         date= tools.getDate();
         time=tools.getTime();
         FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
-        mStorageReference= firebaseStorage.getReference();
+        mStorageReference= firebaseStorage.getReference().child("messageVideos");
         myResultReceiver =  intent.getParcelableExtra("receiver");
         fPhoneNumber=intent.getStringExtra("fPhoneNumber");
         userId=intent.getStringExtra("userId");
         String otherUserId = intent.getStringExtra("otherUserId");
         String caption =intent.getStringExtra("caption");
-        otherUserPK =intent.getStringExtra("otherUserPk");
+
         String uriString=intent.getStringExtra("uri");
         Uri uri = Uri.parse(uriString);
         uploadVideo(userId, otherUserId, uri,getApplicationContext(),caption);
@@ -82,10 +82,11 @@ public class VideoUploadService extends Service {
     private void uploadVideo(String userId, String otherUserId, Uri uri, Context context, String caption){
 
         if(uri!=null){
-            PublicKey fUserPublicKey;
+
             updateToken(FirebaseInstanceId.getInstance().getToken());
             apiService= Client.getClient("https://fcm.googleapis.com").create(APIService.class);
-
+            DatabaseReference fLMBranch=database.getReference().child("lastMessage").child(userId).child(otherUserId);
+            DatabaseReference otherLMBranch=database.getReference().child("lastMessage").child(otherUserId).child(userId);
 
             DatabaseReference otherUserRef= database.getReference().child("chats").child(otherUserId).child(userId);
             DatabaseReference fUserChatRef= database.getReference().child("chats").child(userId).child(otherUserId).push();
@@ -96,13 +97,9 @@ public class VideoUploadService extends Service {
             fUserMessage.setText(caption);
             fUserMessage.setVideoUrI(String.valueOf(uri));
             try {
-                KeyStore keyStore=KeyStore.getInstance("AndroidKeyStore");
-                keyStore.load(null);
-                KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry)keyStore.getEntry(ALIAS, null);
-                fUserPublicKey = (RSAPublicKey) privateKeyEntry.getCertificate().getPublicKey();
-                fUserMessage.setVideoUrI(tools.encrypt(String.valueOf(uri),fUserPublicKey));
+                fUserMessage.setVideoUrI(tools.encryptText(String.valueOf(uri)));
                 if(caption!=null){
-                    fUserMessage.setText(tools.encrypt(caption,fUserPublicKey));
+                    fUserMessage.setText(tools.encryptText(caption));
                 }
 
             } catch (Exception e) {
@@ -110,6 +107,7 @@ public class VideoUploadService extends Service {
             }
             fUserMessage.setReceiver(otherUserId);
             fUserChatRef.setValue(fUserMessage);
+            fLMBranch.setValue(fUserMessage);
             String messageKey=fUserChatRef.getKey();
             StorageReference fileReference;
             fileReference = mStorageReference.child(System.currentTimeMillis()
@@ -137,7 +135,7 @@ public class VideoUploadService extends Service {
                     Uri downloadUri = task.getResult();
                     messageListModel messageOtherUser=new messageListModel();
                     try {
-                        messageOtherUser.setVideoUrI(tools.encrypt(downloadUri.toString(), tools.initPublic(otherUserPK)));
+                        messageOtherUser.setVideoUrI(tools.encryptText(downloadUri.toString()));
                     } catch (Exception e) {
                         messageOtherUser.setVideoUrI(downloadUri.toString());
                         e.printStackTrace();
@@ -146,7 +144,7 @@ public class VideoUploadService extends Service {
                     messageOtherUser.setDate(date);
                     messageOtherUser.setType("VIDEO");
                     try {
-                        messageOtherUser.setText(tools.encrypt(caption, tools.initPublic(otherUserPK)));
+                        messageOtherUser.setText(tools.encryptText(caption));
                     } catch (Exception e) {
                         messageOtherUser.setText(caption);
                         e.printStackTrace();
@@ -155,7 +153,7 @@ public class VideoUploadService extends Service {
                     try {
                         if (caption != null) {
 
-                            messageOtherUser.setText(tools.encrypt(caption,tools.initPublic(otherUserPK)));
+                            messageOtherUser.setText(tools.encryptText(caption));
 
                         }
                     } catch (Exception e) {
@@ -165,6 +163,7 @@ public class VideoUploadService extends Service {
 
 
                     otherUserRef.child(messageKey).setValue(messageOtherUser);
+                    otherLMBranch.setValue(messageOtherUser);
                     notify=true;
                     if(notify){
                         sendNotification(otherUserId,fPhoneNumber);

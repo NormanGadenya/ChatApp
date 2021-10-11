@@ -24,6 +24,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
 import com.example.letStalk.Common.ServiceCheck;
+import com.example.letStalk.Common.Tools;
 import com.example.letStalk.Model.UserViewModel;
 import com.example.campaign.R;
 import com.example.letStalk.Services.updateStatusService;
@@ -90,14 +91,18 @@ public class OtherUserActivity extends AppCompatActivity {
             }
             setSupportActionBar(toolbar);
             phoneNumber.setText(user.getPhoneNumber());
-            Log.d("otherUserName", "setupToolBar: "+otherUserName);
             if(otherUserId!=null){
                 userName.setText(otherUserName);
             }else{
                 userName.setText(user.getUserName());
             }
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            Glide.with(getApplicationContext()).load(profileUrI).into(imageView);
+            Tools tools = new Tools();
+            try {
+                Glide.with(getApplicationContext()).load(tools.decryptText(profileUrI)).into(imageView);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
 
     }

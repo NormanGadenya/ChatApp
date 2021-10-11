@@ -83,13 +83,13 @@ public class MainActivity extends AppCompatActivity   {
         super.onStart();
         list=chatViewModel.getChatListData().getValue();
         Log.d("ksks", "onStart: "+ list.size());
-        if(list!=null && list.size()>0){
-            chatListAdapter=new chatListAdapter(list, MainActivity.this,this,viewModelStoreOwner,lifecycleOwner);
+        if(list!=null) {
+            chatListAdapter = new chatListAdapter(list, MainActivity.this, this, viewModelStoreOwner, lifecycleOwner);
             chatListAdapter.setContactsSharedPrefs(contactsSharedPrefs);
             chatViewModel.getChatListData().observe(this, chatList -> chatListAdapter.notifyDataSetChanged());
             recyclerView.setAdapter(chatListAdapter);
-        }
 
+        }
     }
 
     private void InitializeControllers() {
