@@ -7,7 +7,7 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="cream">#D3D0D0</color>
+    <color name="cream">#F1E7EA</color>
     <color name="cyan">#03A9F4</color>
     <color name="deepBlue">#0B1830</color>
     <color name="deepBlueT">#AD0B1830</color>
@@ -15,4 +15,11 @@
     <color name="BLUE_NCS">#2E86AB</color>
     <color name="dark_p">#E810101D</color>
     <color name="transparent">#03FFFFFF</color>
+    <color name="lightSteelBlue">#bcd3f2</color>
+    <color name="eggshell">#E6E1C5</color>
+    <color name="light_blue_600">#FF039BE5</color>
+    <color name="light_blue_900">#FF01579B</color>
+    <color name="light_blue_A200">#FF40C4FF</color>
+    <color name="light_blue_A400">#FF00B0FF</color>
+    <color name="black_overlay">#66000000</color>
 </resources>

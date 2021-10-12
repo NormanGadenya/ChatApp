@@ -1,6 +1,8 @@
 package com.example.letStalk.Activities;
 
 
+import static android.view.View.GONE;
+
 import android.Manifest;
 import android.app.ActivityManager;
 import android.content.Context;
@@ -84,11 +86,16 @@ public class OtherUserActivity extends AppCompatActivity {
 
         userViewModel.getOtherUserInfo().observe(this,user->{
             profileUrI=user.getProfileUrI();
-            try {
-                profileBitmap=MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.parse(profileUrI));
-            } catch (IOException e) {
-                e.printStackTrace();
+            if(profileUrI!=null){
+                try {
+                    profileBitmap=MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.parse(profileUrI));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }else{
+                saveProfilePicBtn.setVisibility(GONE);
             }
+
             setSupportActionBar(toolbar);
             phoneNumber.setText(user.getPhoneNumber());
             if(otherUserId!=null){

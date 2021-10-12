@@ -4,8 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.content.res.AppCompatResources;
-import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -44,7 +42,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestBuilder;
+import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.MultiTransformation;
+import com.bumptech.glide.load.Transformation;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
@@ -80,14 +82,6 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
 import java.io.IOException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.UnrecoverableEntryException;
-import java.security.cert.CertificateException;
-import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -101,7 +95,6 @@ import retrofit2.Response;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static com.example.letStalk.Common.Tools.ALIAS;
 import static com.example.letStalk.Common.Tools.AUDIOREQUEST;
 import static com.example.letStalk.Common.Tools.IMAGEREQUEST;
 import static com.example.letStalk.Common.Tools.VIDEOREQUEST;
@@ -116,7 +109,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private RecyclerView recyclerView ;
     private ImageButton sendButton;
     private ImageButton attachButton;
-    private TextView userName,onlineStatus,typing,msgGroupDate;
+    private TextView userName,msgGroupDate;
     private EmojiconEditText newMessage;
     private CircularImageView profilePic;
     private FirebaseUser fUser;
@@ -140,9 +133,9 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private String date,time;
     private Tools tools;
     private String fPhoneNumber;
-
-
-
+    private String chatWallpaperUrI;
+    private ImageButton scrollButton;
+    private TextView status;
 
 
     @SuppressWarnings("deprecation")
@@ -154,8 +147,25 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         tools = new Tools();
         date=tools.getDate();
         time=tools.getTime();
+        scrollButton=findViewById(R.id.scrollToBottom);
         tools.context=getApplicationContext();
         InitialiseControllers();
+        chatWallpaperUrI=settingsSharedPreferences.getString("chatWallpaper",null);
+        new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.parse(chatWallpaperUrI));
+                    createPaletteAsync(bitmap);
+                } catch (Exception e) {
+
+
+                    e.printStackTrace();
+                }
+
+            }
+        }).start();
         loadUserDetails();
         setTypingStatus();
         layoutManager= new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
@@ -202,7 +212,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             }
         });
 
-        getCurrentWallpaper();
+        getCurrentWallpaper(chatWallpaperUrI);
         try{
             Handler handler = new Handler(Looper.getMainLooper());
             handler.post(this::getMessages);
@@ -254,7 +264,30 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     }
 
+    public void createPaletteAsync(Bitmap bitmap) {
+        if (bitmap!=null){
+            Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
 
+                public void onGenerated(Palette p) {
+                    messageListAdapter.viewBackColor = p.getMutedColor(getResources().getColor(R.color.cream));
+                    Palette.Swatch mutedSwatch = p.getMutedSwatch();
+                    Palette.Swatch vibrantSwatch = p.getVibrantSwatch();
+                    if( vibrantSwatch != null && mutedSwatch !=null){
+                        messageListAdapter.viewTextColor = mutedSwatch.getTitleTextColor();
+                        messageListAdapter.checkedColor = vibrantSwatch.getRgb();
+                    }else{
+                        messageListAdapter.viewTextColor =getResources().getColor(R.color.black);
+
+                    }
+
+                    messageListAdapter.notifyDataSetChanged();
+//                    GradientDrawable gradientDrawable = (GradientDrawable) view.getBackground() .mutate();
+//                    gradientDrawable.setColor(p.getMutedColor(getResources().getColor(R.color.cream)));
+                }
+            });
+
+        }
+    }
     private void loadAdapter(){
         if(messageList!=null){
             messageListAdapter=new messageListAdapter();
@@ -265,6 +298,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             messageListAdapter.setOtherUserId(otherUserId);
             messageListAdapter.uploadImageTask=uploadImageData;
             messageListAdapter.uploadVideoTask=uploadVideoData;
+            messageListAdapter.chatWallpaperUri =chatWallpaperUrI;
             recyclerView.setAdapter(messageListAdapter);
         }
 
@@ -418,123 +452,86 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     }
 
 
-    // Generate palette asynchronously and use it on a different
-// thread using onGenerated()
-    public void createPaletteAsync(Bitmap bitmap) {
-        Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
-            public void onGenerated(Palette p) {
-                Drawable unwrappedDrawable = AppCompatResources.getDrawable(getApplicationContext(), R.drawable.background_right);
-                Drawable wrappedDrawable = DrawableCompat.wrap(unwrappedDrawable);
-                DrawableCompat.setTint(wrappedDrawable, Color.RED);
-            }
-        });
-    }
 
-    private void getCurrentWallpaper(){
-        String chatWallpaperUrI=settingsSharedPreferences.getString("chatWallpaper",null);
+    private void getCurrentWallpaper(String chatWallpaperUrI){
+
         int blur=settingsSharedPreferences.getInt("chatBlur",0);
 
         progressBar.setVisibility(VISIBLE);
         if (chatWallpaperUrI!=null){
+            RequestBuilder requestBuilder= Glide.with(getApplicationContext()).load(chatWallpaperUrI);
+
             if(blur!=0) {
-                try {
-                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.parse(chatWallpaperUrI));
-                    createPaletteAsync(bitmap);
-                } catch (IOException e) {
-                    e.printStackTrace();
+                requestBuilder.transform(new BlurTransformation(blur));
+            }
+            requestBuilder.addListener(new RequestListener<Drawable>() {
+                @Override
+                public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                    progressBar.setVisibility(GONE);
+                    Log.e(TAG, "onLoadFailed: ",e );
+                    return false;
                 }
 
-                Glide.with(getApplicationContext())
-                        .load(chatWallpaperUrI)
-                        .transform(new BlurTransformation(blur))
-                        .addListener(new RequestListener<Drawable>() {
-                            @Override
-                            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                                progressBar.setVisibility(View.GONE);
-                                return false;
-                            }
-
-                            @Override
-                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                                progressBar.setVisibility(View.GONE);
+                @Override
+                public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                    progressBar.setVisibility(GONE);
 
 
-                                return false;
-                            }
-                        })
-
-                        .into(backgroundImageView);
-            }else{
-                Glide.with(getApplicationContext())
-                        .load(chatWallpaperUrI)
-                        .addListener(new RequestListener<Drawable>() {
-                            @Override
-                            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                                progressBar.setVisibility(View.GONE);
-                                return false;
-                            }
-
-                            @Override
-                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                                progressBar.setVisibility(View.GONE);
-
-
-                                return false;
-                            }
-                        })
-
-                        .into(backgroundImageView);
-            }
+                    return false;
+                }
+            }).into(backgroundImageView);
         }else{
             backgroundImageView.setImageResource(R.drawable.whatsapp_wallpaper_121);
         }
 
    }
 
-    private void getTypingStatus(userModel user){
-        if(user.getTyping()!=null){
-            Log.d(TAG, "getTypingStatus: ".concat(user.getTyping()));
-            if(user.getTyping().equals(fUser.getUid())){
-                onlineStatus.setVisibility(GONE);
-                typing.setVisibility(VISIBLE);
 
-            }else{
-                onlineStatus.setVisibility(VISIBLE);
-                typing.setVisibility(View.GONE);
-            }
-
-        }
-
-    }
 
     private void statusCheck(userModel user){
 
-        if(user.getOnline()!=null && user.getShowOnlineState()!=null & user.getShowLastSeenState()!=null){
-            String lastSeen;
-            if(user.getOnline() && user.getShowOnlineState()){
-                lastSeen ="online";
-                onlineStatusView.setVisibility(VISIBLE);
-                onlineStatus.setSelected(false);
+        if(user.getTyping()!=null){
+            if(user.getTyping().equals(fUser.getUid())){
+                status.setVisibility(VISIBLE);
+                status.setText("Typing ..");
+                status.setTextColor(getResources().getColor(R.color.lightSteelBlue));
 
             }else{
-                onlineStatusView.setVisibility(GONE);
-                onlineStatus.setVisibility(GONE);
-                String lastSeenDate=user.getLastSeenDate();
-                String lastSeenTime=user.getLastSeenTime();
-                if (lastSeenDate.equals(date)){
-                    lastSeen = "Last seen today at "+ lastSeenTime;
+                if(user.getOnline()!=null && user.getShowOnlineState()!=null & user.getShowLastSeenState()!=null){
+                    String lastSeen;
+
+                    if(user.getShowOnlineState()){
+                        status.setTextColor(getResources().getColor(R.color.eggshell));
+                        if(user.getOnline() ){
+                            lastSeen ="online";
+                            onlineStatusView.setVisibility(VISIBLE);
+                            status.setSelected(false);
+
+                        }else{
+                            onlineStatusView.setVisibility(GONE);
+                            String lastSeenDate=user.getLastSeenDate();
+                            String lastSeenTime=user.getLastSeenTime();
+                            if (lastSeenDate.equals(date)){
+                                lastSeen = "Last seen today at "+ lastSeenTime;
+                            }else{
+                                lastSeen = "Last seen on " +lastSeenDate +" at "+ lastSeenTime;
+                            }
+
+
+                        }
+                        status.setText(lastSeen);
+                    }
+
+
                 }else{
-                    lastSeen = "Last seen on " +lastSeenDate +" at "+ lastSeenTime;
+                    status.setVisibility(GONE);
                 }
 
-
-            }
-
-            if(user.getShowLastSeenState()){
-                onlineStatus.setText(lastSeen);
             }
 
         }
+
+
 
 
     }
@@ -574,8 +571,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         @SuppressLint("InflateParams") View actionBarView=LayoutInflater.inflate(R.layout.chat_custom_bar,null);
         actionBar.setCustomView(actionBarView);
         sendButton=findViewById(R.id.sendButton);
-        onlineStatus=findViewById(R.id.onlineStatus);
-        typing=findViewById(R.id.typingStatus);
+        status=findViewById(R.id.status);
         attachButton= findViewById(R.id.attachButton);
         profilePic=findViewById(R.id.image_profile);
         newMessage=findViewById(R.id.message_container);
@@ -596,20 +592,33 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 super.onScrolled(recyclerView, dx, dy);
                 if(messageList.size()>0){
                     int firstElementPosition = layoutManager.findFirstVisibleItemPosition();
+                    int lastElementPosition = layoutManager.findLastCompletelyVisibleItemPosition();
                     try{
 
                         if(messageList.get(firstElementPosition).getDate().equals(new Tools().getDate())){
-                            msgGroupDate.setVisibility(View.GONE);
+                            msgGroupDate.setVisibility(GONE);
                         }else{
                             msgGroupDate.setVisibility(VISIBLE);
                             msgGroupDate.setText(formatDate(messageList.get(Math.abs(firstElementPosition)).getDate()));
                         }
+                        if (messageList.size()> lastElementPosition+1){
+                            scrollButton.setVisibility(VISIBLE);
+                        }else{
+                            scrollButton.setVisibility(GONE);
+                        }
+
+
                     }catch(Exception e){
                         Log.e(TAG, "onScrolled: ",e.fillInStackTrace());
                     }
                 }
             }
         });
+        scrollButton.setOnClickListener(I->{
+            recyclerView.scrollToPosition(messageList.size()-1);
+
+        });
+
         database = FirebaseDatabase.getInstance();
 
         ImageButton emojiButton = findViewById(R.id.emoji_button);
@@ -680,13 +689,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             profileUrI=otherUserInfo.getProfileUrI();
             userName.setText(otherUserName);
             statusCheck(otherUserInfo);
-            getTypingStatus(otherUserInfo);
 
-            try {
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
             if(profileUrI!=null){
                 try {
                     Glide.with(getApplicationContext()).load(tools.decryptText(profileUrI)).listener(new RequestListener<Drawable>() {
@@ -706,11 +709,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                profilePic.setOnClickListener(v -> {
-               Intent intent =new Intent(getApplicationContext(), OtherUserActivity.class);
-                intent.putExtra("otherUserId",otherUserId).putExtra("otherUserName",otherUserName);
-                startActivity(intent);
-                });
 
             }else{
                 progressBar.setVisibility(GONE);
@@ -718,6 +716,12 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 profilePic.setCircleColor(Color.WHITE);
 
             }
+            profilePic.setOnClickListener(v -> {
+                Intent intent =new Intent(getApplicationContext(), OtherUserActivity.class);
+                intent.putExtra("otherUserId",otherUserId).putExtra("otherUserName",otherUserName);
+                startActivity(intent);
+            });
+
         });
 
     }
@@ -849,7 +853,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     @Override
     public void onItemClick(int position) {
         Intent i= new Intent();
-        PrivateKey privateKey;
+
         String imageUrI=messageList.get(position).getImageUrI();
         String videoUrI=messageList.get(position).getVideoUrI();
         String caption =messageList.get(position).getText();

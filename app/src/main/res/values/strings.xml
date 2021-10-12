@@ -27,5 +27,8 @@
     <string name="yesterday">Yesterday</string>
     <string name="today">Today</string>
     <string name="exitMessage">Press the logout button if you want to exit from the application</string>
+    <string name="title_activity_fullscreen">FullscreenActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
 
 </resources>

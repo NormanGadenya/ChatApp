@@ -168,6 +168,7 @@ public class SettingsActivity extends AppCompatActivity {
         chatWallpaperUrI = sharedPreferences.getString("chatWallpaper", null);
         int blur = sharedPreferences.getInt("chatBlur", 0);
         if (chatWallpaperUrI != null) {
+
             if (blur != 0) {
                 Glide.with(getApplicationContext())
                         .load(chatWallpaperUrI)

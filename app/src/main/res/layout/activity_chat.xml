@@ -41,89 +41,20 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:background="#8D3A3A3E"
-        android:id="@+id/constraint_layout2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:padding="5dp"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/const_message"
-            android:layout_width="0dp"
-            android:minHeight="40dp"
-            android:maxHeight="60dp"
-            android:layout_height="wrap_content"
-            app:layout_constraintEnd_toStartOf="@+id/attachButton"
-            app:layout_constraintHorizontal_bias="0.123"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:background="@drawable/card_background2"
-            >
-
-            <ImageButton
-                android:id="@+id/emoji_button"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="4dp"
-                android:background="@color/transparent"
-                android:clickable="true"
-                android:contentDescription="insert emoji"
-                android:src="@drawable/smiley"
-                app:tint="@color/white"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <hani.momanii.supernova_emoji_library.Helper.EmojiconEditText
-                android:id="@+id/message_container"
-                android:layout_width="250dp"
-                android:minHeight="40dp"
-                android:maxHeight="60dp"
-                android:contentDescription="@string/TypeMessage"
-                android:layout_marginLeft="8dp"
-                android:layout_height="wrap_content"
-                android:textColor="@color/white"
-                android:textColorHint="@color/cream"
-                android:paddingLeft="10dp"
-                android:background="@android:color/transparent"
-                android:hint="@string/TypeMessage"
-                app:emojiconSize="28sp"
-                app:layout_constraintStart_toEndOf="@id/emoji_button"
-                app:layout_constraintTop_toTopOf="parent"
-                />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-
-        <ImageButton
-            android:id="@+id/attachButton"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="1dp"
-            android:background="@drawable/ripple"
-            android:contentDescription="@string/attach_button"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/sendButton"
-            app:layout_constraintStart_toEndOf="@+id/const_message"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_baseline_attach_file_24" />
-
-        <ImageButton
-            android:id="@+id/sendButton"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginEnd="2dp"
-            android:background="@drawable/ripple"
-            android:contentDescription="@string/send_button"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/send" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
+    <ImageButton
+        android:id="@+id/scrollToBottom"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:visibility="gone"
+        android:background="@drawable/background_icon"
+        android:src="@drawable/ic_baseline_keyboard_arrow_down_24"
+        app:layout_constraintBottom_toBottomOf="@+id/recyclerView1"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="16dp"
+        android:layout_marginEnd="8dp"
+        android:elevation="4dp"
+        app:tint="@color/cream" />
+    <include layout="@layout/message_container"/>
     <androidx.cardview.widget.CardView
         android:id="@+id/layout_actions"
         android:layout_width="300dp"

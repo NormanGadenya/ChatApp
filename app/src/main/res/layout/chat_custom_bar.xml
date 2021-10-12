@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="?actionBarSize">
 
@@ -22,58 +23,42 @@
         app:layout_constraintEnd_toEndOf="@+id/image_profile" />
 
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
+    <TextView
+        android:id="@+id/userName"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:text="Norman Gadenya"
+        android:autoSizeTextType="uniform"
+        android:textSize="20sp"
+        android:fontFamily="sans-serif-condensed-medium"
+        android:textColor="@color/eggshell"
+        android:visibility="visible"
         android:layout_marginStart="8dp"
-        android:orientation="vertical"
+        app:layout_constraintBottom_toTopOf="@id/status"
         app:layout_constraintStart_toEndOf="@+id/image_profile"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/userName"
-            android:layout_width="200dp"
-            android:layout_height="25dp"
-            android:layout_centerVertical="true"
-            android:layout_weight=".5"
-            android:autoSizeTextType="uniform"
-            android:fontFamily="sans-serif-condensed-medium"
-            android:textColor="@color/white"
-            android:textSize="15sp"
-            android:visibility="visible"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+    <TextView
+        android:id="@+id/status"
+        android:layout_width="200dp"
+        android:layout_height="0dp"
+        android:layout_centerVertical="true"
+        android:ellipsize="marquee"
+        android:freezesText="true"
+        android:marqueeRepeatLimit="marquee_forever"
+        android:singleLine="true"
+        android:textSize="15sp"
+        android:padding="2dp"
+        android:visibility="visible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/image_profile"
+        app:layout_constraintBottom_toBottomOf="parent"
+        />
 
-        <TextView
-            android:id="@+id/onlineStatus"
-            android:layout_width="200dp"
-            android:layout_height="0dp"
-            android:layout_centerVertical="true"
-            android:layout_weight=".5"
-            android:ellipsize="marquee"
-            android:freezesText="true"
-            android:marqueeRepeatLimit="marquee_forever"
-            android:singleLine="true"
-            android:textColor="@color/white"
-            android:textSize="15sp"
-            android:visibility="visible"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/userName" />
 
-        <TextView
-            android:id="@+id/typingStatus"
-            android:layout_width="200dp"
-            android:layout_height="0dp"
-            android:layout_centerVertical="true"
-            android:layout_weight=".5"
-            android:text="Typing ..."
-            android:textColor="@color/teal_200"
-            android:textSize="15sp"
-            android:visibility="gone"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/userName" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+
 
     <ProgressBar
         android:id="@+id/progressBar2"

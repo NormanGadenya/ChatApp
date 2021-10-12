@@ -29,6 +29,8 @@ import com.example.letStalk.Common.Tools;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ViewModelProviders;
@@ -83,6 +85,8 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     private final ArrayList<messageListModel> selected=new ArrayList<>();
     private final FirebaseUser firebaseUser=FirebaseAuth.getInstance().getCurrentUser();
     private Handler mHandler = new Handler();
+    public String chatWallpaperUri;
+    public  int viewBackColor,viewTextColor, checkedColor;
 
 
 
@@ -109,6 +113,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     @NonNull
     @Override
     public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+
         View view;
 
         if(viewType ==MESSAGE_LEFT){
@@ -127,10 +132,33 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
+        try {
+            if(viewTextColor!=0 || viewTextColor !=0 ){
+                GradientDrawable gradientDrawable = (GradientDrawable) holder.backgroundView.getBackground() .mutate();
+                gradientDrawable.setColor(viewBackColor);
+                holder.message.setTextColor(viewTextColor);
+                holder.time.setTextColor(viewTextColor);
+                if(checkedColor!=0){
+                    List<Integer> checkedDraw = new ArrayList<>();
+                    checkedDraw.add(R.drawable.ic_baseline_done_all_24);
+                    checkedDraw.add(R.drawable.ic_baseline_done_24);
+                    for (int i : checkedDraw){
+                        Drawable unwrappedDrawable = AppCompatResources.getDrawable(context,i );
+                        Drawable wrappedDrawable = DrawableCompat.wrap(unwrappedDrawable);
+                        DrawableCompat.setTint(wrappedDrawable, checkedColor);
+                    }
 
+                }
+
+            }
+
+
+        } catch (Exception e) {
+            Log.e(TAG, "onBindViewHolder: ",e );
+        }
         holder.bind(list.get(position));
-        GradientDrawable gradientDrawable = (GradientDrawable) holder.backgroundView.getBackground() .mutate();
-        gradientDrawable.setColor(Color.RED);
+
+
         String previousTs=null;
         if(position>=1){
             previousTs = list.get(position-1).getDate();
