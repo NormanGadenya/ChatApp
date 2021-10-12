@@ -1,5 +1,10 @@
 package com.example.letStalk.Activities;
 
+import static android.view.View.GONE;
+import static com.example.letStalk.Common.Tools.CAMERA_REQUEST;
+import static com.example.letStalk.Common.Tools.CONTACTS_REQUEST;
+import static com.example.letStalk.Common.Tools.GALLERY_REQUEST;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -8,12 +13,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
-import android.security.keystore.KeyGenParameterSpec;
-import android.security.keystore.KeyProperties;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -30,25 +31,19 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.example.campaign.R;
 import com.example.letStalk.Common.Tools;
 import com.example.letStalk.Model.userModel;
-import com.example.campaign.R;
 import com.example.letStalk.Services.ProfileUploadService;
-
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-
 import com.zolad.zoominimageview.ZoomInImageView;
-import java.io.ByteArrayOutputStream;
 
-import static android.view.View.GONE;
-import static com.example.letStalk.Common.Tools.CAMERA_REQUEST;
-import static com.example.letStalk.Common.Tools.CONTACTS_REQUEST;
-import static com.example.letStalk.Common.Tools.GALLERY_REQUEST;
+import java.io.ByteArrayOutputStream;
 
 
 public class RegistrationActivity extends AppCompatActivity {
@@ -211,7 +206,6 @@ public class RegistrationActivity extends AppCompatActivity {
             userModel.setOnline(true);
             userModel.setShowLastSeen(true);
             userModel.setShowOnlineState(true);
-            userModel.setTyping("none");
             DatabaseReference myRef = database.getReference();
             myRef.child("UserDetails").child(userId).setValue(userModel);
     }

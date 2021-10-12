@@ -226,7 +226,6 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void getOpacity() {
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 changed = true;

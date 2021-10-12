@@ -3,9 +3,9 @@ package com.example.letStalk.adapter;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -25,7 +25,6 @@ import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.bumptech.glide.load.MultiTransformation;
 import com.example.letStalk.Common.Tools;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -50,15 +49,10 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 import com.zolad.zoominimageview.ZoomInImageView;
 
-import java.io.IOException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.UnrecoverableEntryException;
-import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -67,7 +61,6 @@ import java.util.Map;
 import hani.momanii.supernova_emoji_library.Helper.EmojiconTextView;
 import jp.wasabeef.glide.transformations.BlurTransformation;
 
-import static com.example.letStalk.Common.Tools.ALIAS;
 import static com.example.letStalk.Common.Tools.MESSAGE_LEFT;
 import static com.example.letStalk.Common.Tools.MESSAGE_RIGHT;
 
@@ -90,8 +83,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     private final ArrayList<messageListModel> selected=new ArrayList<>();
     private final FirebaseUser firebaseUser=FirebaseAuth.getInstance().getCurrentUser();
     private Handler mHandler = new Handler();
-
-
 
 
 
@@ -123,6 +114,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         if(viewType ==MESSAGE_LEFT){
             view =LayoutInflater.from(context).inflate(R.layout.chat_item_left,parent,false);
 
+
         }else if(viewType==MESSAGE_RIGHT){
             view =LayoutInflater.from(context).inflate(R.layout.chat_item_right,parent,false);
 
@@ -135,18 +127,10 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
-        PrivateKey privateKey;
 
-        try {
-            KeyStore keyStore= KeyStore.getInstance("AndroidKeyStore");
-            keyStore.load(null);
-            KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry)keyStore.getEntry(ALIAS, null);
-            privateKey=privateKeyEntry.getPrivateKey();
-            holder.bind(list.get(position),privateKey);
-        } catch (IOException | KeyStoreException | CertificateException | NoSuchAlgorithmException | UnrecoverableEntryException e) {
-            e.printStackTrace();
-        }
-
+        holder.bind(list.get(position));
+        GradientDrawable gradientDrawable = (GradientDrawable) holder.backgroundView.getBackground() .mutate();
+        gradientDrawable.setColor(Color.RED);
         String previousTs=null;
         if(position>=1){
             previousTs = list.get(position-1).getDate();
@@ -192,13 +176,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         int id=item.getItemId();
                         switch (id){
                             case R.id.menu_delete:
-                                DatabaseReference messageRef=database.getReference().child("chats").child(firebaseUser.getUid()).child(otherUserId);
-                                for(messageListModel c:selected){
-                                    list.remove(c);
-                                    messageRef.child(c.getMessageId()).removeValue();
-                                    notifyDataSetChanged();
-                                }
-                                mode.finish();
+                                itemDelete(mode);
                                 break;
 
                             case R.id.menu_selectAll:
@@ -234,6 +212,34 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         });
     }
 
+    private void itemDelete(ActionMode mode) {
+        DatabaseReference messageRef=database.getReference().child("chats").child(firebaseUser.getUid()).child(otherUserId);
+        FirebaseStorage mFirebaseStorage =FirebaseStorage.getInstance();
+        String reference=null;
+        StorageReference photoRef;
+        for(messageListModel c:selected){
+            list.remove(c);
+            if(c.getVideoUrI()!=null){
+                reference=c.getVideoUrI();
+            }else if( c.getImageUrI()!=null){
+                reference= c.getImageUrI();
+            }else if(c.getAudioUrI()!=null) {
+                reference=c.getAudioUrI();
+            }
+            try {
+                photoRef = mFirebaseStorage.getReferenceFromUrl(tools.decryptText(reference));
+                photoRef.delete();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            messageRef.child(c.getMessageId()).removeValue();
+
+            notifyDataSetChanged();
+        }
+        mode.finish();
+    }
+
     private void clickedItem(Holder holder) {
         messageListModel messageListModel=list.get(holder.getAdapterPosition());
         if(holder.checkBox.getVisibility()==View.GONE){
@@ -244,7 +250,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
             holder.checkBox.setVisibility(View.GONE);
             holder.itemView.setBackgroundColor(Color.TRANSPARENT);
             selected.remove(messageListModel);
-            Log.d("item_count",String.valueOf(selected.size()));
+
         }
         chatViewModel.setText(String.valueOf(selected.size()));
     }
@@ -286,6 +292,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         private final SeekBar audioSeekBar;
         private final ImageView checkBox;
         private String audioUrI;
+        private View backgroundView;
 
         public Holder(@NonNull View itemView) {
             super(itemView);
@@ -302,10 +309,11 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
             playButton=itemView.findViewById(R.id.playButton);
             pauseButton=itemView.findViewById(R.id.pauseButton);
             duration=itemView.findViewById(R.id.duration);
+            backgroundView= itemView.findViewById(R.id.background);
         }
 
         @SuppressLint({"ClickableViewAccessibility", "SetTextI18n"})
-        private void bind(final messageListModel messageList, PrivateKey privateKey) throws IOException {
+        private void bind(final messageListModel messageList) {
             if(messageList.getReceiver()!=null){
 
                 switch(messageList.getType()){
@@ -350,16 +358,13 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         duration.setVisibility(View.GONE);
                         if(messageList.getText()==null){
                             message.setVisibility(View.GONE);
-                        }else{
-                            if(privateKey!=null){
-                                try {
-                                    message.setText(tools.decryptText(messageList.getText()));
-                                } catch (Exception e) {
-                                    message.setText(messageList.getText());
-                                    e.printStackTrace();
-                                }
-                            }else{
+                        }else {
+
+                            try {
+                                message.setText(tools.decryptText(messageList.getText()));
+                            } catch (Exception e) {
                                 message.setText(messageList.getText());
+                                e.printStackTrace();
                             }
                             message.setVisibility(View.VISIBLE);
                         }
@@ -368,14 +373,13 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
                         time.setText(messageList.getTime());
                         String imageUri=messageList.getImageUrI();
-                        if(privateKey!=null){
-                            try {
-                                imageUri=tools.decryptText(imageUri);
-                            } catch (Exception e) {
+                        try {
+                            imageUri=tools.decryptText(imageUri);
+                        } catch (Exception e) {
 
-                                e.printStackTrace();
-                            }
+                            e.printStackTrace();
                         }
+
 
                         if(uploadImageData.containsKey(messageList.getMessageId()) && uploadImageData!=null){
                             progressBar.setVisibility(View.VISIBLE);
@@ -399,7 +403,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                                     return false;
                                 }
                             }).into(imageView);
-//                            progressBar.setVisibility(View.GONE);
                         }else{
                             Glide.with(context).load(imageUri).listener(new RequestListener<Drawable>() {
                                 @Override
@@ -445,14 +448,14 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         videoPlayButton.setOnClickListener(V-> recyclerViewInterface.onItemClick(getAdapterPosition()));
                         time.setText(messageList.getTime());
                         String videoUrI=messageList.getVideoUrI();
-                        if(privateKey!=null){
+
                             try {
                                 videoUrI=tools.decryptText(videoUrI);
 
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
-                        }
+
                         if(videoUrI!=null){
                             Glide.with(context)
                                     .load(videoUrI)
@@ -486,14 +489,14 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         progressBar.setVisibility(View.GONE);
 
                         audioUrI=messageList.getAudioUrI();
-                        if(privateKey!=null){
-                            try {
-                                audioUrI=tools.decryptText(audioUrI);
-                            } catch (Exception e) {
 
-                                e.printStackTrace();
-                            }
+                        try {
+                            audioUrI=tools.decryptText(audioUrI);
+                        } catch (Exception e) {
+
+                            e.printStackTrace();
                         }
+
                         if(uploadAudioData.containsKey(messageList.getMessageId()) && uploadAudioData!=null){
                             audioLoadProgress.setVisibility(View.VISIBLE);
                             playButton.setVisibility(View.GONE);
@@ -630,7 +633,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                     mediaPlayer.setDataSource(context, Uri.parse(uri));
                     mediaPlayer.prepare();
                 } catch (Exception e) {
-                    Log.e("messageList", e.getLocalizedMessage() + 'k');
+                    Log.e(TAG, e.getLocalizedMessage() );
                 }
             });
             }

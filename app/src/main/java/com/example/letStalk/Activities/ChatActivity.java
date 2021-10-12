@@ -4,7 +4,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.annotation.SuppressLint;
@@ -13,8 +16,10 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -412,12 +417,33 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         });
     }
 
+
+    // Generate palette asynchronously and use it on a different
+// thread using onGenerated()
+    public void createPaletteAsync(Bitmap bitmap) {
+        Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
+            public void onGenerated(Palette p) {
+                Drawable unwrappedDrawable = AppCompatResources.getDrawable(getApplicationContext(), R.drawable.background_right);
+                Drawable wrappedDrawable = DrawableCompat.wrap(unwrappedDrawable);
+                DrawableCompat.setTint(wrappedDrawable, Color.RED);
+            }
+        });
+    }
+
     private void getCurrentWallpaper(){
         String chatWallpaperUrI=settingsSharedPreferences.getString("chatWallpaper",null);
         int blur=settingsSharedPreferences.getInt("chatBlur",0);
+
         progressBar.setVisibility(VISIBLE);
         if (chatWallpaperUrI!=null){
             if(blur!=0) {
+                try {
+                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.parse(chatWallpaperUrI));
+                    createPaletteAsync(bitmap);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
                 Glide.with(getApplicationContext())
                         .load(chatWallpaperUrI)
                         .transform(new BlurTransformation(blur))
@@ -467,6 +493,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     private void getTypingStatus(userModel user){
         if(user.getTyping()!=null){
+            Log.d(TAG, "getTypingStatus: ".concat(user.getTyping()));
             if(user.getTyping().equals(fUser.getUid())){
                 onlineStatus.setVisibility(GONE);
                 typing.setVisibility(VISIBLE);
