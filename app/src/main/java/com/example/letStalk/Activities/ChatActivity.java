@@ -17,7 +17,6 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -43,10 +42,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestBuilder;
-import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.load.DataSource;
-import com.bumptech.glide.load.MultiTransformation;
-import com.bumptech.glide.load.Transformation;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
@@ -81,7 +77,6 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -462,7 +457,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             RequestBuilder requestBuilder= Glide.with(getApplicationContext()).load(chatWallpaperUrI);
 
             if(blur!=0) {
-                requestBuilder.transform(new BlurTransformation(blur));
+                requestBuilder= (RequestBuilder) requestBuilder.transform(new BlurTransformation(blur));
             }
             requestBuilder.addListener(new RequestListener<Drawable>() {
                 @Override
@@ -622,7 +617,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         database = FirebaseDatabase.getInstance();
 
         ImageButton emojiButton = findViewById(R.id.emoji_button);
-//        rootView=findViewById(R.id.constraint_layout2);
         layoutActions=findViewById(R.id.layout_actions);
         imageButton=findViewById(R.id.att_image);
         videoButton=findViewById(R.id.att_vid);
@@ -697,7 +691,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                         public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
                             progressBar.setVisibility(GONE);
                             return false;
-
                         }
 
                         @Override
@@ -751,7 +744,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                                 .putExtra("otherUserName", otherUserName);
                         startActivity(intent);
                     } else if (requestCode == VIDEOREQUEST) {
-                        Intent intent = new Intent(getApplicationContext(), sendVideo.class)
+                        Intent intent = new Intent(getApplicationContext(), SendVideo.class)
                                 .putExtra("videoUrI", selected.toString())
                                 .putExtra("otherUserId", otherUserId)
                                 .putExtra("otherUserName", otherUserName);

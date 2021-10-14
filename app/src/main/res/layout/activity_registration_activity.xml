@@ -13,151 +13,121 @@
     android:elevation="2dp"
     android:orientation="vertical"
     android:weightSum="4"
-    android:background="?colorPrimary"
+    android:background="?colorPrimary">
 
-    >
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:orientation="vertical"
+        android:layout_weight=".5"
+        >
 
-
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="30dp"
-            android:layout_marginRight="30dp"
-            android:layout_centerVertical="true"
-            android:orientation="vertical"
-            android:layout_weight=".5"
-            >
+            android:layout_marginTop="50dp"
+            android:textSize="30sp"
+            android:text="@string/registration"
+            android:textColor="@color/white"
+            android:fontFamily="sans-serif-condensed-medium"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:text="@string/aboutSelf"
+            android:textColor="@color/white"
+            android:fontFamily="sans-serif-condensed-medium"
+            android:layout_marginStart="20dp"
+            />
+    </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="50dp"
-                android:textSize="30dp"
-                android:text="Registration"
-                android:textColor="@color/white"
-                android:fontFamily="sans-serif-condensed-medium"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="20dp"
-                android:text="@string/aboutSelf"
-                android:textColor="@color/white"
-                android:fontFamily="sans-serif-condensed-medium"
-                android:layout_marginLeft="20dp"
-                />
-        </LinearLayout>
-
-
-    <RelativeLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="3.5"
         android:background="@drawable/card_background"
         android:elevation="50dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <com.zolad.zoominimageview.ZoomInImageView
+            android:id="@+id/image_profile"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:background="@drawable/rounded_outlines"
+            android:contentDescription="@string/profile_picture"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_male_avatar_svgrepo_com"
+            android:visibility="visible"
+            app:layout_constraintBottom_toTopOf="@+id/textInputLayout3"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/selProfilePic"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="50dp"
-            android:layout_centerVertical="true"
-            android:layout_marginRight="50dp"
-            android:orientation="vertical">
+            android:layout_marginEnd="8dp"
+            android:contentDescription="@string/insert_profile_picture"
+            app:layout_constraintBottom_toBottomOf="@+id/image_profile"
+            app:layout_constraintEnd_toEndOf="@+id/image_profile"
+            app:srcCompat="@drawable/camera" />
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="wrap_content"
-                android:layout_gravity="center"
-                android:layout_height="wrap_content">
-                <com.zolad.zoominimageview.ZoomInImageView
-                    android:id="@+id/image_profile"
-                    android:layout_width="200dp"
-                    android:layout_height="200dp"
-                    android:background="@drawable/rounded_outlines"
-                    android:scaleType="centerCrop"
-                    android:contentDescription="@string/profile_picture"
-                    android:visibility="visible"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    android:src="@drawable/ic_male_avatar_svgrepo_com"
-                     />
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textInputLayout3"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/progressBar1"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
-
-
-                <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/selProfilePic"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:layout_marginRight="8dp"
-                    android:contentDescription="insert profile picture"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="@+id/image_profile"
-                    app:srcCompat="@drawable/camera" />
-
-                <ProgressBar
-                    style="?android:attr/progressBarStyle"
-                    android:visibility="gone"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:layout_constraintBottom_toBottomOf="@+id/image_profile"
-                    app:layout_constraintEnd_toEndOf="@+id/image_profile"
-                    app:layout_constraintStart_toStartOf="@+id/image_profile"
-                    app:layout_constraintTop_toTopOf="parent" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editTextPersonName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@color/white"
+                android:hint="@string/name"
+                android:inputType="text"
+                android:singleLine="true" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-                >
+        <Button
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:singleLine="true"
-                    android:id="@+id/editTextPersonName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@color/white"
-                    android:inputType="text"
-                    android:hint="@string/name" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_marginTop="8dp"
-                android:layout_height="wrap_content">
-
-                <Button
-
-                    android:id="@+id/RegistrationButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/white"
-                    android:contentDescription="submit button"
-                    android:text="@string/next"
-                    app:layout_constraintEnd_toStartOf="@+id/progressBar1"
-                    app:layout_constraintHorizontal_bias="0.5"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <ProgressBar
-
-                    android:id="@+id/progressBar1"
-                    style="?android:attr/progressBarStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:visibility="gone"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.5"
-                    app:layout_constraintStart_toEndOf="@+id/RegistrationButton"
-                    app:layout_constraintTop_toTopOf="parent" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
+            android:id="@+id/RegistrationButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/submit_button"
+            android:text="@string/next"
+            android:textColor="@color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/progressBar1"
+            app:layout_constraintTop_toTopOf="parent" />
 
 
-        </LinearLayout>
+        <ProgressBar
 
-    </RelativeLayout>
+            android:id="@+id/progressBar1"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/RegistrationButton"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/textInputLayout3"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </LinearLayout>
+
+
+
+
     <include layout="@layout/layout_actions"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

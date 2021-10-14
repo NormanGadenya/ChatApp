@@ -29,6 +29,11 @@ public class ServiceCheck extends AppCompatActivity {
 
     }
 
+    public void stopService(){
+        Intent i=new Intent(context, updateStatusService.class);
+        stopService(i);
+    }
+
 
 }
 

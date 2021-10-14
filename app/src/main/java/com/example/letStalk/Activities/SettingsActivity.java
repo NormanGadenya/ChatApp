@@ -10,7 +10,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -23,7 +22,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -33,6 +31,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
@@ -61,11 +60,12 @@ import java.util.Map;
 import jp.wasabeef.glide.transformations.BlurTransformation;
 
 import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
+import static com.example.letStalk.Common.Tools.GALLERY_REQUEST;
 
 public class SettingsActivity extends AppCompatActivity {
     private Toolbar toolbar;
     private RecyclerView recyclerView;
-    private static final int GALLERY_REQUEST = 100;
     private final List<messageListModel> messageList = new ArrayList<>();
     private Uri selected;
     private BlurImageView imageView;
@@ -80,15 +80,19 @@ public class SettingsActivity extends AppCompatActivity {
     private SharedPreferences sharedPreferences;
     private boolean showOnline, showLastSeen;
     private Button logout;
+    private FloatingActionButton restoreButton;
+    public static final String TAG="SettingsActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_settings);
         sharedPreferences = getSharedPreferences("Settings", MODE_PRIVATE);
         toolbar = findViewById(R.id.toolbar);
         Button applyButton = findViewById(R.id.done);
         imageView = findViewById(R.id.imageView);
+        restoreButton=findViewById(R.id.wallPaperRestore);
         imageView.setClipToOutline(true);
         imageView.setBackgroundResource(R.drawable.card_background3);
         seekBar = findViewById(R.id.seekBar);
@@ -148,75 +152,58 @@ public class SettingsActivity extends AppCompatActivity {
             new AlertDialog.Builder(this)
                     .setTitle("Log out")
                     .setMessage("Are you sure you want to sign out")
-                    .setPositiveButton("Yes", (dialog, which) -> signOut())
+                    .setPositiveButton("Yes", (dialog, which) -> signOut(serviceCheck))
                     .setNegativeButton("cancel", (dialog, which) -> dialog.dismiss())
                     .create().show();
         });
-    }
+        restoreButton.setOnClickListener(I->{
+           selected=null;
+           imageView.setImageResource(R.drawable.whatsapp_wallpaper_121);
 
-    private void signOut() {
-        AuthUI.getInstance().signOut(this).addOnSuccessListener(I->{
-            moveTaskToBack(true);
-            android.os.Process.killProcess(android.os.Process.myPid());
-            System.exit(1);
         });
+    }
+
+    private void signOut(ServiceCheck service) {
+        FirebaseAuth firebase= FirebaseAuth.getInstance();
+        firebase.signOut();
+//        moveTaskToBack(true);
+//        android.os.Process.killProcess(android.os.Process.myPid());
+//        System.exit(1);
+//        AuthUI.getInstance().signOut(this).addOnSuccessListener(I->{
+//            moveTaskToBack(true);
+//            android.os.Process.killProcess(android.os.Process.myPid());
+//            System.exit(1);
+//        });
 
     }
 
 
-    private void getCurrentWallpaper() throws IOException {
+    private void getCurrentWallpaper()  {
         chatWallpaperUrI = sharedPreferences.getString("chatWallpaper", null);
         int blur = sharedPreferences.getInt("chatBlur", 0);
         if (chatWallpaperUrI != null) {
+                RequestBuilder<Drawable> requestBuilder = Glide.with(getApplicationContext()).load(chatWallpaperUrI);
 
-            if (blur != 0) {
-                Glide.with(getApplicationContext())
-                        .load(chatWallpaperUrI)
-                        .transform(new BlurTransformation(blur))
-                        .addListener(new RequestListener<Drawable>() {
-                            @Override
-                            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                                progressBar.setVisibility(GONE);
-                                return false;
-                            }
+                if( blur!=0){
+                    requestBuilder =requestBuilder.transform(new BlurTransformation(blur));
 
-                            @Override
-                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                                progressBar.setVisibility(GONE);
-                                seekBar.setProgress(blur * 4);
+                }
 
-                                return false;
-                            }
-                        })
+                requestBuilder.addListener(new RequestListener<Drawable>() {
+                    @Override
+                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                        progressBar.setVisibility(GONE);
+                        Log.e(TAG, "onLoadFailed: ", e);
+                        return false;
+                    }
 
-                        .diskCacheStrategy(DiskCacheStrategy.NONE)
-                        .skipMemoryCache(true)
-                        .into(imageView);
-
-            } else {
-                Glide.with(getApplicationContext())
-                        .load(chatWallpaperUrI)
-                        .addListener(new RequestListener<Drawable>() {
-                            @Override
-                            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                                progressBar.setVisibility(GONE);
-                                return false;
-                            }
-
-                            @Override
-                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                                progressBar.setVisibility(GONE);
-                                seekBar.setProgress(blur * 4);
-
-                                return false;
-                            }
-                        })
-
-                        .diskCacheStrategy(DiskCacheStrategy.NONE)
-                        .skipMemoryCache(true)
-                        .into(imageView);
-
-            }
+                    @Override
+                    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                        progressBar.setVisibility(GONE);
+                        seekBar.setProgress(blur * 4);
+                        return false;
+                    }
+                }).into(imageView);
 
         } else {
             imageView.setImageResource(R.drawable.whatsapp_wallpaper_121);
@@ -275,13 +262,14 @@ public class SettingsActivity extends AppCompatActivity {
     private void setSettings(String userId) {
         DatabaseReference myRef = database.getReference().child("UserDetails").child(userId);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        progressBar.setVisibility(View.VISIBLE);
+        progressBar.setVisibility(VISIBLE);
         Map<String, Object> userDetail = new HashMap<>();
         userDetail.put("showLastSeenState", showLastSeen);
         userDetail.put("showOnlineState", showOnline);
         myRef.updateChildren(userDetail);
         editor.putBoolean("showOnline", showOnline);
         editor.putBoolean("showLastSeen", showLastSeen);
+        Log.d(TAG, "setSettings: "+selected);
         if (selected != null) {
             try {
                 editor.putString("chatWallpaper", selected.toString());
@@ -294,7 +282,7 @@ public class SettingsActivity extends AppCompatActivity {
             }
 
         } else {
-
+            editor.putString("chatWallpaper",null);
             if (changed) {
                 progressBar.setVisibility(View.GONE);
                 editor.putInt("chatBlur", seekBarProgress);
@@ -327,8 +315,9 @@ public class SettingsActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == GALLERY_REQUEST && resultCode == Activity.RESULT_OK && data != null) {
             selected = data.getData();
+            restoreButton.setVisibility(VISIBLE);
             try {
-                progressBar.setVisibility(View.VISIBLE);
+                progressBar.setVisibility(VISIBLE);
                 Glide.with(getApplicationContext())
                         .load(selected)
                         .addListener(new RequestListener<Drawable>() {
@@ -348,7 +337,6 @@ public class SettingsActivity extends AppCompatActivity {
                         .skipMemoryCache(true)
                         .into(imageView)
                 ;
-                Log.d("imageUri", String.valueOf(selected));
 
                 getOpacity();
 
@@ -356,8 +344,8 @@ public class SettingsActivity extends AppCompatActivity {
             } catch (Exception e) {
                 Log.d("error", e.getMessage());
 
-
             }
+
         }
 
     }

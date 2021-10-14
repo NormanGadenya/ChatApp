@@ -53,8 +53,8 @@ public class UserListActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private UserViewModel userViewModel;
     private SharedPreferences contactsSharedPrefs;
+    public static final String TAG = "UserListActivity";
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,16 +67,21 @@ public class UserListActivity extends AppCompatActivity {
         ServiceCheck serviceCheck=new ServiceCheck(updateStatusService.class,this,manager);
         serviceCheck.checkServiceRunning();
         loadSharedPreferenceData();
+        userViewModel.initUserList(contactsSharedPrefs);
 
-        try{
-            userViewModel.initUserList(contactsSharedPrefs);
-            list=userViewModel.getAllUsers().getValue();
-            userListAdapter=new userListAdapter(list, UserListActivity.this);
-            recyclerView.setAdapter(userListAdapter);
-        }catch(Exception e){
-            Log.e("Exception",e.getMessage());
-        }
+        list=userViewModel.getAllUsers().getValue();
 
+
+
+        userViewModel.getAllUsers().observe(this, userModels -> {
+
+                userListAdapter=new userListAdapter(list, UserListActivity.this);
+                recyclerView.setAdapter(userListAdapter);
+
+            userListAdapter.notifyDataSetChanged();
+            progressBar.setVisibility(View.GONE);
+
+        });
         loadUsers();
 
 
@@ -140,13 +145,7 @@ public class UserListActivity extends AppCompatActivity {
 
 
     private void loadUsers(){
-        userViewModel.getAllUsers().observe(this, userModels -> {
-            if(userModels.size()>0){
-                userListAdapter.notifyDataSetChanged();
-                progressBar.setVisibility(View.GONE);
-            }
 
-        });
 
     }
 

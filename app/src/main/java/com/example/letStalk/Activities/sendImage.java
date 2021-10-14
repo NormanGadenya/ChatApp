@@ -1,5 +1,7 @@
 package com.example.letStalk.Activities;
 
+import static android.view.View.GONE;
+
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -33,14 +35,17 @@ public class sendImage extends AppCompatActivity {
         ImageButton sendButton = findViewById(R.id.sendButton);
         ZoomInImageView imageView = findViewById(R.id.attachedImage);
         ImageButton emojiButton = findViewById(R.id.emoji_button);
-        View rootView = findViewById(R.id.constraint_layout2);
+
+        ImageButton attachButton =findViewById(R.id.attachButton);
+        attachButton.setVisibility(GONE);
         selected=getIntent().getStringExtra("imageUrI");
         otherUserId=getIntent().getStringExtra("otherUserId");
         String otherUserName = getIntent().getStringExtra("otherUserName");
-        caption=findViewById(R.id.caption);
-        EmojIconActions emojIcon=new EmojIconActions(getApplicationContext(), rootView,caption, emojiButton,"#495C66","#DCE1E2","#0B1830");
-        emojIcon.setIconsIds(R.drawable.ic_action_keyboard,R.drawable.smiley);
-        emojIcon.ShowEmojIcon();
+        caption=findViewById(R.id.message_container);
+        View textArea=findViewById(R.id.constraint_layout2);
+        EmojIconActions emojiIcon=new EmojIconActions(getApplicationContext(),textArea,caption, emojiButton,"#495C66","#DCE1E2","#0B1830");
+        emojiIcon.setIconsIds(R.drawable.ic_action_keyboard,R.drawable.smiley);
+        emojiIcon.ShowEmojIcon();
         ActionBar actionBar=getSupportActionBar();
         actionBar.setTitle("Send to "+ otherUserName);
         actionBar.setDisplayHomeAsUpEnabled(true);

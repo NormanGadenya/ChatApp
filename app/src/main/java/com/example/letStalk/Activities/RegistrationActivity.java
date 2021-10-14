@@ -30,9 +30,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.campaign.R;
 import com.example.letStalk.Common.Tools;
+import com.example.letStalk.Model.ChatViewModel;
 import com.example.letStalk.Model.userModel;
 import com.example.letStalk.Services.ProfileUploadService;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -53,7 +55,6 @@ public class RegistrationActivity extends AppCompatActivity {
     private FloatingActionButton selProfilePic,gallery_button,camera_button,remove_button;
     private String userId;
     private String phoneNumber;
-
     private ConstraintLayout wrapper;
     public static final String TAG="Registration";
     private Uri selected;
@@ -120,6 +121,7 @@ public class RegistrationActivity extends AppCompatActivity {
                     updateUserDetails(userName,phoneNumber,userId);
                     clickedDone=true;
                     if(selected!=null){
+
                         Intent i= new Intent (getApplicationContext(), ProfileUploadService.class);
                         i.putExtra("userId",userId);
                         i.setData(selected);

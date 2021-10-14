@@ -1,7 +1,10 @@
 package com.example.letStalk.Model;
 
+import static android.util.Log.println;
+
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -19,9 +22,11 @@ public class UserViewModel extends ViewModel {
 
     public void initUserList(SharedPreferences sharedPreferences){
         if(userList!=null){
+
             return;
         }
         userList= Repo.getInstance().getAllUsers(sharedPreferences);
+
     }
 
     public void initOtherUserInfo(String otherUserId){
@@ -29,6 +34,7 @@ public class UserViewModel extends ViewModel {
             return;
         }
         otherUserInfo=Repo.getInstance().getOtherUserInfo(otherUserId);
+
     }
 
     public void initFUserInfo(){
@@ -36,6 +42,8 @@ public class UserViewModel extends ViewModel {
             return;
         }
         fUserInfo=Repo.getInstance().getFUserInfo();
+
+
     }
 
     public LiveData<ArrayList<userModel>> getAllUsers(){

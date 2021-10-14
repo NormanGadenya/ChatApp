@@ -47,7 +47,6 @@ public class userListAdapter extends RecyclerView.Adapter<userListAdapter.Holder
     public void onBindViewHolder(@NonNull Holder holder, int position) {
         final userModel userList=list.get(position);
         holder.userName.setText(userList.getUserName());
-//        holder.profile.setBorderColor(context.getColor(R.color.teal_200));
 
         if(userList.getOnline()){
             holder.onlineStatus.setVisibility(VISIBLE);

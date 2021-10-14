@@ -56,6 +56,7 @@ public class MyFirebaseMessaging extends FirebaseMessagingService {
         int j=Integer.parseInt(user.replaceAll("[\\D]", "")); // generates the notification id's
         Intent intent=new Intent(this, ChatActivity.class);
         intent.putExtra("userId",user);
+        intent.putExtra("userName",userName);
         PendingIntent pendingIntent=PendingIntent.getActivity(this,j,intent,PendingIntent.FLAG_ONE_SHOT);
         Uri RingingSound= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         OreoNotification oreoNotification=new OreoNotification(this);
@@ -87,6 +88,7 @@ public class MyFirebaseMessaging extends FirebaseMessagingService {
         int j=Integer.parseInt(user.replaceAll("[\\D]", ""));
         Intent intent=new Intent(this, ChatActivity.class);
         intent.putExtra("userId",user);
+        intent.putExtra("userName",userName);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent=PendingIntent.getActivity(this,j,intent,PendingIntent.FLAG_ONE_SHOT);
         Uri RingingSound= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);

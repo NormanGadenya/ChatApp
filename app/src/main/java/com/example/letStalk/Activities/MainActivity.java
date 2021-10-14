@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity   {
     protected void onStart() {
         super.onStart();
         list=chatViewModel.getChatListData().getValue();
-        Log.d("ksks", "onStart: "+ list.size());
+
         if(list!=null) {
             chatListAdapter = new chatListAdapter(list, MainActivity.this, this, viewModelStoreOwner, lifecycleOwner);
             chatListAdapter.setContactsSharedPrefs(contactsSharedPrefs);

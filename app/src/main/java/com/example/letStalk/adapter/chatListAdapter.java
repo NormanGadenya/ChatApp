@@ -52,6 +52,7 @@ import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
@@ -103,162 +104,162 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     public void onBindViewHolder(@NonNull Holder holder, int position) {
 
         final userModel chatList = list.get(position);
-
-        try {
-
-            getLastMessage(chatList.getUserId(),holder.tvDesc,holder.tvDate,holder.imageView,holder.messageStatus);
-
-        } catch (Exception e) {
-            Log.e("ChatList", "onBindViewHolder: ", e);
-        }
-
-        String userName=contactsSharedPrefs.getString(chatList.getPhoneNumber(),null);
-
-        if(userName!=null){
-            holder.tvName.setText(userName);
-        }else{
-            holder.tvName.setText(chatList.getUserName());
-        }
-        if (chatList.getProfileUrI()==null){
-            holder.profile.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
-        } else {
-            Glide.with(context).load(chatList.getProfileUrI()).into(holder.profile);
-        }
-
-        if(chatList.getOnline()){
-
-            holder.onlineStatus.setVisibility( VISIBLE);
-
-        }else{
-            holder.onlineStatus.setVisibility( GONE);
-
-
-        }
-
-        if(chatList.getTyping()!=null){
-            if(chatList.getTyping().equals(firebaseUser.getUid())){
-                holder.tvTyping.setVisibility(VISIBLE);
-                holder.tvDesc.setVisibility(GONE);
-                holder.messageStatus.setVisibility(GONE);
-
-            }else{
-                holder.tvTyping.setVisibility(GONE);
-                holder.tvDesc.setVisibility(VISIBLE);
-                holder.messageStatus.setVisibility(VISIBLE);
+        if(chatList!=null) {
+            try {
+                if (chatList.getUserId() != null) {
+                    getLastMessage(chatList.getUserId(), holder.tvDesc, holder.tvDate, holder.imageView, holder.messageStatus);
+                }
+            } catch (Exception e) {
+                Log.e("ChatList", "onBindViewHolder: ", e);
             }
-        }
+
+            String userName = contactsSharedPrefs.getString(chatList.getPhoneNumber(), null);
+            if (userName != null) {
+                holder.tvName.setText(userName);
+            } else {
+                if (chatList.getUserName() != null) {
+                    holder.tvName.setText(chatList.getUserName());
+                }
 
 
-        holder.itemView.setOnClickListener(v -> {
-            if(isEnabled){
-                clickedItem(holder);
+            }
+            Tools tools = new Tools();
+            if (chatList.getProfileUrI() == null) {
+                holder.profile.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
+            } else {
+                try {
+                    Glide.with(context).load(tools.decryptText(chatList.getProfileUrI())).into(holder.profile);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            if (chatList.getOnline()) {
+                holder.onlineStatus.setVisibility(VISIBLE);
+            } else {
+                holder.onlineStatus.setVisibility(GONE);
+            }
+            if (chatList.getTyping() != null) {
+                if (chatList.getTyping().equals(firebaseUser.getUid())) {
+                    holder.tvTyping.setVisibility(VISIBLE);
+                    holder.tvDesc.setVisibility(GONE);
+                    holder.messageStatus.setVisibility(GONE);
 
-            }else{
-                if(list!=null){
+                } else {
+                    holder.tvTyping.setVisibility(GONE);
+                    holder.tvDesc.setVisibility(VISIBLE);
+                    holder.messageStatus.setVisibility(VISIBLE);
+                }
+            }
+            holder.itemView.setOnClickListener(v -> {
+                if (isEnabled) {
+                    clickedItem(holder);
+                } else {
+
                     String name;
-                    if(userName==null){
-                        name=list.get(position).getUserName();
-                    }else{
-                        name=userName;
+                    if (userName == null) {
+                        name = list.get(position).getUserName();
+                    } else {
+                        name = userName;
                     }
-                    Intent intent =new Intent(context, ChatActivity.class)
-                            .putExtra("userId",list.get(position).getUserId())
-                            .putExtra("userName",name)
-                            .putExtra("profileUrI",list.get(position).getProfileUrI());
+                    Intent intent = new Intent(context, ChatActivity.class)
+                            .putExtra("userId", list.get(position).getUserId())
+                            .putExtra("userName", name)
+                            .putExtra("profileUrI", list.get(position).getProfileUrI());
 
                     activity.startActivity(intent);
-                    activity.overridePendingTransition(android.R.anim.slide_in_left,android.R.anim.slide_out_right);
+                    activity.overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
 
 
                 }
+
+            });
+
+
+            if (isSelected) {
+                holder.checkBox.setVisibility(VISIBLE);
+                holder.itemView.setBackgroundColor(Color.LTGRAY);
+            } else {
+                holder.checkBox.setVisibility(GONE);
+                holder.itemView.setBackgroundColor(Color.TRANSPARENT);
             }
 
-        });
-
-        if(isSelected){
-            holder.checkBox.setVisibility(VISIBLE);
-            holder.itemView.setBackgroundColor(Color.LTGRAY);
-        }else{
-            holder.checkBox.setVisibility(GONE);
-            holder.itemView.setBackgroundColor(Color.TRANSPARENT);
-        }
-
-        holder.itemView.setOnLongClickListener(v -> {
-            if(!isEnabled){
-                ActionMode.Callback callback= new ActionMode.Callback() {
-                    @Override
-                    public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                        MenuInflater menuInflater=mode.getMenuInflater();
-                        menuInflater.inflate(R.menu.action_menu,menu);
-                        return true;
-                    }
-                    @Override
-                    public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-                        isEnabled=true;
-                        clickedItem(holder);
-
-                        chatViewModel.getText().observe((LifecycleOwner)activity, s -> mode.setTitle(String.format("%s selected",s)));
-
-                        return true;
-                    }
-
-                    @Override
-                    public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-                        int id=item.getItemId();
-                        switch (id){
-                            case R.id.menu_delete:
-
-                                ArrayList<String> deletedChatIds = new ArrayList<String>();
-                                for(userModel c:selected){
-                                    deletedChatIds.add(c.getUserId());
-                                    list.remove(c);
-                                    notifyDataSetChanged();
-                                }
-
-                                Bundle b = new Bundle();
-                                b.putStringArrayList("deletedChatsList",deletedChatIds);
-                                Intent i = new Intent(context, DeleteStorageFile.class);
-                                i.putExtras(b);
-
-                                activity.startService(i);
-                                mode.finish();
-                                break;
-
-                            case R.id.menu_selectAll:
-                                if(selected.size() ==list.size()){
-                                    isSelected=false;
-                                    selected.clear();
-                                }else{
-                                    isSelected=true;
-                                    selected.clear();
-                                    selected.addAll(list);
-                                }
-                                chatViewModel.setText(String.valueOf(selected.size()));
-                                notifyDataSetChanged();
-                                break;
-
+            holder.itemView.setOnLongClickListener(v -> {
+                if (!isEnabled) {
+                    ActionMode.Callback callback = new ActionMode.Callback() {
+                        @Override
+                        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                            MenuInflater menuInflater = mode.getMenuInflater();
+                            menuInflater.inflate(R.menu.action_menu, menu);
+                            return true;
                         }
-                        return true;
-                    }
 
-                    @Override
-                    public void onDestroyActionMode(ActionMode mode) {
-                        isEnabled=false;
-                        isSelected=false;
-                        selected.clear();
-                        notifyDataSetChanged();
-                    }
-                };
-                ((AppCompatActivity)v.getContext()).startActionMode(callback);
+                        @Override
+                        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                            isEnabled = true;
+                            clickedItem(holder);
 
-            }else{
-                clickedItem(holder);
+                            chatViewModel.getText().observe((LifecycleOwner) activity, s -> mode.setTitle(String.format("%s selected", s)));
 
-            }
-            return true;
-        });
+                            return true;
+                        }
 
+                        @Override
+                        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                            int id = item.getItemId();
+                            switch (id) {
+                                case R.id.menu_delete:
 
+                                    ArrayList<String> deletedChatIds = new ArrayList<String>();
+                                    for (userModel c : selected) {
+                                        deletedChatIds.add(c.getUserId());
+                                        list.remove(c);
+                                        notifyDataSetChanged();
+                                    }
+
+                                    Bundle b = new Bundle();
+                                    b.putStringArrayList("deletedChatsList", deletedChatIds);
+                                    Intent i = new Intent(context, DeleteStorageFile.class);
+                                    i.putExtras(b);
+
+                                    activity.startService(i);
+                                    mode.finish();
+                                    break;
+
+                                case R.id.menu_selectAll:
+                                    if (selected.size() == list.size()) {
+                                        isSelected = false;
+                                        selected.clear();
+                                    } else {
+                                        isSelected = true;
+                                        selected.clear();
+                                        selected.addAll(list);
+                                    }
+                                    chatViewModel.setText(String.valueOf(selected.size()));
+                                    notifyDataSetChanged();
+                                    break;
+
+                            }
+                            return true;
+                        }
+
+                        @Override
+                        public void onDestroyActionMode(ActionMode mode) {
+                            isEnabled = false;
+                            isSelected = false;
+                            selected.clear();
+                            notifyDataSetChanged();
+                        }
+                    };
+                    ((AppCompatActivity) v.getContext()).startActionMode(callback);
+
+                } else {
+                    clickedItem(holder);
+
+                }
+                return true;
+            });
+
+        }
     }
 
     private void clickedItem(Holder holder) {
@@ -322,12 +323,13 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
         chatViewModel = new ViewModelProvider(viewModelStoreOwner).get(ChatViewModel.class);
         chatViewModel.initLastMessage(userId);
         chatViewModel.getLastMessage().observe(lifecycleOwner, lastMessage -> {
-            if(lastMessage.containsKey(userId)){
-                Boolean messageChecked=lastMessage.get(userId).isChecked();
-                String textMessage=lastMessage.get(userId).getText();
-                String imageUrI=lastMessage.get(userId).getImageUrI();
-                String videoUrI=lastMessage.get(userId).getVideoUrI();
-                String audioUrI=lastMessage.get(userId).getAudioUrI();
+            if(lastMessage.containsKey(userId) ){
+
+                Boolean messageChecked= Objects.requireNonNull(lastMessage.get(userId)).isChecked();
+                String textMessage= Objects.requireNonNull(lastMessage.get(userId)).getText();
+                String imageUrI= Objects.requireNonNull(lastMessage.get(userId)).getImageUrI();
+                String videoUrI= Objects.requireNonNull(lastMessage.get(userId)).getVideoUrI();
+                String audioUrI= Objects.requireNonNull(lastMessage.get(userId)).getAudioUrI();
                 Tools tools = new Tools();
                 try {
                     textMessage=(textMessage!=null) ? tools.decryptText(textMessage) : null;

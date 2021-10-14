@@ -1,5 +1,8 @@
 package com.example.letStalk.Activities;
 
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -7,6 +10,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,11 +36,11 @@ public class OtpActivity extends AppCompatActivity {
     private PhoneAuthProvider.OnVerificationStateChangedCallbacks mCallBacks;
     private PhoneAuthCredential credential;
     private Handler handler=new Handler();
-    private Runnable runnable;
     public static final String TAG="OTPActivity";
     private static final String FORMAT = "%02d:%02d";
     private TextView countDownTimer;
     private CountDownTimer countDT;
+    private ProgressBar progressBar;
 
 
     @Override
@@ -53,8 +57,8 @@ public class OtpActivity extends AppCompatActivity {
 
         resendCodeBtn.setOnClickListener(I->{
            requestCode();
-           resendCodeBtn.setVisibility(View.GONE);
-           mVerifyCodeBtn.setVisibility(View.VISIBLE);
+           resendCodeBtn.setVisibility(GONE);
+           mVerifyCodeBtn.setVisibility(VISIBLE);
         });
 
         mVerifyCodeBtn.setOnClickListener(v -> {
@@ -79,12 +83,11 @@ public class OtpActivity extends AppCompatActivity {
             }
 
             public void onFinish() {
-                resendCodeBtn.setVisibility(View.VISIBLE);
-                mVerifyCodeBtn.setVisibility(View.GONE);
+                resendCodeBtn.setVisibility(VISIBLE);
+                mVerifyCodeBtn.setVisibility(GONE);
             }
         };
         countDT.start();
-        handler.post(runnable);
 
     }
     public void requestCode(){
@@ -96,7 +99,7 @@ public class OtpActivity extends AppCompatActivity {
                 .build();
         try{
             PhoneAuthProvider.verifyPhoneNumber(options);
-            countDownTimer.setVisibility(View.VISIBLE);
+            countDownTimer.setVisibility(VISIBLE);
             countDownTimer();
 
         }catch(Exception e){
@@ -107,9 +110,11 @@ public class OtpActivity extends AppCompatActivity {
         if (!verificationCode.isEmpty()){
             if(verificationId!=null){
                 try{
+                    progressBar.setVisibility(VISIBLE);
                     verifyPhoneNumberWithCode(verificationId,verificationCode);
                     signIn(credential);
                 }catch(Exception e){
+                    progressBar.setVisibility(GONE);
                     Log.e(TAG, "verifyOtp: ",e.fillInStackTrace() );
                 }
             }
@@ -123,14 +128,15 @@ public class OtpActivity extends AppCompatActivity {
         resendCodeBtn=findViewById(R.id.resendButton);
         mVerifyCodeBtn=findViewById(R.id.verifyButton);
         otpEdit=findViewById(R.id.editOtpNumber);
+        progressBar=findViewById(R.id.progressBarOTP);
         countDownTimer=findViewById(R.id.timer);
         mCallBacks = new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
             @Override
             public void onVerificationCompleted(@NonNull PhoneAuthCredential phoneAuthCredential) {
                 final String code = phoneAuthCredential.getSmsCode();
-                handler.removeCallbacks(runnable);
-                countDownTimer.setVisibility(View.GONE);
+                countDownTimer.setVisibility(GONE);
                 otpEdit.setText(code);
+                progressBar.setVisibility(GONE);
                 signIn(phoneAuthCredential);
 
             }
@@ -138,9 +144,9 @@ public class OtpActivity extends AppCompatActivity {
             @Override
             public void onVerificationFailed(@NonNull FirebaseException e) {
                 countDT.cancel();
-                countDownTimer.setVisibility(View.GONE);
-                resendCodeBtn.setVisibility(View.VISIBLE);
-                mVerifyCodeBtn.setVisibility(View.GONE);
+                countDownTimer.setVisibility(GONE);
+                resendCodeBtn.setVisibility(VISIBLE);
+                mVerifyCodeBtn.setVisibility(GONE);
 
             }
 
@@ -148,7 +154,7 @@ public class OtpActivity extends AppCompatActivity {
             public void onCodeSent(@NonNull String s, @NonNull PhoneAuthProvider.ForceResendingToken forceResendingToken) {
                 super.onCodeSent(s, forceResendingToken);
                 verificationId=s;
-                countDownTimer.setVisibility(View.GONE);
+                countDownTimer.setVisibility(GONE);
 
             }
         };
@@ -165,11 +171,13 @@ public class OtpActivity extends AppCompatActivity {
 
     private void signIn(PhoneAuthCredential credential){
         firebaseAuth.signInWithCredential(credential).addOnCompleteListener(task -> {
-            if (task.isSuccessful()){
+            if (task.isSuccessful()) {
                 countDT.cancel();
-                Intent i = new Intent(OtpActivity.this,RegistrationActivity.class);
+                Intent i = new Intent(OtpActivity.this, RegistrationActivity.class);
                 startActivity(i);
                 finish();
+            }else{
+                progressBar.setVisibility(GONE);
             }
         });
 

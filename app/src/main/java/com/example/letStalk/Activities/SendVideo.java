@@ -1,5 +1,7 @@
 package com.example.letStalk.Activities;
 
+import static android.view.View.GONE;
+
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -17,7 +19,7 @@ import com.example.campaign.R;
 import hani.momanii.supernova_emoji_library.Actions.EmojIconActions;
 import hani.momanii.supernova_emoji_library.Helper.EmojiconEditText;
 
-public class sendVideo extends AppCompatActivity {
+public class SendVideo extends AppCompatActivity {
 
     private String selected;
     private EmojiconEditText caption;
@@ -32,14 +34,17 @@ public class sendVideo extends AppCompatActivity {
 
         ImageButton emojiButton = findViewById(R.id.emoji_button);
         VideoView videoView = findViewById(R.id.attachedVideo);
-        View rootView = findViewById(R.id.constraint_layout2);
         selected=getIntent().getStringExtra("videoUrI");
         otherUserId=getIntent().getStringExtra("otherUserId");
         String otherUserName = getIntent().getStringExtra("otherUserName");
-        caption=findViewById(R.id.caption);
-        EmojIconActions emojIcon=new EmojIconActions(getApplicationContext(), rootView,caption, emojiButton,"#495C66","#DCE1E2","#0B1830");
-        emojIcon.setIconsIds(R.drawable.ic_action_keyboard,R.drawable.smiley);
-        emojIcon.ShowEmojIcon();
+        ImageButton attachButton =findViewById(R.id.attachButton);
+        attachButton.setVisibility(GONE);
+        caption=findViewById(R.id.message_container);
+        View textArea=findViewById(R.id.constraint_layout2);
+        EmojIconActions emojiIcon=new EmojIconActions(getApplicationContext(),textArea,caption, emojiButton,"#495C66","#DCE1E2","#0B1830");
+        emojiIcon.setIconsIds(R.drawable.ic_action_keyboard,R.drawable.smiley);
+        emojiIcon.ShowEmojIcon();
+
         ActionBar actionBar=getSupportActionBar();
         actionBar.setTitle("Send to "+ otherUserName);
         actionBar.setDisplayHomeAsUpEnabled(true);

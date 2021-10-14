@@ -28,6 +28,7 @@ import java.util.Set;
 @SuppressWarnings("unchecked")
 public class Repo {
     static Repo instance;
+    public static final String TAG = "Repo";
     private final MutableLiveData<ArrayList<userModel>> chatList=new MutableLiveData<>();
     private final MutableLiveData <HashMap<String,messageListModel>> lastMessage=new MutableLiveData<>();
     private final HashMap<String,messageListModel> messageSet=new HashMap<>();
@@ -46,12 +47,15 @@ public class Repo {
     public static Repo getInstance() {
         if(instance == null){
             instance= new Repo();
+
+
         }
 
         return instance;
     }
 
     public MutableLiveData<ArrayList<userModel>> getChatList(){
+        Log.d(TAG, "getChatList: Yesss");
         if (chats_List_Model!=null && fUser!=null) {
             GetChatList getChatList=new GetChatList();
             new Thread(getChatList).start();
@@ -185,9 +189,10 @@ public class Repo {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 HashMap<String,userModel> chatListOrder=new HashMap<>();
+                Log.d(TAG, "onDataChange: "+snapshot);
                 chatListOrder.clear();
                 chats_List_Model.clear();
-                Log.d("snapshot",snapshot.toString());
+
                 for(DataSnapshot dataSnapshot:snapshot.getChildren()){
                     if(arrangedChatListId.contains(dataSnapshot.getKey())){
                         System.out.println(dataSnapshot);
@@ -345,6 +350,7 @@ public class Repo {
                     int i= Collections.frequency(phoneNumbersList,users.getPhoneNumber());
                     if(contactsSharedPrefs!=null && users!= null){
                         if ( !users.getPhoneNumber().equals(phoneNumber)) {
+
                             if (i <=1 && contactsSharedPrefs.contains(phoneNumber)){
                                 String userName=contactsSharedPrefs.getString(users.getPhoneNumber(),null);
                                 if(userName!=null){

@@ -70,7 +70,6 @@ public class UserProfileActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private StorageReference mStorageReference;
     private Uri selected;
-//    private static final int GALLERY_REQUEST = 100;
     private UserViewModel userViewModel;
 
     @Override

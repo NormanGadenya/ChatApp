@@ -33,8 +33,6 @@ public class SplashActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
         context=getApplicationContext();
-        ChatViewModel chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
-        chatViewModel.initChatsList();
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
             getPhoneNumbers();
         }else{

@@ -45,7 +45,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.example.letStalk.Activities.sendVideo"
+            android:name="com.example.letStalk.Activities.SendVideo"
             android:parentActivityName="com.example.letStalk.Activities.ChatActivity" />
         <activity
             android:name="com.example.letStalk.Activities.sendImage"
