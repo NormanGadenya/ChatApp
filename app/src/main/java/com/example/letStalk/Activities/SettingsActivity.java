@@ -78,7 +78,7 @@ public class SettingsActivity extends AppCompatActivity {
     private final FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
     private UserViewModel userViewModel;
     private SharedPreferences sharedPreferences;
-    private boolean showOnline, showLastSeen;
+    private boolean showOnline, showLastSeen,setFingerprint;
     private Button logout;
     private FloatingActionButton restoreButton;
     public static final String TAG="SettingsActivity";
@@ -100,6 +100,7 @@ public class SettingsActivity extends AppCompatActivity {
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
         CheckBox onlineStatus = findViewById(R.id.onlineStatus);
         CheckBox lastSeenStatus = findViewById(R.id.lastSeenStatus);
+        CheckBox fingerprintStatus = findViewById(R.id.fingerprint);
         userViewModel.initFUserInfo();
         progressBar = findViewById(R.id.progressBarChatWallpaper);
         setSupportActionBar(toolbar);
@@ -115,9 +116,10 @@ public class SettingsActivity extends AppCompatActivity {
         }
         boolean lastSeen = sharedPreferences.getBoolean("showLastSeen", true);
         boolean online = sharedPreferences.getBoolean("showOnline", true);
-
+        boolean fingerprint = sharedPreferences.getBoolean("setFingerprint",false);
         onlineStatus.setChecked(online);
         lastSeenStatus.setChecked(lastSeen);
+        fingerprintStatus.setChecked(fingerprint);
 
         recyclerView = findViewById(R.id.recycler_view_wall);
         FloatingActionButton editWallpaper = findViewById(R.id.editWallpaper);
@@ -147,13 +149,14 @@ public class SettingsActivity extends AppCompatActivity {
         onlineStatus.setOnCheckedChangeListener((buttonView, isChecked) -> showOnline = isChecked);
 
         lastSeenStatus.setOnCheckedChangeListener((buttonView, isChecked) -> showLastSeen = isChecked);
+        fingerprintStatus.setOnCheckedChangeListener((buttonView, isChecked) -> setFingerprint = isChecked);
         applyButton.setOnClickListener(v -> setSettings(firebaseUser.getUid()));
         logout.setOnClickListener(v->{
             new AlertDialog.Builder(this)
                     .setTitle("Log out")
                     .setMessage("Are you sure you want to sign out")
                     .setPositiveButton("Yes", (dialog, which) -> signOut(serviceCheck))
-                    .setNegativeButton("cancel", (dialog, which) -> dialog.dismiss())
+                    .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
                     .create().show();
         });
         restoreButton.setOnClickListener(I->{
@@ -269,6 +272,7 @@ public class SettingsActivity extends AppCompatActivity {
         myRef.updateChildren(userDetail);
         editor.putBoolean("showOnline", showOnline);
         editor.putBoolean("showLastSeen", showLastSeen);
+        editor.putBoolean("setFingerprint",setFingerprint);
         Log.d(TAG, "setSettings: "+selected);
         if (selected != null) {
             try {

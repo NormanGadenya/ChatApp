@@ -3,6 +3,7 @@ package com.example.letStalk.Activities;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -84,7 +85,15 @@ public class SignUpActivity extends AppCompatActivity {
         }
     }
     private void sendToChats(){
-        Intent mainIntent = new Intent(SignUpActivity.this , MainActivity.class);
+        SharedPreferences sharedPreferences = getSharedPreferences("Settings", MODE_PRIVATE);
+        boolean fingerprint = sharedPreferences.getBoolean("setFingerprint",false);
+        Class<?> gotoclass ;
+        if(!fingerprint){
+            gotoclass = MainActivity.class;
+        }else{
+            gotoclass = FingerprintActivity.class;
+        }
+        Intent mainIntent = new Intent(SignUpActivity.this ,gotoclass );
         startActivity(mainIntent);
         finish();
     }

@@ -14,9 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.ViewModelProvider;
 
-import com.example.letStalk.Model.ChatViewModel;
 import com.example.campaign.R;
 
 import java.util.HashMap;
@@ -28,6 +26,7 @@ public class SplashActivity extends AppCompatActivity {
     private final Map<String, String> namePhoneMap= new HashMap<>();
     private Context context;
     private SharedPreferences contactsSharedPrefs;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,6 +70,7 @@ public class SplashActivity extends AppCompatActivity {
             }
         }
     }
+
 
     public boolean isAlphanumeric2(String str) {
         for (int i=0; i<str.length(); i++) {
@@ -122,15 +122,19 @@ public class SplashActivity extends AppCompatActivity {
             }
             phones.close();
             editor.apply();
-
-
             Intent mainIntent = new Intent(SplashActivity.this, SignUpActivity.class);
             startActivity(mainIntent);
             finish();
 
+
+
+
         });
 
         getContactsThread.start();
+
+
+
 
     }
 
