@@ -4,8 +4,6 @@ package com.example.letStalk.Activities;
 import static android.view.View.GONE;
 
 import android.Manifest;
-import android.app.ActivityManager;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -13,7 +11,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,11 +22,9 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
-import com.example.letStalk.Common.ServiceCheck;
+import com.example.campaign.R;
 import com.example.letStalk.Common.Tools;
 import com.example.letStalk.Model.UserViewModel;
-import com.example.campaign.R;
-import com.example.letStalk.Services.updateStatusService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
@@ -80,7 +75,6 @@ public class OtherUserActivity extends AppCompatActivity {
     }
 
     private void setupToolBar(){
-
         userViewModel.getOtherUserInfo().observe(this,user->{
             profileUrI=user.getProfileUrI();
             if(profileUrI!=null){

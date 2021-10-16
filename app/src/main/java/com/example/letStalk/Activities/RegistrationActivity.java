@@ -7,7 +7,6 @@ import static com.example.letStalk.Common.Tools.GALLERY_REQUEST;
 
 import android.Manifest;
 import android.app.Activity;
-import androidx.appcompat.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -23,18 +22,15 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.ViewModelProvider;
-
 import com.example.campaign.R;
 import com.example.letStalk.Common.Tools;
-import com.example.letStalk.Model.ChatViewModel;
 import com.example.letStalk.Model.userModel;
 import com.example.letStalk.Services.ProfileUploadService;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -65,6 +61,7 @@ public class RegistrationActivity extends AppCompatActivity {
     private String date;
     private String time;
     private Tools tools;
+    private FirebaseUser user;
 
 
     @Override
@@ -72,11 +69,9 @@ public class RegistrationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_registration_activity);
         database = FirebaseDatabase.getInstance();
-        tools =new Tools();
+        user= FirebaseAuth.getInstance().getCurrentUser();
         InitializeControllers();
         bottomSheet= BottomSheetBehavior.from(wrapper);
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
         bottomSheet.setState(BottomSheetBehavior.STATE_HIDDEN);
         selProfilePic.setOnClickListener(v -> {
             closeKeyboard();
@@ -146,11 +141,7 @@ public class RegistrationActivity extends AppCompatActivity {
         remove_button.setOnClickListener(v -> {
             removeImage();
         });
-
     }
-
-
-
 
     private void removeImage() {
         selected=null;
@@ -223,11 +214,12 @@ public class RegistrationActivity extends AppCompatActivity {
         profilePic=findViewById(R.id.image_profile);
         progressBar=findViewById(R.id.progressBar1);
         profilePic.setClipToOutline(true);
+        tools =new Tools();
         time=tools.getTime();
         date=tools.getDate();
 
-    }
 
+    }
 
     private Uri getImageUri( Bitmap photo) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -251,7 +243,6 @@ public class RegistrationActivity extends AppCompatActivity {
                     new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, GALLERY_REQUEST);
         }
     }
-
 
     private void requestCameraPermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(this,

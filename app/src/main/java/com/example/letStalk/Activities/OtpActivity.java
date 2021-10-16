@@ -35,19 +35,18 @@ public class OtpActivity extends AppCompatActivity {
     private String phoneNumber,verificationId;
     private PhoneAuthProvider.OnVerificationStateChangedCallbacks mCallBacks;
     private PhoneAuthCredential credential;
-    private Handler handler=new Handler();
     public static final String TAG="OTPActivity";
     private static final String FORMAT = "%02d:%02d";
     private TextView countDownTimer;
     private CountDownTimer countDT;
     private ProgressBar progressBar;
+    private String code;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_otp);
-
         InitializeControllers();
         requestCode();
         otpEdit.setOnCompleteListener(value -> {
@@ -62,7 +61,6 @@ public class OtpActivity extends AppCompatActivity {
         });
 
         mVerifyCodeBtn.setOnClickListener(v -> {
-
             String verificationCode = otpEdit.getText().toString();
             verifyOtp(verificationCode);
         });
@@ -70,16 +68,18 @@ public class OtpActivity extends AppCompatActivity {
 
     }
     private void countDownTimer(){
-         countDT=new CountDownTimer(120000, 1000) { // adjust the milli seconds here
+         countDT=new CountDownTimer(120000, 1000) {
 
             public void onTick(long millisUntilFinished) {
-
+                if(millisUntilFinished<60000 && code==null){
+                    resendCodeBtn.setVisibility(VISIBLE);
+                }
                 countDownTimer.setText(""+String.format(FORMAT,
                         TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished) - TimeUnit.HOURS.toMinutes(
                                 TimeUnit.MILLISECONDS.toHours(millisUntilFinished)),
                         TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished) - TimeUnit.MINUTES.toSeconds(
                                 TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished))));
-                Log.d(TAG, "onTick: ");
+
             }
 
             public void onFinish() {
@@ -90,6 +90,7 @@ public class OtpActivity extends AppCompatActivity {
         countDT.start();
 
     }
+
     public void requestCode(){
         PhoneAuthOptions options = PhoneAuthOptions.newBuilder(firebaseAuth)
                 .setPhoneNumber(phoneNumber)
@@ -133,7 +134,7 @@ public class OtpActivity extends AppCompatActivity {
         mCallBacks = new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
             @Override
             public void onVerificationCompleted(@NonNull PhoneAuthCredential phoneAuthCredential) {
-                final String code = phoneAuthCredential.getSmsCode();
+                code = phoneAuthCredential.getSmsCode();
                 countDownTimer.setVisibility(GONE);
                 otpEdit.setText(code);
                 progressBar.setVisibility(GONE);
@@ -182,8 +183,6 @@ public class OtpActivity extends AppCompatActivity {
         });
 
     }
-
-
 
     private void verifyPhoneNumberWithCode(String verificationId, String code) {
 

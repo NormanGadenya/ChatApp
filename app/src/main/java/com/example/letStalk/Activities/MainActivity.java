@@ -1,52 +1,40 @@
 package com.example.letStalk.Activities;
 
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.app.ActivityOptionsCompat;
-
-import androidx.core.view.MenuItemCompat;
-import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelStoreOwner;
-
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
+import static com.example.letStalk.Common.Tools.EXTRA_CIRCULAR_REVEAL_X;
+import static com.example.letStalk.Common.Tools.EXTRA_CIRCULAR_REVEAL_Y;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-
 import android.os.Bundle;
-
 import android.text.TextUtils;
-
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.SearchView;
-import android.widget.TextView;
-
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.ActivityOptionsCompat;
+import androidx.core.view.MenuItemCompat;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelStoreOwner;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import com.example.campaign.R;
 import com.example.letStalk.Common.ServiceCheck;
-
 import com.example.letStalk.Model.ChatViewModel;
-
 import com.example.letStalk.Model.userModel;
-
 import com.example.letStalk.Services.updateStatusService;
 import com.example.letStalk.adapter.chatListAdapter;
-import com.example.campaign.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.example.letStalk.Common.Tools.EXTRA_CIRCULAR_REVEAL_X;
-import static com.example.letStalk.Common.Tools.EXTRA_CIRCULAR_REVEAL_Y;
 
 public class MainActivity extends AppCompatActivity   {
     private RecyclerView recyclerView;
@@ -60,6 +48,8 @@ public class MainActivity extends AppCompatActivity   {
     private ViewModelStoreOwner viewModelStoreOwner;
     private LifecycleOwner lifecycleOwner;
     private SharedPreferences contactsSharedPrefs;
+    public static final String TAG="MainActivity";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +58,7 @@ public class MainActivity extends AppCompatActivity   {
         InitializeControllers();
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         actionBar=getSupportActionBar();
+        assert actionBar != null;
         actionBar.setTitle("Messages");
         chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
         loadSharedPreferenceData();
@@ -99,8 +90,7 @@ public class MainActivity extends AppCompatActivity   {
         recyclerView=findViewById(R.id.recyclerViewChatList);
         newChat=findViewById(R.id.newChat);
         list=new ArrayList<>();
-        ImageView welcomeEmoji = findViewById(R.id.welcomeEmoji);
-        TextView welcomeMsg = findViewById(R.id.startNewChatMsg);
+
         lifecycleOwner=this;
         viewModelStoreOwner=this;
     }
@@ -113,12 +103,17 @@ public class MainActivity extends AppCompatActivity   {
     private ArrayList<userModel> FilterList(String newText){
         ArrayList<userModel> newList=new ArrayList<>();
         for(userModel user:list){
-            if(user.getUserName().toLowerCase().contains(newText.toLowerCase())){
+            String name = contactsSharedPrefs.getString(user.getPhoneNumber(),null);
+            if(name==null){
+                name = user.getPhoneNumber();
+            }
+            if(name.toLowerCase().contains(newText.toLowerCase())){
                 newList.add(user);
             }
         }
         return newList;
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menuInflater =getMenuInflater();
@@ -140,6 +135,7 @@ public class MainActivity extends AppCompatActivity   {
 
                     if (!TextUtils.isEmpty(s.trim())){
                         newList=FilterList(s);
+                        Log.d(TAG, "onQueryTextSubmit: ");
                         chatListAdapter=new chatListAdapter(newList, MainActivity.this,activity,viewModelStoreOwner,lifecycleOwner);
                         chatListAdapter.setContactsSharedPrefs(contactsSharedPrefs);
                         chatListAdapter.notifyDataSetChanged();

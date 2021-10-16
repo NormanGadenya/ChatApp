@@ -48,14 +48,11 @@ public class Repo {
         if(instance == null){
             instance= new Repo();
 
-
         }
-
         return instance;
     }
 
     public MutableLiveData<ArrayList<userModel>> getChatList(){
-        Log.d(TAG, "getChatList: Yesss");
         if (chats_List_Model!=null && fUser!=null) {
             GetChatList getChatList=new GetChatList();
             new Thread(getChatList).start();
@@ -119,7 +116,7 @@ public class Repo {
         };
     }
 
-    void arrangeIdList(){
+    private void arrangeIdList(){
         Set<Map.Entry<String, String>> entries = messageArrange.entrySet();
         List<Map.Entry<String, String>> listOfEntries = new ArrayList<>(entries);
         Collections.sort(listOfEntries, comparator());
@@ -133,8 +130,6 @@ public class Repo {
             arrangedChatListId.add(mapping.getKey());
         }
     }
-
-
 
     private void loadChatList() {
         chatListId=new ArrayList<>();
@@ -183,19 +178,18 @@ public class Repo {
 
 
     }
+
     private void getChatUserInfo() {
         DatabaseReference userDetailRef=database.getReference().child("UserDetails");
         userDetailRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 HashMap<String,userModel> chatListOrder=new HashMap<>();
-                Log.d(TAG, "onDataChange: "+snapshot);
                 chatListOrder.clear();
                 chats_List_Model.clear();
 
                 for(DataSnapshot dataSnapshot:snapshot.getChildren()){
                     if(arrangedChatListId.contains(dataSnapshot.getKey())){
-                        System.out.println(dataSnapshot);
                         String userId=dataSnapshot.getKey();
                         userModel user= dataSnapshot.getValue(userModel.class);
                         user.setUserId(userId);
@@ -234,7 +228,6 @@ public class Repo {
         });
     }
 
-
     private void loadMessages(String otherUserId){
         DatabaseReference fMRef=database.getReference().child("chats").child(fUser.getUid()).child(otherUserId);
         DatabaseReference otherUserMRef=database.getReference().child("chats").child(otherUserId).child(fUser.getUid());
@@ -270,7 +263,6 @@ public class Repo {
                             if(mKeys.contains(s.getKey())){
                                 HashMap<String,Object> messageStatus=new HashMap<>();
                                 messageStatus.put("checked",true);
-                                Log.d("otherSnapshot",otherSnapshot.getKey() + "" + s.getKey());
                                 otherUserMRef.child(s.getKey()).updateChildren(messageStatus);
                                 otherUserLMRef.updateChildren(messageStatus);
                             }
@@ -331,7 +323,6 @@ public class Repo {
         });
     }
 
-
     private void loadAllUsers(SharedPreferences contactsSharedPrefs){
         DatabaseReference userDetails=database.getReference().child("UserDetails");
         userDetails.addValueEventListener(new ValueEventListener() {
@@ -358,7 +349,6 @@ public class Repo {
                                 }else{
                                     userListObj.setUserName(users.getUserName());
                                 }
-
                                 userListObj.setPhoneNumber(users.getPhoneNumber());
                                 userListObj.setProfileUrI(users.getProfileUrI());
                                 userListObj.setUserId(userId);
@@ -380,8 +370,6 @@ public class Repo {
             }
         });
     }
-
-
 
     class GetChatList implements Runnable {
         @Override
