@@ -10,26 +10,29 @@
         <entry key="app/src/main/res/drawable/card_background2.xml" value="0.353125" />
         <entry key="app/src/main/res/drawable/card_background3.xml" value="0.353125" />
         <entry key="app/src/main/res/drawable/chat_communication_svgrepo_com.xml" value="0.353125" />
+        <entry key="app/src/main/res/drawable/ic_baseline_done_all_24.xml" value="0.34627170582226763" />
         <entry key="app/src/main/res/drawable/ic_baseline_fingerprint_24.xml" value="0.353125" />
         <entry key="app/src/main/res/drawable/ic_baseline_keyboard_arrow_down_24.xml" value="0.353125" />
         <entry key="app/src/main/res/drawable/ic_baseline_lock_24.xml" value="0.353125" />
+        <entry key="app/src/main/res/drawable/ic_male_avatar_svgrepo_com.xml" value="0.34627170582226763" />
         <entry key="app/src/main/res/drawable/personal_details_back.xml" value="0.353125" />
         <entry key="app/src/main/res/drawable/ripple.xml" value="0.353125" />
         <entry key="app/src/main/res/drawable/rounded_outlines.xml" value="0.353125" />
         <entry key="app/src/main/res/drawable/title_background.xml" value="0.10520833333333333" />
-        <entry key="app/src/main/res/layout-land/activity_registration_activity.xml" value="0.33" />
-        <entry key="app/src/main/res/layout-v21/activity_signup.xml" value="0.3328125" />
+        <entry key="app/src/main/res/layout-land/activity_registration_activity.xml" value="0.25" />
+        <entry key="app/src/main/res/layout-v21/activity_signup.xml" value="0.33" />
         <entry key="app/src/main/res/layout/activity_chat.xml" value="0.33" />
         <entry key="app/src/main/res/layout/activity_fingerprint.xml" value="0.3328125" />
         <entry key="app/src/main/res/layout/activity_fullscreen.xml" value="0.3328125" />
+        <entry key="app/src/main/res/layout/activity_main.xml" value="0.3328125" />
         <entry key="app/src/main/res/layout/activity_other_user.xml" value="0.1" />
-        <entry key="app/src/main/res/layout/activity_otp.xml" value="0.5" />
+        <entry key="app/src/main/res/layout/activity_otp.xml" value="0.33" />
         <entry key="app/src/main/res/layout/activity_password.xml" value="0.33" />
         <entry key="app/src/main/res/layout/activity_profile_details.xml" value="0.3328125" />
-        <entry key="app/src/main/res/layout/activity_registration_activity.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/activity_registration_activity.xml" value="0.6659619450317125" />
         <entry key="app/src/main/res/layout/activity_send_image.xml" value="0.3328125" />
         <entry key="app/src/main/res/layout/activity_send_video.xml" value="0.3328125" />
-        <entry key="app/src/main/res/layout/activity_settings.xml" value="0.5" />
+        <entry key="app/src/main/res/layout/activity_settings.xml" value="0.33" />
         <entry key="app/src/main/res/layout/activity_signup.xml" value="0.3328125" />
         <entry key="app/src/main/res/layout/activity_splash.xml" value="0.3328125" />
         <entry key="app/src/main/res/layout/activity_view_image.xml" value="0.3328125" />
@@ -37,7 +40,7 @@
         <entry key="app/src/main/res/layout/chat_item_left.xml" value="0.340625" />
         <entry key="app/src/main/res/layout/chat_item_right.xml" value="0.340625" />
         <entry key="app/src/main/res/layout/layout_actions.xml" value="0.1" />
-        <entry key="app/src/main/res/layout/layout_chat_list.xml" value="0.34132581100141046" />
+        <entry key="app/src/main/res/layout/layout_chat_list.xml" value="0.33088235294117646" />
         <entry key="app/src/main/res/layout/message_container.xml" value="0.1" />
         <entry key="app/src/main/res/layout/settings_chat_left.xml" value="0.2966485507246377" />
         <entry key="app/src/main/res/layout/settings_chat_right.xml" value="0.384375" />
@@ -52,5 +55,12 @@
   </component>
   <component name="ProjectType">
     <option name="id" value="Android" />
+  </component>
+  <component name="VisualizationToolProject">
+    <option name="state">
+      <ProjectState>
+        <option name="scale" value="0.6659619450317125" />
+      </ProjectState>
+    </option>
   </component>
 </project>

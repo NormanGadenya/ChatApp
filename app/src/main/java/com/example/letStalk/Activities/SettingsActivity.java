@@ -76,6 +76,7 @@ public class SettingsActivity extends AppCompatActivity {
     private SharedPreferences sharedPreferences;
     private boolean showOnline, showLastSeen,setFingerprint,dynamicChatBubbles;
     public static final String TAG="SettingsActivity";
+    private SharedPreferences.Editor editor ;
     private Tools tools = new Tools();
     private FloatingActionButton restoreButton;
     private MessageSettingsAdapter messageSettingsAdapter;
@@ -89,7 +90,6 @@ public class SettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_settings);
         sharedPreferences = getSharedPreferences("Settings", MODE_PRIVATE);
         Toolbar toolbar = findViewById(R.id.toolbar);
-        Button applyButton = findViewById(R.id.done);
         imageView = findViewById(R.id.imageView);
         restoreButton = findViewById(R.id.wallPaperRestore);
         imageView.setClipToOutline(true);
@@ -105,10 +105,10 @@ public class SettingsActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBarChatWallpaper);
         setSupportActionBar(toolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
-
-        boolean lastSeen = sharedPreferences.getBoolean("showLastSeen", true);
-        boolean online = sharedPreferences.getBoolean("showOnline", true);
-        boolean fingerprint = sharedPreferences.getBoolean("setFingerprint",false);
+        editor= sharedPreferences.edit();
+        showLastSeen = sharedPreferences.getBoolean("showLastSeen", true);
+        showOnline = sharedPreferences.getBoolean("showOnline", true);
+        setFingerprint = sharedPreferences.getBoolean("setFingerprint",false);
         dynamicChatBubbles= sharedPreferences.getBoolean("useDynamicBubbles",false);
         try{
             getOpacity();
@@ -116,9 +116,9 @@ public class SettingsActivity extends AppCompatActivity {
         }catch(Exception e){
             Log.e(TAG, "onCreate: ",e );
         }
-        onlineStatus.setChecked(online);
-        lastSeenStatus.setChecked(lastSeen);
-        fingerprintStatus.setChecked(fingerprint);
+        onlineStatus.setChecked(showOnline);
+        lastSeenStatus.setChecked(showLastSeen);
+        fingerprintStatus.setChecked(setFingerprint);
         chatBubblesState.setChecked(dynamicChatBubbles);
 
         RecyclerView recyclerView = findViewById(R.id.recycler_view_wall);
@@ -157,7 +157,6 @@ public class SettingsActivity extends AppCompatActivity {
             dynamicChatBubbles =isChecked;});
         lastSeenStatus.setOnCheckedChangeListener((buttonView, isChecked) -> showLastSeen = isChecked);
         fingerprintStatus.setOnCheckedChangeListener((buttonView, isChecked) -> setFingerprint = isChecked);
-        applyButton.setOnClickListener(v -> setSettings(firebaseUser.getUid()));
         logout.setOnClickListener(v-> new AlertDialog.Builder(this)
                 .setTitle("Log out")
                 .setMessage("Are you sure you want to sign out")
@@ -167,7 +166,8 @@ public class SettingsActivity extends AppCompatActivity {
 
 
         restoreButton.setOnClickListener(I->{
-           selected=null;
+           editor.remove("chatWallpaperUrI");
+
            imageView.setImageResource(R.drawable.def_wallpaper);
            messageSettingsAdapter.viewBackColor=getColor(R.color.cream);
            messageSettingsAdapter.notifyDataSetChanged();
@@ -308,6 +308,14 @@ public class SettingsActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    protected void onStop() {
+        setSettings(firebaseUser.getUid());
+        super.onStop();
+    }
+
+
+
     private void requestStoragePermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                 Manifest.permission.READ_EXTERNAL_STORAGE)) {
@@ -353,7 +361,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void setSettings(String userId) {
         DatabaseReference myRef = database.getReference().child("UserDetails").child(userId);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
+
         progressBar.setVisibility(VISIBLE);
         Map<String, Object> userDetail = new HashMap<>();
         userDetail.put("showLastSeenState", showLastSeen);
@@ -372,7 +380,8 @@ public class SettingsActivity extends AppCompatActivity {
             editor.putInt("chatBlur", seekBarProgress);
 
         } else {
-            editor.remove("chatWallpaper");
+
+
             if (changed) {
                 progressBar.setVisibility(GONE);
                 editor.putInt("chatBlur", seekBarProgress);

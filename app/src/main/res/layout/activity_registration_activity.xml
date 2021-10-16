@@ -88,8 +88,11 @@
                 android:id="@+id/editTextPersonName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@color/white"
                 android:hint="@string/name"
+                android:textColorHint="@color/cream"
+                android:textColor="?attr/colorOnPrimary"
+                android:background="@color/white"
+
                 android:inputType="text"
                 android:singleLine="true" />
         </com.google.android.material.textfield.TextInputLayout>

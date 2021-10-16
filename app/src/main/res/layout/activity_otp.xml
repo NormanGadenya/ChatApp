@@ -59,6 +59,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/Enter_otp"
                 android:textSize="18dp"
+                android:textColor="?attr/colorOnPrimary"
                 android:textAlignment="center"
                 android:layout_marginTop="5dp"
                 />

@@ -34,7 +34,6 @@ public class updateStatusService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Toast.makeText(this, "Service killed", Toast.LENGTH_SHORT).show();
         FirebaseUser user= FirebaseAuth.getInstance().getCurrentUser();
         if(user!=null){
             FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -50,7 +49,6 @@ public class updateStatusService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "Service started", Toast.LENGTH_SHORT).show();
         updateStatus();
         return START_STICKY;
     }
