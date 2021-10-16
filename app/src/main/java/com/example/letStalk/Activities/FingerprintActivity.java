@@ -14,6 +14,8 @@ import android.os.CancellationSignal;
 import android.widget.Toast;
 
 import com.example.campaign.R;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class FingerprintActivity extends AppCompatActivity {
     private BiometricPrompt.AuthenticationCallback authenticationCallback;
@@ -36,9 +38,15 @@ public class FingerprintActivity extends AppCompatActivity {
                     @Override
                     public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
                         super.onAuthenticationSucceeded(result);
-                        Intent mainIntent = new Intent(FingerprintActivity.this, MainActivity.class);
-                        startActivity(mainIntent);
-                        finish();
+                        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                        if (user != null) {
+                            Intent mainIntent = new Intent(FingerprintActivity.this, MainActivity.class);
+                            startActivity(mainIntent);
+                            finish();
+                        }else{
+                            finishAndRemoveTask();
+                        }
+
 
                     }
                 };

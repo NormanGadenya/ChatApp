@@ -59,9 +59,9 @@ public class OtherUserActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        ServiceCheck serviceCheck=new ServiceCheck(updateStatusService.class,this,manager);
-        serviceCheck.checkServiceRunning();
+//        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+//        ServiceCheck serviceCheck=new ServiceCheck(updateStatusService.class,this,manager);
+//        serviceCheck.checkServiceRunning();
         otherUserId=getIntent().getStringExtra("otherUserId");
         otherUserName=getIntent().getStringExtra("otherUserName");
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);

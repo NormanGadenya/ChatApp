@@ -3,6 +3,9 @@ package com.example.letStalk.Common;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
+import android.content.res.AssetManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -12,6 +15,8 @@ import android.webkit.MimeTypeMap;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -47,10 +52,11 @@ public class Tools {
     public static final String  EXTRA_CIRCULAR_REVEAL_Y = "EXTRA_CIRCULAR_REVEAL_Y";
     public static final int  MESSAGE_LEFT = 0;
     public static final int  MESSAGE_RIGHT = 1;
-    public static final String KEY_STORE="ANDROID_KEY_STORE";
+
     public static final String ALIAS="letsTalk";
     private static final String PASS ="Bar12345Bar12345";
     private static Cipher cipher ;
+
     public String getTime(){
         Date dateTime = Calendar.getInstance().getTime();
         SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm");
@@ -99,6 +105,20 @@ public class Tools {
         return extension;
     }
 
+    public static Bitmap getBitmapFromAsset(Context context, String filePath) {
+        AssetManager assetManager = context.getAssets();
+
+        InputStream istr;
+        Bitmap bitmap = null;
+        try {
+            istr = assetManager.open(filePath);
+            bitmap = BitmapFactory.decodeStream(istr);
+        } catch (IOException e) {
+            // handle exception
+        }
+
+        return bitmap;
+    }
 
     public String encryptText(String text) throws Exception  {
         Key aesKey =  new SecretKeySpec(PASS.getBytes(), "AES");
@@ -120,13 +140,7 @@ public class Tools {
 
 
     }
-    public  String decrypt (String encryptedMessage, PrivateKey privateKey) throws Exception{
-        byte [] encryptedBytes = decode(encryptedMessage);
-        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        cipher.init(Cipher.DECRYPT_MODE,privateKey);
-        byte [] decryptedMessage =cipher.doFinal(encryptedBytes);
-        return  new String(decryptedMessage,"UTF8");
-    }
+
     public byte[] decode(String encryptedMessage) {
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O){
             return  Base64.getDecoder().decode(encryptedMessage);

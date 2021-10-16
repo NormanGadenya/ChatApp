@@ -1,19 +1,21 @@
 package com.example.letStalk.Activities;
 
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
+import static com.example.letStalk.Common.Tools.GALLERY_REQUEST;
+
 import android.Manifest;
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ProgressBar;
@@ -27,6 +29,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -37,13 +40,12 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
-import com.example.letStalk.Common.ServiceCheck;
+import com.example.campaign.R;
+import com.example.letStalk.Common.Tools;
 import com.example.letStalk.Model.UserViewModel;
 import com.example.letStalk.Model.messageListModel;
-import com.example.campaign.R;
 import com.example.letStalk.Services.updateStatusService;
-import com.example.letStalk.adapter.messageSettingsAdapter;
-import com.firebase.ui.auth.AuthUI;
+import com.example.letStalk.adapter.MessageSettingsAdapter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -51,21 +53,15 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.jgabrielfreitas.core.BlurImageView;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import jp.wasabeef.glide.transformations.BlurTransformation;
 
-import static android.view.View.GONE;
-import static android.view.View.VISIBLE;
-import static com.example.letStalk.Common.Tools.GALLERY_REQUEST;
-
 public class SettingsActivity extends AppCompatActivity {
-    private Toolbar toolbar;
-    private RecyclerView recyclerView;
     private final List<messageListModel> messageList = new ArrayList<>();
     private Uri selected;
     private BlurImageView imageView;
@@ -76,12 +72,12 @@ public class SettingsActivity extends AppCompatActivity {
     private String chatWallpaperUrI;
     private final FirebaseDatabase database = FirebaseDatabase.getInstance();
     private final FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-    private UserViewModel userViewModel;
     private SharedPreferences sharedPreferences;
-    private boolean showOnline, showLastSeen,setFingerprint;
-    private Button logout;
-    private FloatingActionButton restoreButton;
+    private boolean showOnline, showLastSeen,setFingerprint,dynamicChatBubbles;
     public static final String TAG="SettingsActivity";
+    private Tools tools = new Tools();
+    private FloatingActionButton restoreButton;
+    private MessageSettingsAdapter messageSettingsAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,43 +85,45 @@ public class SettingsActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_settings);
         sharedPreferences = getSharedPreferences("Settings", MODE_PRIVATE);
-        toolbar = findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         Button applyButton = findViewById(R.id.done);
         imageView = findViewById(R.id.imageView);
-        restoreButton=findViewById(R.id.wallPaperRestore);
+        restoreButton = findViewById(R.id.wallPaperRestore);
         imageView.setClipToOutline(true);
         imageView.setBackgroundResource(R.drawable.card_background3);
         seekBar = findViewById(R.id.seekBar);
-        logout=findViewById(R.id.logout);
-        userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
+        Button logout = findViewById(R.id.logout);
+        UserViewModel userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
         CheckBox onlineStatus = findViewById(R.id.onlineStatus);
         CheckBox lastSeenStatus = findViewById(R.id.lastSeenStatus);
         CheckBox fingerprintStatus = findViewById(R.id.fingerprint);
+        CheckBox chatBubblesState = findViewById(R.id.chatBubbles);
         userViewModel.initFUserInfo();
         progressBar = findViewById(R.id.progressBarChatWallpaper);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        ServiceCheck serviceCheck= new ServiceCheck(updateStatusService.class,this,manager);
-        serviceCheck.checkServiceRunning();
-        try {
+        Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
+
+        try{
             getOpacity();
             getCurrentWallpaper();
-        } catch (Exception e) {
-            e.printStackTrace();
+        }catch(Exception e){
+            Log.e(TAG, "onCreate: ",e );
         }
+
+
         boolean lastSeen = sharedPreferences.getBoolean("showLastSeen", true);
         boolean online = sharedPreferences.getBoolean("showOnline", true);
         boolean fingerprint = sharedPreferences.getBoolean("setFingerprint",false);
+        boolean chatBubbles = sharedPreferences.getBoolean("useDynamicBubbles",false);
+
         onlineStatus.setChecked(online);
         lastSeenStatus.setChecked(lastSeen);
         fingerprintStatus.setChecked(fingerprint);
+        chatBubblesState.setChecked(chatBubbles);
 
-        recyclerView = findViewById(R.id.recycler_view_wall);
+        RecyclerView recyclerView = findViewById(R.id.recycler_view_wall);
         FloatingActionButton editWallpaper = findViewById(R.id.editWallpaper);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        messageSettingsAdapter messageSettingsAdapter = new messageSettingsAdapter(messageList, getApplicationContext());
-        recyclerView.setAdapter(messageSettingsAdapter);
         messageList.add(new messageListModel(null, "123", "17-04-2020", "02:00", "", "", "TEXT", ""));
         messageList.add(new messageListModel(null, firebaseUser.getUid(), "17-04-2020", "02:00", "", "", "TEXT", ""));
         messageList.add(new messageListModel(null, "firebaseUser.getUid()", "17-04-2020", "02:00", "", "", "TEXT", ""));
@@ -133,7 +131,9 @@ public class SettingsActivity extends AppCompatActivity {
         messageList.add(new messageListModel(null, "firebaseUser.getUid()", "17-04-2020", "02:00", "", "", "TEXT", ""));
         messageList.add(new messageListModel(null, firebaseUser.getUid(), "17-04-2020", "02:00", "", "", "TEXT", ""));
 
-        messageSettingsAdapter.notifyDataSetChanged();
+        messageSettingsAdapter = new MessageSettingsAdapter(messageList, getApplicationContext());
+        recyclerView.setAdapter(messageSettingsAdapter);
+
 
         editWallpaper.setOnClickListener(v -> {
             if (ContextCompat.checkSelfPermission(getApplicationContext(),
@@ -147,36 +147,80 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
         onlineStatus.setOnCheckedChangeListener((buttonView, isChecked) -> showOnline = isChecked);
+        chatBubblesState.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if(isChecked){
+                if(chatWallpaperUrI!=null){
+                    getViewColor(Uri.parse(chatWallpaperUrI));
 
+                }else{
+                    getViewColor(null);
+
+                }
+
+            }else{
+                messageSettingsAdapter.viewBackColor=getColor(R.color.cream);
+                messageSettingsAdapter.notifyDataSetChanged();
+            }
+
+            dynamicChatBubbles =isChecked;});
         lastSeenStatus.setOnCheckedChangeListener((buttonView, isChecked) -> showLastSeen = isChecked);
         fingerprintStatus.setOnCheckedChangeListener((buttonView, isChecked) -> setFingerprint = isChecked);
         applyButton.setOnClickListener(v -> setSettings(firebaseUser.getUid()));
-        logout.setOnClickListener(v->{
-            new AlertDialog.Builder(this)
-                    .setTitle("Log out")
-                    .setMessage("Are you sure you want to sign out")
-                    .setPositiveButton("Yes", (dialog, which) -> signOut(serviceCheck))
-                    .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
-                    .create().show();
-        });
+        logout.setOnClickListener(v-> new AlertDialog.Builder(this)
+                .setTitle("Log out")
+                .setMessage("Are you sure you want to sign out")
+                .setPositiveButton("Yes", (dialog, which) -> signOut())
+                .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
+                .create().show());
+
+
         restoreButton.setOnClickListener(I->{
            selected=null;
-           imageView.setImageResource(R.drawable.whatsapp_wallpaper_121);
+           imageView.setImageResource(R.drawable.def_wallpaper);
+           messageSettingsAdapter.viewBackColor=getColor(R.color.cream);
+           messageSettingsAdapter.notifyDataSetChanged();
+
+
+        });
+        FirebaseAuth mAuth =FirebaseAuth.getInstance();
+
+        mAuth.addAuthStateListener(i->{
+            if(i.getCurrentUser()==null){
+                finishAndRemoveTask();
+            }
 
         });
     }
+    public void createPaletteAsync(Bitmap bitmap) {
 
-    private void signOut(ServiceCheck service) {
-        FirebaseAuth firebase= FirebaseAuth.getInstance();
-        firebase.signOut();
-//        moveTaskToBack(true);
-//        android.os.Process.killProcess(android.os.Process.myPid());
-//        System.exit(1);
-//        AuthUI.getInstance().signOut(this).addOnSuccessListener(I->{
-//            moveTaskToBack(true);
-//            android.os.Process.killProcess(android.os.Process.myPid());
-//            System.exit(1);
-//        });
+        if (bitmap!=null){
+            Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
+
+                public void onGenerated(Palette p) {
+                    messageSettingsAdapter.viewBackColor = p.getMutedColor(getResources().getColor(R.color.cream));
+                    messageSettingsAdapter.notifyDataSetChanged();
+                }
+            });
+
+        }
+
+    }
+
+
+    private void signOut() {
+        Intent i=new Intent(SettingsActivity.this,updateStatusService.class);
+        stopService(i);
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        assert user != null;
+        DatabaseReference userDetailRef=database.getReference().child("UserDetails").child(user.getUid());
+        Map<String ,Object> lastSeenStatus=new HashMap<>();
+
+        lastSeenStatus.put("lastSeenDate",tools.getDate());
+        lastSeenStatus.put("lastSeenTime",tools.getTime());
+        lastSeenStatus.put("online",false);
+        userDetailRef.onDisconnect().updateChildren(lastSeenStatus).addOnSuccessListener(I -> FirebaseAuth.getInstance().signOut());
+
+
 
     }
 
@@ -185,31 +229,34 @@ public class SettingsActivity extends AppCompatActivity {
         chatWallpaperUrI = sharedPreferences.getString("chatWallpaper", null);
         int blur = sharedPreferences.getInt("chatBlur", 0);
         if (chatWallpaperUrI != null) {
-                RequestBuilder<Drawable> requestBuilder = Glide.with(getApplicationContext()).load(chatWallpaperUrI);
+            if(dynamicChatBubbles){
+                getViewColor(Uri.parse(chatWallpaperUrI));
 
-                if( blur!=0){
-                    requestBuilder =requestBuilder.transform(new BlurTransformation(blur));
+            }
+            RequestBuilder<Drawable> requestBuilder = Glide.with(getApplicationContext()).load(chatWallpaperUrI);
+            if( blur!=0){
+                requestBuilder =requestBuilder.transform(new BlurTransformation(blur));
 
+            }
+
+            requestBuilder.addListener(new RequestListener<Drawable>() {
+                @Override
+                public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                    progressBar.setVisibility(GONE);
+                    Log.e(TAG, "onLoadFailed: ", e);
+                    return false;
                 }
 
-                requestBuilder.addListener(new RequestListener<Drawable>() {
-                    @Override
-                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                        progressBar.setVisibility(GONE);
-                        Log.e(TAG, "onLoadFailed: ", e);
-                        return false;
-                    }
-
-                    @Override
-                    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                        progressBar.setVisibility(GONE);
-                        seekBar.setProgress(blur * 4);
-                        return false;
-                    }
-                }).into(imageView);
+                @Override
+                public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                    progressBar.setVisibility(GONE);
+                    seekBar.setProgress(blur * 4);
+                    return false;
+                }
+            }).into(imageView);
 
         } else {
-            imageView.setImageResource(R.drawable.whatsapp_wallpaper_121);
+            imageView.setImageResource(R.drawable.def_wallpaper);
         }
 
 
@@ -262,6 +309,32 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
+    private void getViewColor(Uri wallpaper){
+        new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    Bitmap bitmap;
+                    if(wallpaper!=null){
+
+                        bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), wallpaper);
+
+                    }
+                    else{
+                        bitmap = tools.getBitmapFromAsset(getApplicationContext(),"def_wallpaper.jpg");
+
+                    }
+                    createPaletteAsync(bitmap);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }).start();
+    }
+
     private void setSettings(String userId) {
         DatabaseReference myRef = database.getReference().child("UserDetails").child(userId);
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -273,29 +346,28 @@ public class SettingsActivity extends AppCompatActivity {
         editor.putBoolean("showOnline", showOnline);
         editor.putBoolean("showLastSeen", showLastSeen);
         editor.putBoolean("setFingerprint",setFingerprint);
+        editor.putBoolean("useDynamicBubbles", dynamicChatBubbles);
         Log.d(TAG, "setSettings: "+selected);
         if (selected != null) {
             try {
                 editor.putString("chatWallpaper", selected.toString());
                 editor.putInt("chatBlur", seekBarProgress);
-                Log.e("Error", sharedPreferences.getString("chatWallpaper", null));
-
 
             } catch (Exception e) {
                 Log.e("Error", e.getLocalizedMessage());
             }
 
         } else {
-            editor.putString("chatWallpaper",null);
+            editor.remove("chatWallpaper");
             if (changed) {
-                progressBar.setVisibility(View.GONE);
+                progressBar.setVisibility(GONE);
                 editor.putInt("chatBlur", seekBarProgress);
             }
 
         }
         editor.apply();
 
-        progressBar.setVisibility(View.GONE);
+        progressBar.setVisibility(GONE);
         Toast.makeText(getApplicationContext(), "Successfully updated", Toast.LENGTH_SHORT).show();
     }
 
@@ -327,13 +399,13 @@ public class SettingsActivity extends AppCompatActivity {
                         .addListener(new RequestListener<Drawable>() {
                             @Override
                             public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                                progressBar.setVisibility(View.GONE);
+                                progressBar.setVisibility(GONE);
                                 return false;
                             }
 
                             @Override
                             public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                                progressBar.setVisibility(View.GONE);
+                                progressBar.setVisibility(GONE);
                                 return false;
                             }
                         })
@@ -341,6 +413,9 @@ public class SettingsActivity extends AppCompatActivity {
                         .skipMemoryCache(true)
                         .into(imageView)
                 ;
+                if(dynamicChatBubbles){
+                    getViewColor(selected);
+                }
 
                 getOpacity();
 

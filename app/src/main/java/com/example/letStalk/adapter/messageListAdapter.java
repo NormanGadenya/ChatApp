@@ -133,7 +133,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
         try {
-            if(viewTextColor!=0 || viewTextColor !=0 ){
+            if(viewBackColor!=0 || viewTextColor !=0 ){
                 GradientDrawable gradientDrawable = (GradientDrawable) holder.backgroundView.getBackground() .mutate();
                 gradientDrawable.setColor(viewBackColor);
                 holder.message.setTextColor(viewTextColor);

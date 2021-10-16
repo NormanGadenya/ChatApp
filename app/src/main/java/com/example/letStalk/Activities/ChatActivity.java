@@ -131,7 +131,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private String chatWallpaperUrI;
     private ImageButton scrollButton;
     private TextView status;
-
+    private Boolean dynamicChatBubbles;
 
     @SuppressWarnings("deprecation")
     @Override
@@ -146,27 +146,28 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         tools.context=getApplicationContext();
         InitialiseControllers();
         chatWallpaperUrI=settingsSharedPreferences.getString("chatWallpaper",null);
-        new Thread(new Runnable() {
+        dynamicChatBubbles =settingsSharedPreferences.getBoolean("useDynamicBubbles",false);
+        if(dynamicChatBubbles){
+            new Thread(new Runnable() {
 
-            @Override
-            public void run() {
-                try {
-                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.parse(chatWallpaperUrI));
-                    createPaletteAsync(bitmap);
-                } catch (Exception e) {
+                @Override
+                public void run() {
+                    try {
+                        Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.parse(chatWallpaperUrI));
+                        createPaletteAsync(bitmap);
+                    } catch (Exception e) {
 
-
-                    e.printStackTrace();
+                        e.printStackTrace();
+                    }
                 }
+            }).start();
+        }
 
-            }
-        }).start();
         loadUserDetails();
         setTypingStatus();
         layoutManager= new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
         messageViewModel.initChats(otherUserId);
-
 
         serviceCheck();
         messageList=messageViewModel.getMessages().getValue();
@@ -476,7 +477,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 }
             }).into(backgroundImageView);
         }else{
-            backgroundImageView.setImageResource(R.drawable.whatsapp_wallpaper_121);
+            backgroundImageView.setImageResource(R.drawable.def_wallpaper);
         }
 
    }

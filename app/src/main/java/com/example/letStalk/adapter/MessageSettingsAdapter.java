@@ -1,6 +1,7 @@
 package com.example.letStalk.adapter;
 
 import android.content.Context;
+import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,14 +16,15 @@ import com.google.firebase.auth.FirebaseUser;
 
 import java.util.List;
 
-public class messageSettingsAdapter extends RecyclerView.Adapter<messageSettingsAdapter.Holder> {
+public class MessageSettingsAdapter extends RecyclerView.Adapter<MessageSettingsAdapter.Holder> {
     private final List<messageListModel> list;
     private final Context context;
     private static final int MESSAGE_LEFT=0;
     private static final int MESSAGE_RIGHT=1;
     private final FirebaseUser firebaseUser=FirebaseAuth.getInstance().getCurrentUser();
+    public int viewBackColor;
 
-    public messageSettingsAdapter(List<messageListModel> list, Context context){
+    public MessageSettingsAdapter(List<messageListModel> list, Context context){
         this.context = context;
         this.list=list;
     }
@@ -46,6 +48,11 @@ public class messageSettingsAdapter extends RecyclerView.Adapter<messageSettings
 
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
+        if( viewBackColor!=0){
+            GradientDrawable gradientDrawable = (GradientDrawable) holder.backgroundView.getBackground() .mutate();
+            gradientDrawable.setColor(viewBackColor);
+        }
+
 
 
     }
@@ -72,9 +79,10 @@ public class messageSettingsAdapter extends RecyclerView.Adapter<messageSettings
     }
 
     public static class Holder extends RecyclerView.ViewHolder {
-
+        private View backgroundView;
         public Holder(@NonNull View itemView) {
             super(itemView);
+            backgroundView=itemView.findViewById(R.id.background);
 
         }
     }

@@ -15,8 +15,14 @@ import android.widget.Toast;
 
 import com.broooapps.otpedittext2.OtpEditText;
 import com.example.campaign.R;
+import com.example.letStalk.Common.Tools;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class SignUpActivity extends AppCompatActivity {
     private FirebaseAuth Auth;
@@ -84,6 +90,8 @@ public class SignUpActivity extends AppCompatActivity {
             sendToChats();
         }
     }
+
+
     private void sendToChats(){
         SharedPreferences sharedPreferences = getSharedPreferences("Settings", MODE_PRIVATE);
         boolean fingerprint = sharedPreferences.getBoolean("setFingerprint",false);

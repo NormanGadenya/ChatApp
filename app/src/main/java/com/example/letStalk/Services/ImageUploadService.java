@@ -128,7 +128,6 @@ public class ImageUploadService extends Service {
                 }
                 bundle.putInt("uploadImagePercentage",currentProgress);
                 bundle.putString("uploadImageTId",messageKey);
-
                 myResultReceiver.send(100,bundle);
             }).addOnPausedListener(taskSnapshot -> System.out.println("Upload is paused")).continueWithTask(task -> {
                 if (!task.isSuccessful()) {

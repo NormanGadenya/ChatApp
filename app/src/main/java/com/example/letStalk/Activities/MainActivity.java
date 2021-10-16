@@ -92,6 +92,8 @@ public class MainActivity extends AppCompatActivity   {
         }
     }
 
+
+
     private void InitializeControllers() {
 
         recyclerView=findViewById(R.id.recyclerViewChatList);
