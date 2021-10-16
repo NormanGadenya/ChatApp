@@ -22,7 +22,6 @@ public class ServiceCheck extends AppCompatActivity {
     }
     public void checkServiceRunning() {
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-
             if (!serviceClass.getName().equals(service.service.getClassName())) {
                 i=new Intent(context, updateStatusService.class);
                 context.startService(i);

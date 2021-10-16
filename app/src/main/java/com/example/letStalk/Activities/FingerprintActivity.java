@@ -2,6 +2,7 @@ package com.example.letStalk.Activities;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -11,6 +12,7 @@ import android.hardware.fingerprint.FingerprintManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CancellationSignal;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.example.campaign.R;
@@ -26,13 +28,14 @@ public class FingerprintActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fingerprint);
 
-        if (checkBiometricSupport()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                ImageView fingerprint = findViewById(R.id.imageView);
                 authenticationCallback = new BiometricPrompt.AuthenticationCallback() {
                     @Override
                     public void onAuthenticationError(int errorCode, CharSequence errString) {
                         super.onAuthenticationError(errorCode, errString);
-                        Toast.makeText(getApplicationContext(),errString,Toast.LENGTH_SHORT).show();
+                        fingerprint.setColorFilter(ContextCompat.getColor(getApplicationContext(), R.color.red), android.graphics.PorterDuff.Mode.SRC_IN);                            Intent mainIntent = new Intent(FingerprintActivity.this, MainActivity.class);
+
                     }
 
                     @Override
@@ -40,7 +43,7 @@ public class FingerprintActivity extends AppCompatActivity {
                         super.onAuthenticationSucceeded(result);
                         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                         if (user != null) {
-                            Intent mainIntent = new Intent(FingerprintActivity.this, MainActivity.class);
+                            fingerprint.setColorFilter(ContextCompat.getColor(getApplicationContext(), R.color.teal_200), android.graphics.PorterDuff.Mode.SRC_IN);                            Intent mainIntent = new Intent(FingerprintActivity.this, MainActivity.class);
                             startActivity(mainIntent);
                             finish();
                         }else{
@@ -65,7 +68,7 @@ public class FingerprintActivity extends AppCompatActivity {
                         }
                     }).build();
             biometricPrompt.authenticate(getCancellationSignal(), getMainExecutor(), authenticationCallback);
-        }
+
 
     }
     private CancellationSignal getCancellationSignal(){
@@ -83,17 +86,5 @@ public class FingerprintActivity extends AppCompatActivity {
         Toast.makeText(getApplicationContext(), text, Toast.LENGTH_SHORT);
     }
 
-    private Boolean checkBiometricSupport(){
 
-        FingerprintManager fingerprintManager = (FingerprintManager) this.getSystemService(Context.FINGERPRINT_SERVICE);
-        if (!fingerprintManager.isHardwareDetected()) {
-            return false;
-        } else if (!fingerprintManager.hasEnrolledFingerprints()) {
-            return false;
-        } else {
-            // Everything is ready for fingerprint authentication
-            return true;
-        }
-
-    }
 }

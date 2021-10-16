@@ -6,13 +6,16 @@ import static com.example.letStalk.Common.Tools.GALLERY_REQUEST;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
+
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.hardware.fingerprint.FingerprintManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -21,6 +24,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -81,6 +85,7 @@ public class SettingsActivity extends AppCompatActivity {
     private FloatingActionButton restoreButton;
     private MessageSettingsAdapter messageSettingsAdapter;
     private int chatBubbleColor,chatTextColor, chatReadColor;
+    private Boolean fpSupport=false;
 
 
     @Override
@@ -95,12 +100,16 @@ public class SettingsActivity extends AppCompatActivity {
         imageView.setClipToOutline(true);
         imageView.setBackgroundResource(R.drawable.card_background3);
         seekBar = findViewById(R.id.seekBar);
+
         Button logout = findViewById(R.id.logout);
         UserViewModel userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
         CheckBox onlineStatus = findViewById(R.id.onlineStatus);
         CheckBox lastSeenStatus = findViewById(R.id.lastSeenStatus);
         CheckBox fingerprintStatus = findViewById(R.id.fingerprint);
         CheckBox chatBubblesState = findViewById(R.id.chatBubbles);
+        if(checkBiometricSupport()){
+            fpSupport =true;
+        }
         userViewModel.initFUserInfo();
         progressBar = findViewById(R.id.progressBarChatWallpaper);
         setSupportActionBar(toolbar);
@@ -108,7 +117,13 @@ public class SettingsActivity extends AppCompatActivity {
         editor= sharedPreferences.edit();
         showLastSeen = sharedPreferences.getBoolean("showLastSeen", true);
         showOnline = sharedPreferences.getBoolean("showOnline", true);
-        setFingerprint = sharedPreferences.getBoolean("setFingerprint",false);
+        if(fpSupport){
+            setFingerprint = sharedPreferences.getBoolean("setFingerprint",false);
+        }else{
+            findViewById(R.id.textView13).setVisibility(GONE);
+            findViewById(R.id.textView19).setVisibility(GONE);
+            fingerprintStatus.setVisibility(GONE);
+        }
         dynamicChatBubbles= sharedPreferences.getBoolean("useDynamicBubbles",false);
         try{
             getOpacity();
@@ -182,6 +197,18 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
     }
+    private Boolean checkBiometricSupport(){
+
+        FingerprintManager fingerprintManager = (FingerprintManager) this.getSystemService(Context.FINGERPRINT_SERVICE);
+        if (!fingerprintManager.isHardwareDetected()) {
+            return false;
+        } else if (!fingerprintManager.hasEnrolledFingerprints()) {
+            return false;
+        } else {
+            return true;
+        }
+
+    }
 
     private void setUpRecyclerView(RecyclerView recyclerView) {
         messageList.add(new messageListModel(null, "123", "17-04-2020", "02:00", "", "", "TEXT", ""));
@@ -241,6 +268,7 @@ public class SettingsActivity extends AppCompatActivity {
         int blur = sharedPreferences.getInt("chatBlur", 0);
 
         if (chatWallpaperUrI != null) {
+            restoreButton.setVisibility(VISIBLE);
             if(dynamicChatBubbles){
                 getViewColor(Uri.parse(chatWallpaperUrI));
             }

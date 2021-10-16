@@ -457,48 +457,60 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     private void statusCheck(userModel user){
 
-        if(user.getTyping()!=null){
-            if(user.getTyping().equals(fUser.getUid())){
+            if(user.getOnline() && user.getShowOnlineState()){
+                    onlineStatusView.setVisibility(VISIBLE);
+                }else{
+                onlineStatusView.setVisibility(GONE);
+            }
+            if(user.getTyping()!=null && user.getTyping().equals(fUser.getUid())){
                 status.setVisibility(VISIBLE);
                 status.setText("Typing ..");
                 status.setTextColor(getResources().getColor(R.color.lightSteelBlue));
 
             }else{
-                if(user.getOnline()!=null && user.getShowOnlineState()!=null & user.getShowLastSeenState()!=null){
-                    String lastSeen;
+
+
+                    String state;
 
                     if(user.getShowOnlineState()){
                         status.setTextColor(getResources().getColor(R.color.eggshell));
                         if(user.getOnline() ){
-                            lastSeen ="online";
+                            status.setVisibility(VISIBLE);
+                            state ="Online";
                             onlineStatusView.setVisibility(VISIBLE);
                             status.setSelected(false);
+                            status.setText(state);
 
                         }else{
-                            onlineStatusView.setVisibility(GONE);
-                            String lastSeenDate=user.getLastSeenDate();
-                            String lastSeenTime=user.getLastSeenTime();
-                            if (lastSeenDate.equals(date)){
-                                lastSeen = "Last seen today at "+ lastSeenTime;
+                            if(user.getShowLastSeenState()){
+                                onlineStatusView.setVisibility(GONE);
+                                status.setVisibility(VISIBLE);
+
+                                String lastSeenDate=user.getLastSeenDate();
+                                String lastSeenTime=user.getLastSeenTime();
+                                if (lastSeenDate.equals(date)){
+                                    state = "Last seen today at "+ lastSeenTime;
+                                }else{
+                                    state = "Last seen on " +lastSeenDate +" at "+ lastSeenTime;
+                                }
+                                status.setText(state);
+
                             }else{
-                                lastSeen = "Last seen on " +lastSeenDate +" at "+ lastSeenTime;
+                                status.setVisibility(GONE);
                             }
 
 
                         }
-                        status.setText(lastSeen);
-                    }
+
+
 
 
                 }else{
+
                     status.setVisibility(GONE);
+                    onlineStatusView.setVisibility(GONE);
                 }
-
             }
-
-        }
-
-
 
 
     }
