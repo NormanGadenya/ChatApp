@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -78,6 +79,8 @@ public class SettingsActivity extends AppCompatActivity {
     private Tools tools = new Tools();
     private FloatingActionButton restoreButton;
     private MessageSettingsAdapter messageSettingsAdapter;
+    private int chatBubbleColor,chatTextColor, chatReadColor;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,36 +106,25 @@ public class SettingsActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
 
+        boolean lastSeen = sharedPreferences.getBoolean("showLastSeen", true);
+        boolean online = sharedPreferences.getBoolean("showOnline", true);
+        boolean fingerprint = sharedPreferences.getBoolean("setFingerprint",false);
+        dynamicChatBubbles= sharedPreferences.getBoolean("useDynamicBubbles",false);
         try{
             getOpacity();
             getCurrentWallpaper();
         }catch(Exception e){
             Log.e(TAG, "onCreate: ",e );
         }
-
-
-        boolean lastSeen = sharedPreferences.getBoolean("showLastSeen", true);
-        boolean online = sharedPreferences.getBoolean("showOnline", true);
-        boolean fingerprint = sharedPreferences.getBoolean("setFingerprint",false);
-        boolean chatBubbles = sharedPreferences.getBoolean("useDynamicBubbles",false);
-
         onlineStatus.setChecked(online);
         lastSeenStatus.setChecked(lastSeen);
         fingerprintStatus.setChecked(fingerprint);
-        chatBubblesState.setChecked(chatBubbles);
+        chatBubblesState.setChecked(dynamicChatBubbles);
 
         RecyclerView recyclerView = findViewById(R.id.recycler_view_wall);
         FloatingActionButton editWallpaper = findViewById(R.id.editWallpaper);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        messageList.add(new messageListModel(null, "123", "17-04-2020", "02:00", "", "", "TEXT", ""));
-        messageList.add(new messageListModel(null, firebaseUser.getUid(), "17-04-2020", "02:00", "", "", "TEXT", ""));
-        messageList.add(new messageListModel(null, "firebaseUser.getUid()", "17-04-2020", "02:00", "", "", "TEXT", ""));
-        messageList.add(new messageListModel(null, firebaseUser.getUid(), "17-04-2020", "02:00", "", "", "TEXT", ""));
-        messageList.add(new messageListModel(null, "firebaseUser.getUid()", "17-04-2020", "02:00", "", "", "TEXT", ""));
-        messageList.add(new messageListModel(null, firebaseUser.getUid(), "17-04-2020", "02:00", "", "", "TEXT", ""));
-
-        messageSettingsAdapter = new MessageSettingsAdapter(messageList, getApplicationContext());
-        recyclerView.setAdapter(messageSettingsAdapter);
+        setUpRecyclerView(recyclerView);
 
 
         editWallpaper.setOnClickListener(v -> {
@@ -188,17 +180,35 @@ public class SettingsActivity extends AppCompatActivity {
             if(i.getCurrentUser()==null){
                 finishAndRemoveTask();
             }
-
         });
     }
+
+    private void setUpRecyclerView(RecyclerView recyclerView) {
+        messageList.add(new messageListModel(null, "123", "17-04-2020", "02:00", "", "", "TEXT", ""));
+        messageList.add(new messageListModel(null, firebaseUser.getUid(), "17-04-2020", "02:00", "", "", "TEXT", ""));
+        messageList.add(new messageListModel(null, "firebaseUser.getUid()", "17-04-2020", "02:00", "", "", "TEXT", ""));
+        messageList.add(new messageListModel(null, firebaseUser.getUid(), "17-04-2020", "02:00", "", "", "TEXT", ""));
+        messageList.add(new messageListModel(null, "firebaseUser.getUid()", "17-04-2020", "02:00", "", "", "TEXT", ""));
+        messageList.add(new messageListModel(null, firebaseUser.getUid(), "17-04-2020", "02:00", "", "", "TEXT", ""));
+        messageSettingsAdapter = new MessageSettingsAdapter(messageList, getApplicationContext());
+        recyclerView.setAdapter(messageSettingsAdapter);
+    }
+
     public void createPaletteAsync(Bitmap bitmap) {
 
         if (bitmap!=null){
             Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
 
                 public void onGenerated(Palette p) {
-                    messageSettingsAdapter.viewBackColor = p.getMutedColor(getResources().getColor(R.color.cream));
+                    chatBubbleColor = p.getMutedColor(getResources().getColor(R.color.cream));
+                    messageSettingsAdapter.viewBackColor =chatBubbleColor;
                     messageSettingsAdapter.notifyDataSetChanged();
+                    Palette.Swatch mutedSwatch = p.getMutedSwatch();
+                    Palette.Swatch vibrantSwatch = p.getVibrantSwatch();
+                    if( vibrantSwatch != null && mutedSwatch !=null){
+                        chatTextColor= mutedSwatch.getTitleTextColor();
+                        chatReadColor= vibrantSwatch.getTitleTextColor();
+                    }
                 }
             });
 
@@ -225,13 +235,14 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
 
-    private void getCurrentWallpaper()  {
+    private void getCurrentWallpaper() {
         chatWallpaperUrI = sharedPreferences.getString("chatWallpaper", null);
+
         int blur = sharedPreferences.getInt("chatBlur", 0);
+
         if (chatWallpaperUrI != null) {
             if(dynamicChatBubbles){
                 getViewColor(Uri.parse(chatWallpaperUrI));
-
             }
             RequestBuilder<Drawable> requestBuilder = Glide.with(getApplicationContext()).load(chatWallpaperUrI);
             if( blur!=0){
@@ -257,6 +268,10 @@ public class SettingsActivity extends AppCompatActivity {
 
         } else {
             imageView.setImageResource(R.drawable.def_wallpaper);
+            if(dynamicChatBubbles){
+                Log.d(TAG, "getCurrentWallpaper: ");
+                getViewColor(null);
+            }
         }
 
 
@@ -316,16 +331,17 @@ public class SettingsActivity extends AppCompatActivity {
             public void run() {
                 try {
                     Bitmap bitmap;
-                    if(wallpaper!=null){
+                    if(wallpaper!=null ){
 
                         bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), wallpaper);
 
-                    }
-                    else{
-                        bitmap = tools.getBitmapFromAsset(getApplicationContext(),"def_wallpaper.jpg");
-
+                    }else{
+                        tools.context =getApplicationContext();
+                        bitmap = tools.getBitmap(R.drawable.def_wallpaper);
                     }
                     createPaletteAsync(bitmap);
+
+
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -347,15 +363,13 @@ public class SettingsActivity extends AppCompatActivity {
         editor.putBoolean("showLastSeen", showLastSeen);
         editor.putBoolean("setFingerprint",setFingerprint);
         editor.putBoolean("useDynamicBubbles", dynamicChatBubbles);
-        Log.d(TAG, "setSettings: "+selected);
+        editor.putInt("chatBubbleColor",chatBubbleColor);
+        editor.putInt("chatTextColor", chatTextColor);
+        editor.putInt("chatReadColor", chatReadColor);
         if (selected != null) {
-            try {
-                editor.putString("chatWallpaper", selected.toString());
-                editor.putInt("chatBlur", seekBarProgress);
 
-            } catch (Exception e) {
-                Log.e("Error", e.getLocalizedMessage());
-            }
+            editor.putString("chatWallpaper", selected.toString());
+            editor.putInt("chatBlur", seekBarProgress);
 
         } else {
             editor.remove("chatWallpaper");
@@ -391,6 +405,7 @@ public class SettingsActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == GALLERY_REQUEST && resultCode == Activity.RESULT_OK && data != null) {
             selected = data.getData();
+            chatWallpaperUrI =selected.toString();
             restoreButton.setVisibility(VISIBLE);
             try {
                 progressBar.setVisibility(VISIBLE);

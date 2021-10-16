@@ -147,21 +147,9 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         InitialiseControllers();
         chatWallpaperUrI=settingsSharedPreferences.getString("chatWallpaper",null);
         dynamicChatBubbles =settingsSharedPreferences.getBoolean("useDynamicBubbles",false);
-        if(dynamicChatBubbles){
-            new Thread(new Runnable() {
-
-                @Override
-                public void run() {
-                    try {
-                        Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.parse(chatWallpaperUrI));
-                        createPaletteAsync(bitmap);
-                    } catch (Exception e) {
-
-                        e.printStackTrace();
-                    }
-                }
-            }).start();
-        }
+        int chatBubbleColor =settingsSharedPreferences.getInt("chatBubbleColor",0);
+        int chatTextColor =settingsSharedPreferences.getInt("chatTextColor",0);
+        int chatReadColor =settingsSharedPreferences.getInt("chatReadColor",0);
 
         loadUserDetails();
         setTypingStatus();
@@ -171,7 +159,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
         serviceCheck();
         messageList=messageViewModel.getMessages().getValue();
-        loadAdapter();
+        loadAdapter(chatBubbleColor,chatTextColor,chatReadColor);
 
         imageButton.setOnClickListener(I->{
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -260,32 +248,9 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     }
 
-    public void createPaletteAsync(Bitmap bitmap) {
-        if (bitmap!=null){
-            Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
-
-                public void onGenerated(Palette p) {
-                    messageListAdapter.viewBackColor = p.getMutedColor(getResources().getColor(R.color.cream));
-                    Palette.Swatch mutedSwatch = p.getMutedSwatch();
-                    Palette.Swatch vibrantSwatch = p.getVibrantSwatch();
-                    if( vibrantSwatch != null && mutedSwatch !=null){
-                        messageListAdapter.viewTextColor = mutedSwatch.getTitleTextColor();
-                        messageListAdapter.checkedColor = vibrantSwatch.getRgb();
-                    }else{
-                        messageListAdapter.viewTextColor =getResources().getColor(R.color.black);
-
-                    }
-
-                    messageListAdapter.notifyDataSetChanged();
-//                    GradientDrawable gradientDrawable = (GradientDrawable) view.getBackground() .mutate();
-//                    gradientDrawable.setColor(p.getMutedColor(getResources().getColor(R.color.cream)));
-                }
-            });
-
-        }
-    }
-    private void loadAdapter(){
+    private void loadAdapter(int chatBubbleColor,int chatTextColor, int chatReadColor){
         if(messageList!=null){
+
             messageListAdapter=new messageListAdapter();
             messageListAdapter.setMContext(ChatActivity.this);
             messageListAdapter.setMessageList(messageList);
@@ -295,6 +260,12 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             messageListAdapter.uploadImageTask=uploadImageData;
             messageListAdapter.uploadVideoTask=uploadVideoData;
             messageListAdapter.chatWallpaperUri =chatWallpaperUrI;
+            if(dynamicChatBubbles){
+                messageListAdapter.viewTextColor=chatTextColor;
+                messageListAdapter.checkedColor = chatReadColor;
+                messageListAdapter.viewBackColor =chatBubbleColor;
+            }
+
             recyclerView.setAdapter(messageListAdapter);
         }
 

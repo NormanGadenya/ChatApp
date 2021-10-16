@@ -6,12 +6,16 @@ import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
+
+import com.example.campaign.R;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -105,19 +109,9 @@ public class Tools {
         return extension;
     }
 
-    public static Bitmap getBitmapFromAsset(Context context, String filePath) {
-        AssetManager assetManager = context.getAssets();
-
-        InputStream istr;
-        Bitmap bitmap = null;
-        try {
-            istr = assetManager.open(filePath);
-            bitmap = BitmapFactory.decodeStream(istr);
-        } catch (IOException e) {
-            // handle exception
-        }
-
-        return bitmap;
+    public Bitmap getBitmap(int id){
+        Drawable defWallpaper = context.getResources().getDrawable(id);
+        return ((BitmapDrawable) defWallpaper).getBitmap();
     }
 
     public String encryptText(String text) throws Exception  {
