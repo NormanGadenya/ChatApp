@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?attr/colorPrimary"
-    tools:context="com.example.letStalk.Activities.FingerprintActivity">
+    tools:context="com.neuralBit.letsTalk.Activities.FingerprintActivity">
 
     <ImageView
         android:id="@+id/imageView"

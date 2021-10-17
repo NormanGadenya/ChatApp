@@ -110,7 +110,7 @@
             android:textColor="@android:color/primary_text_light"
             android:textIsSelectable="true"
             android:visibility="gone"
-            android:textSize="18sp"
+            android:textSize="20sp"
             app:emojiconSize="18sp"
             app:layout_constraintBottom_toTopOf="@+id/message_status"
             app:layout_constraintEnd_toEndOf="parent"

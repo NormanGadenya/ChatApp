@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/black"
-    tools:context="com.example.letStalk.Activities.SendVideo">
+    tools:context="com.neuralBit.letsTalk.Activities.SendVideo">
 
     <FrameLayout
         android:id="@+id/frameLayout"

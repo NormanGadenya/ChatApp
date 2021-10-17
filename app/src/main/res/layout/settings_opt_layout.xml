@@ -164,7 +164,6 @@
             android:layout_width="250dp"
             android:layout_height="350dp"
             android:layout_marginTop="8dp"
-            android:background="?colorPrimary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textView14">

@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.example.letStalk.Activities.ViewImageActivity"
+    tools:context="com.neuralBit.letsTalk.Activities.ViewImageActivity"
     >
 
     <ImageView

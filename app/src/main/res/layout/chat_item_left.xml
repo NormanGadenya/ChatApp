@@ -112,7 +112,7 @@
             android:textColor="@android:color/primary_text_light"
             android:textIsSelectable="true"
             android:visibility="gone"
-            app:emojiconSize="18sp"
+            app:emojiconSize="20sp"
             android:textSize="18sp"
             app:layout_constraintBottom_toTopOf="@id/message_status"
             app:layout_constraintStart_toStartOf="parent" />

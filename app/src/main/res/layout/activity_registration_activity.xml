@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?colorPrimary"
-    tools:context="com.example.letStalk.Activities.RegistrationActivity">
+    tools:context="com.neuralBit.letsTalk.Activities.RegistrationActivity">
 
 <LinearLayout
     android:layout_width="match_parent"

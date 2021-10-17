@@ -5,34 +5,37 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?colorPrimaryVariant"
-    tools:context="com.example.letStalk.Activities.MainActivity">
+    tools:context="com.neuralBit.letsTalk.Activities.MainActivity">
+
 
     <TextView
-        android:id="@+id/startNewChatMsg"
+        android:id="@+id/textView1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Start a new chat"
+        android:text="No messages"
         android:textColor="?colorOnPrimary"
         android:textSize="30sp"
-        android:visibility="gone"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="@+id/recyclerViewChatList"
         app:layout_constraintEnd_toEndOf="@+id/recyclerViewChatList"
-        app:layout_constraintHorizontal_bias="0.497"
+        android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@+id/recyclerViewChatList"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.292" />
+        />
 
-    <ImageView
-        android:id="@+id/welcomeEmoji"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:visibility="gone"
-        android:src="@drawable/ic_baseline_sentiment_very_satisfied_24"
-        app:layout_constraintBottom_toBottomOf="@+id/recyclerViewChatList"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/startNewChatMsg"
- />
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tap ➕ to compose a new message"
+        android:textColor="?colorOnPrimary"
+        android:textSize="20sp"
+        android:visibility="visible"
+        app:layout_constraintEnd_toEndOf="@+id/recyclerViewChatList"
+        app:layout_constraintStart_toStartOf="@+id/recyclerViewChatList"
+        app:layout_constraintTop_toBottomOf="@+id/textView1" />
+
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewChatList"
@@ -55,5 +58,5 @@
         app:tint="@android:color/black"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@drawable/chat_communication_svgrepo_com" />
+        app:srcCompat="@drawable/ic_baseline_add_24" />
 </androidx.constraintlayout.widget.ConstraintLayout>
