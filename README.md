@@ -6,11 +6,11 @@ This is an simple android messaging application developed in java that lets user
 ## Screenshots
 ![Screenshot_20211015_122843](https://user-images.githubusercontent.com/28120359/137472989-d6b43154-8d6f-45de-a7cc-1a8e729664d4.png)
 
-![Screenshot_20211015_123114](https://user-images.githubusercontent.com/28120359/137473117-e3951445-0dfe-4983-b1c1-9ce9fd82fef0.png)
+![device-2021-10-17-031325](https://user-images.githubusercontent.com/28120359/137605550-62145589-806e-45e4-ab29-ce26fb1530fa.png)
 
-![Screenshot_20211015_123258](https://user-images.githubusercontent.com/28120359/137473203-fbca0c63-5b17-4de8-ad63-0e41706097be.png)
+![Screenshot_20211017_014426](https://user-images.githubusercontent.com/28120359/137605566-08baeccf-02d8-4ac2-8958-03402504fdfb.png)
 
-![Screenshot_20211015_123338](https://user-images.githubusercontent.com/28120359/137473228-d5ef0c9f-eb00-411b-9a9c-73b06f10b203.png)
+![Screenshot_20211017_034104](https://user-images.githubusercontent.com/28120359/137605704-053088c4-e46a-4fc2-b4c3-2a79008ce40e.png)
 ## Features
 
 Messaging
