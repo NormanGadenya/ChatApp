@@ -19,6 +19,7 @@ import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ResultReceiver;
@@ -343,6 +344,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             newMessage.setText("");
         }
     }
+
+
 
     private void serviceCheck(){
 
@@ -761,6 +764,19 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     protected void onPause() {
 
         saveSharedPreferenceData();
+
+        CountDownTimer ct=new CountDownTimer(120000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                Log.d(TAG, "onTick: ");
+            }
+
+            @Override
+            public void onFinish() {
+
+            }
+        };
+        ct.start();
         super.onPause();
         releaseMediaPlayer();
     }

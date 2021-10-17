@@ -400,6 +400,7 @@ public class SettingsActivity extends AppCompatActivity {
         editor.putInt("chatBubbleColor",chatBubbleColor);
         editor.putInt("chatTextColor", chatTextColor);
         editor.putInt("chatReadColor", chatReadColor);
+
         if (selected != null) {
 
             editor.putString("chatWallpaper", selected.toString());
