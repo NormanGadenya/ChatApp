@@ -4,13 +4,26 @@ This is an simple android messaging application developed in java that lets user
 .
 
 ## Screenshots
-![Screenshot_20211015_122843](https://user-images.githubusercontent.com/28120359/137472989-d6b43154-8d6f-45de-a7cc-1a8e729664d4.png)
+<table>
+  <tr>
+    <td>Signin Page</td>
+     <td>Message List Page</td>
+     <td>Settings Page</td>
+    <td> Chat Page</td>
+  </tr>
+  <tr>
+    <td><img src="https://user-images.githubusercontent.com/28120359/137472989-d6b43154-8d6f-45de-a7cc-1a8e729664d4.png" width=25% height=50%></td>
+    <td><img src="https://user-images.githubusercontent.com/28120359/137605550-62145589-806e-45e4-ab29-ce26fb1530fa.png" width=25% height=50%></td>
+    <td><img src="https://user-images.githubusercontent.com/28120359/137605566-08baeccf-02d8-4ac2-8958-03402504fdfb.png" width=25% height=50%></td>
+    <td><img src="https://user-images.githubusercontent.com/28120359/137605704-053088c4-e46a-4fc2-b4c3-2a79008ce40e.png" width=25% height=50%></td>
+  </tr>
+ </table>
 
-![device-2021-10-17-031325](https://user-images.githubusercontent.com/28120359/137605550-62145589-806e-45e4-ab29-ce26fb1530fa.png)
 
-![Screenshot_20211017_014426](https://user-images.githubusercontent.com/28120359/137605566-08baeccf-02d8-4ac2-8958-03402504fdfb.png)
 
-![Screenshot_20211017_034104](https://user-images.githubusercontent.com/28120359/137605704-053088c4-e46a-4fc2-b4c3-2a79008ce40e.png)
+
+
+
 ## Features
 
 Messaging
