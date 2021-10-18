@@ -127,7 +127,6 @@ public class SettingsActivity extends AppCompatActivity{
                 }
 
 
-                Toast.makeText(getApplicationContext(), fpTimeOut, Toast.LENGTH_SHORT).show();
             }
 
             @Override
