@@ -233,8 +233,7 @@ public class SettingsActivity extends AppCompatActivity{
 
 
         restoreButton.setOnClickListener(I->{
-           editor.remove("chatWallpaperUrI");
-
+           editor.remove("chatWallpaper");
            imageView.setImageResource(R.drawable.def_wallpaper);
            messageSettingsAdapter.viewBackColor=getColor(R.color.cream);
            messageSettingsAdapter.notifyDataSetChanged();
@@ -382,7 +381,12 @@ public class SettingsActivity extends AppCompatActivity{
         super.onStop();
     }
 
-
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Intent intent = new Intent(SettingsActivity.this, MainActivity.class);
+        startActivity(intent);
+    }
 
     private void requestStoragePermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(this,

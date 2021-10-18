@@ -80,6 +80,8 @@ public class SignUpActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         FirebaseUser user = Auth.getCurrentUser();
+        progressBar.setVisibility(View.GONE);
+        phoneNumberEdit.setText(null);
         if (user !=null){
             sendToChats();
         }
