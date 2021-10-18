@@ -261,10 +261,14 @@ public class Repo {
                         for(DataSnapshot s:otherSnapshot.getChildren()){
 
                             if(mKeys.contains(s.getKey())){
-                                HashMap<String,Object> messageStatus=new HashMap<>();
-                                messageStatus.put("checked",true);
-                                otherUserMRef.child(s.getKey()).updateChildren(messageStatus);
-                                otherUserLMRef.updateChildren(messageStatus);
+                                messageListModel m = s.getValue(messageListModel.class);
+                                if(m.getReceiver()!=null){
+                                    HashMap<String,Object> messageStatus=new HashMap<>();
+                                    messageStatus.put("checked",true);
+                                    otherUserMRef.child(s.getKey()).updateChildren(messageStatus);
+                                    otherUserLMRef.updateChildren(messageStatus);
+                                }
+
                             }
                         }
                     }

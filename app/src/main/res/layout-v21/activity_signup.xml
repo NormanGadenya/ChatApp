@@ -53,9 +53,9 @@
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:layout_marginLeft="50dp"
+
+
             android:layout_marginRight="50dp"
-
-
             android:orientation="vertical">
 
             <TextView
@@ -71,15 +71,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
-                android:textColor="?attr/colorOnPrimary"
                 android:text="@string/About_phone"
                 android:textAlignment="center"
+                android:textColor="?attr/colorOnPrimary"
                 android:textSize="15sp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
+                android:textColor="?attr/colorOnPrimary"
                 android:text="Insert phone number here ️"
                 android:textAlignment="center"
                 android:textSize="15sp" />
@@ -94,8 +95,8 @@
                 android:hint="07"
                 android:inputType="number"
                 android:maxLength="10"
-                android:textColor="?attr/colorOnPrimary"
                 android:padding="8dp"
+                android:textColor="?attr/colorOnPrimary"
                 android:textSize="30sp"
                 app:layout_constraintTop_toTopOf="parent"
                 app:oev_primary_color="@color/teal_200"

@@ -90,7 +90,7 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/name"
                 android:textColorHint="@color/cream"
-                android:textColor="?attr/colorOnPrimary"
+                android:textColor="@color/black"
                 android:background="@color/white"
 
                 android:inputType="text"

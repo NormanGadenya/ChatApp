@@ -167,7 +167,7 @@ public class Tools {
 
     public byte[] decode(String encryptedMessage) {
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O){
-            return  Base64.getDecoder().decode(encryptedMessage);
+            return  Base64.getMimeDecoder().decode(encryptedMessage);
         }else {
             return  android.util.Base64.decode(encryptedMessage,android.util.Base64.DEFAULT);
         }

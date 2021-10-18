@@ -67,8 +67,11 @@ public class MainActivity extends AppCompatActivity   {
         InitializeControllers();
 
         newChat.setOnClickListener(this::presentActivity);
-        list=chatViewModel.getChatListData().getValue();
 
+        list=chatViewModel.getChatListData().getValue();
+        chatViewModel.getAvailability().observe(this, is_available->{
+            Log.d(TAG, "onCreate: "+is_available);
+        });
         if(list!=null) {
             chatListAdapter = new chatListAdapter(list, MainActivity.this, this, viewModelStoreOwner, lifecycleOwner);
             chatListAdapter.textView1 =textView1;
