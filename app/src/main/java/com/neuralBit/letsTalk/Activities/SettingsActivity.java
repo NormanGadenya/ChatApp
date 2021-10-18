@@ -16,13 +16,19 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.hardware.fingerprint.FingerprintManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -64,7 +70,7 @@ import java.util.Objects;
 
 import jp.wasabeef.glide.transformations.BlurTransformation;
 
-public class SettingsActivity extends AppCompatActivity {
+public class SettingsActivity extends AppCompatActivity{
     private final List<messageListModel> messageList = new ArrayList<>();
     private Uri selected;
     private BlurImageView imageView;
@@ -84,6 +90,8 @@ public class SettingsActivity extends AppCompatActivity {
     private MessageSettingsAdapter messageSettingsAdapter;
     private int chatBubbleColor,chatTextColor, chatReadColor;
     private Boolean fpSupport=false;
+    private Spinner spinner;
+    private String fpTimeOut;
 
 
     @Override
@@ -98,14 +106,36 @@ public class SettingsActivity extends AppCompatActivity {
         imageView.setClipToOutline(true);
         imageView.setBackgroundResource(R.drawable.card_background3);
         seekBar = findViewById(R.id.seekBar);
-
+        tools.context =getApplicationContext();
         Button logout = findViewById(R.id.logout);
         UserViewModel userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
         CheckBox onlineStatus = findViewById(R.id.onlineStatus);
         CheckBox lastSeenStatus = findViewById(R.id.lastSeenStatus);
         CheckBox fingerprintStatus = findViewById(R.id.fingerprint);
         CheckBox chatBubblesState = findViewById(R.id.chatBubbles);
-        if(checkBiometricSupport()){
+        spinner =findViewById(R.id.fpTimeOutS);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,R.array.fpTimeOutS,android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                fpTimeOut =parent.getItemAtPosition(position).toString();
+                TextView tv = (TextView) view;
+                if(tv!=null){
+                    tv.setTextColor(getResources().getColor(R.color.lightSteelBlue));
+                }
+
+
+                Toast.makeText(getApplicationContext(), fpTimeOut, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+        if(tools.checkBiometricSupport()){
             fpSupport =true;
         }
         userViewModel.initFUserInfo();
@@ -115,9 +145,19 @@ public class SettingsActivity extends AppCompatActivity {
         editor= sharedPreferences.edit();
         showLastSeen = sharedPreferences.getBoolean("showLastSeen", true);
         showOnline = sharedPreferences.getBoolean("showOnline", true);
-        if(fpSupport){
+        String fpTimeOut= sharedPreferences.getString("fpTimeOut",null);
+        TextView tv = findViewById(R.id.textView20);
+
+        if(fpTimeOut!=null){
+            int spinnerPosition= adapter.getPosition(fpTimeOut);
+            spinner.setSelection(spinnerPosition);
+        }
+
+        if(fpSupport && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P){
             setFingerprint = sharedPreferences.getBoolean("setFingerprint",false);
         }else{
+            spinner.setVisibility(GONE);
+            tv.setVisibility(GONE);
             findViewById(R.id.textView13).setVisibility(GONE);
             findViewById(R.id.textView19).setVisibility(GONE);
             fingerprintStatus.setVisibility(GONE);
@@ -133,7 +173,13 @@ public class SettingsActivity extends AppCompatActivity {
         lastSeenStatus.setChecked(showLastSeen);
         fingerprintStatus.setChecked(setFingerprint);
         chatBubblesState.setChecked(dynamicChatBubbles);
-
+        if(setFingerprint){
+            tv.setVisibility(VISIBLE);
+            spinner.setVisibility(VISIBLE);
+        }else{
+            tv.setVisibility(GONE);
+            spinner.setVisibility(GONE);
+        }
         RecyclerView recyclerView = findViewById(R.id.recycler_view_wall);
         FloatingActionButton editWallpaper = findViewById(R.id.editWallpaper);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -169,7 +215,16 @@ public class SettingsActivity extends AppCompatActivity {
 
             dynamicChatBubbles =isChecked;});
         lastSeenStatus.setOnCheckedChangeListener((buttonView, isChecked) -> showLastSeen = isChecked);
-        fingerprintStatus.setOnCheckedChangeListener((buttonView, isChecked) -> setFingerprint = isChecked);
+        fingerprintStatus.setOnCheckedChangeListener((buttonView, isChecked) ->{
+            setFingerprint = isChecked;
+            if(isChecked){
+                tv.setVisibility(VISIBLE);
+                spinner.setVisibility(VISIBLE);
+            }else{
+                tv.setVisibility(GONE);
+                spinner.setVisibility(GONE);
+            }
+        } );
         logout.setOnClickListener(v-> new AlertDialog.Builder(this)
                 .setTitle("Log out")
                 .setMessage("Are you sure you want to sign out")
@@ -194,18 +249,6 @@ public class SettingsActivity extends AppCompatActivity {
                 finishAndRemoveTask();
             }
         });
-    }
-    private Boolean checkBiometricSupport(){
-
-        FingerprintManager fingerprintManager = (FingerprintManager) this.getSystemService(Context.FINGERPRINT_SERVICE);
-        if (!fingerprintManager.isHardwareDetected()) {
-            return false;
-        } else if (!fingerprintManager.hasEnrolledFingerprints()) {
-            return false;
-        } else {
-            return true;
-        }
-
     }
 
     private void setUpRecyclerView(RecyclerView recyclerView) {
@@ -387,7 +430,6 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void setSettings(String userId) {
         DatabaseReference myRef = database.getReference().child("UserDetails").child(userId);
-
         progressBar.setVisibility(VISIBLE);
         Map<String, Object> userDetail = new HashMap<>();
         userDetail.put("showLastSeenState", showLastSeen);
@@ -400,6 +442,7 @@ public class SettingsActivity extends AppCompatActivity {
         editor.putInt("chatBubbleColor",chatBubbleColor);
         editor.putInt("chatTextColor", chatTextColor);
         editor.putInt("chatReadColor", chatReadColor);
+        editor.putString("fpTimeOut",fpTimeOut);
 
         if (selected != null) {
 

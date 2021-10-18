@@ -93,13 +93,14 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     public void onBindViewHolder(@NonNull Holder holder, int position) {
 
         final userModel chatList = list.get(position);
-        if(!list.isEmpty()){
+        if(!list.isEmpty()) {
             textView2.setVisibility(GONE);
             textView1.setVisibility(GONE);
-        }else{
-            textView1.setVisibility(VISIBLE);
-            textView2.setVisibility(VISIBLE);
         }
+//        }else{
+//            textView1.setVisibility(VISIBLE);
+//            textView2.setVisibility(VISIBLE);
+//        }
         if(chatList!=null) {
             Log.d("GSC", "onBindViewHolder: "+list.size());
 
@@ -269,17 +270,20 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     }
 
     private void clickedItem(Holder holder) {
-        userModel chatListModel=list.get(holder.getAdapterPosition());
-        if(holder.checkBox.getVisibility()== GONE){
-            holder.checkBox.setVisibility(VISIBLE);
-            holder.itemView.setBackgroundColor(Color.LTGRAY);
-            selected.add(chatListModel);
-        }else{
-            holder.checkBox.setVisibility(GONE);
-            holder.itemView.setBackgroundColor(Color.TRANSPARENT);
-            selected.remove(chatListModel);
+        if(!list.isEmpty()){
+            userModel chatListModel=list.get(holder.getAdapterPosition());
+            if(holder.checkBox.getVisibility()== GONE){
+                holder.checkBox.setVisibility(VISIBLE);
+                holder.itemView.setBackgroundColor(Color.LTGRAY);
+                selected.add(chatListModel);
+            }else{
+                holder.checkBox.setVisibility(GONE);
+                holder.itemView.setBackgroundColor(Color.TRANSPARENT);
+                selected.remove(chatListModel);
+            }
+            chatViewModel.setText(String.valueOf(selected.size()));
         }
-        chatViewModel.setText(String.valueOf(selected.size()));
+
     }
 
     @Override
@@ -362,13 +366,18 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                 }
 
                 if (messageChecked != null) {
-
-
-                    if (messageChecked) {
-                        messageStatus.setImageResource(R.drawable.ic_baseline_done_all_24);
-                    } else {
-                        messageStatus.setImageResource(R.drawable.ic_baseline_done_24);
+                    if(lastMessage.get(userId).getReceiver().equals(firebaseUser.getUid())){
+                        messageStatus.setVisibility(GONE);
+                    }else{
+                        messageStatus.setVisibility(VISIBLE);
+                        if (messageChecked) {
+                            messageStatus.setImageResource(R.drawable.ic_baseline_done_all_24);
+                        } else {
+                            messageStatus.setImageResource(R.drawable.ic_baseline_done_24);
+                        }
                     }
+
+
                 }
 
                 if(imageUrI==null && videoUrI ==null && audioUrI==null){

@@ -6,6 +6,7 @@ import android.hardware.biometrics.BiometricPrompt;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CancellationSignal;
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.annotation.RequiresApi;
@@ -19,19 +20,20 @@ import com.google.firebase.auth.FirebaseUser;
 public class FingerprintActivity extends AppCompatActivity {
     private BiometricPrompt.AuthenticationCallback authenticationCallback;
     private CancellationSignal cancellationSignal;
+    public static final String TAG = "FingerprintActivity";
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fingerprint);
-
+        String activityName=getIntent().getStringExtra("ActivityName");
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 ImageView fingerprint = findViewById(R.id.imageView);
                 authenticationCallback = new BiometricPrompt.AuthenticationCallback() {
                     @Override
                     public void onAuthenticationError(int errorCode, CharSequence errString) {
                         super.onAuthenticationError(errorCode, errString);
-                        fingerprint.setColorFilter(ContextCompat.getColor(getApplicationContext(), R.color.red), android.graphics.PorterDuff.Mode.SRC_IN);                            Intent mainIntent = new Intent(FingerprintActivity.this, MainActivity.class);
+                        fingerprint.setColorFilter(ContextCompat.getColor(getApplicationContext(), R.color.red), android.graphics.PorterDuff.Mode.SRC_IN);
 
                     }
 
@@ -39,10 +41,24 @@ public class FingerprintActivity extends AppCompatActivity {
                     public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
                         super.onAuthenticationSucceeded(result);
                         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                        Class<?> cls;
                         if (user != null) {
-                            fingerprint.setColorFilter(ContextCompat.getColor(getApplicationContext(), R.color.teal_200), android.graphics.PorterDuff.Mode.SRC_IN);                            Intent mainIntent = new Intent(FingerprintActivity.this, MainActivity.class);
-                            startActivity(mainIntent);
-                            finish();
+                            fingerprint.setColorFilter(ContextCompat.getColor(getApplicationContext(), R.color.teal_200), android.graphics.PorterDuff.Mode.SRC_IN);
+                            try {
+                                if(activityName!=null) {
+                                     cls= Class.forName(activityName);
+                                }else{
+                                    cls=MainActivity.class;
+                                }
+                                Intent mainIntent = new Intent(FingerprintActivity.this, cls);
+                                startActivity(mainIntent);
+                                finish();
+
+                            } catch (ClassNotFoundException e) {
+                                e.printStackTrace();
+                            }
+
+
                         }else{
                             finishAndRemoveTask();
                         }

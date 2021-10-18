@@ -22,7 +22,7 @@ import java.io.IOException;
 import hani.momanii.supernova_emoji_library.Actions.EmojIconActions;
 import hani.momanii.supernova_emoji_library.Helper.EmojiconEditText;
 
-public class sendImage extends AppCompatActivity {
+public class SendImage extends AppCompatActivity {
 
     private String selected;
     private EmojiconEditText caption;

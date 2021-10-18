@@ -1,15 +1,21 @@
 package com.neuralBit.letsTalk.Common;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.hardware.fingerprint.FingerprintManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
+import android.os.CountDownTimer;
+import android.util.Log;
 import android.webkit.MimeTypeMap;
 
 import java.io.File;
@@ -39,7 +45,7 @@ public class Tools {
     public static final String ALIAS="letsTalk";
     private static final String PASS ="Bar12345Bar12345";
     private static Cipher cipher ;
-
+    public  Boolean fpTimeout=false;
     public String getTime(){
         Date dateTime = Calendar.getInstance().getTime();
         SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm");
@@ -96,11 +102,56 @@ public class Tools {
     public String encryptText(String text) throws Exception  {
         Key aesKey =  new SecretKeySpec(PASS.getBytes(), "AES");
         cipher = Cipher.getInstance("AES");
-        // encrypt the text
         cipher.init(Cipher.ENCRYPT_MODE, aesKey);
         byte[] encrypted = cipher.doFinal(text.getBytes());
         return encode(encrypted);
     }
+
+    public CountDownTimer setUpFPTime(){
+        SharedPreferences settingsSharedPreferences=context.getSharedPreferences("Settings",MODE_PRIVATE);
+        CountDownTimer ct;
+        String timeOut = settingsSharedPreferences.getString("fpTimeOut",null);
+        long time;
+        if(timeOut.equals("2 minutes")){
+            time = 120000;
+        }else if (timeOut.equals("5 minutes")){
+            time = 300000;
+        }else {
+            time =0;
+        }
+        ct=new CountDownTimer(time, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {}
+
+            @Override
+            public void onFinish() {
+                fpTimeout=true;
+            }
+        };
+        if(time!=0){
+
+            ct.start();
+        }else{
+            fpTimeout=true;
+        }
+
+        return ct;
+
+    }
+
+    public Boolean checkBiometricSupport(){
+
+        FingerprintManager fingerprintManager = (FingerprintManager) context.getSystemService(Context.FINGERPRINT_SERVICE);
+        if (!fingerprintManager.isHardwareDetected()) {
+            return false;
+        } else if (!fingerprintManager.hasEnrolledFingerprints()) {
+            return false;
+        } else {
+            return true;
+        }
+
+    }
+
 
     public String decryptText(String encrypted) throws Exception{
         Key aesKey =  new SecretKeySpec(PASS.getBytes(), "AES");

@@ -1,22 +1,21 @@
 package com.neuralBit.letsTalk.Activities;
 
-import static android.view.View.GONE;
-import static android.view.View.VISIBLE;
 import static com.neuralBit.letsTalk.Common.Tools.EXTRA_CIRCULAR_REVEAL_X;
 import static com.neuralBit.letsTalk.Common.Tools.EXTRA_CIRCULAR_REVEAL_Y;
+
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.SearchView;
 import android.widget.TextView;
 
@@ -30,13 +29,15 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.campaign.R;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.neuralBit.letsTalk.Common.ServiceCheck;
+import com.neuralBit.letsTalk.Common.Tools;
 import com.neuralBit.letsTalk.Model.ChatViewModel;
 import com.neuralBit.letsTalk.Model.userModel;
 import com.neuralBit.letsTalk.Services.updateStatusService;
 import com.neuralBit.letsTalk.adapter.chatListAdapter;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,31 +55,18 @@ public class MainActivity extends AppCompatActivity   {
     private LifecycleOwner lifecycleOwner;
     private SharedPreferences contactsSharedPrefs;
     public static final String TAG="MainActivity";
-
+    private Tools tools;
     private TextView textView1,textView2;
-
+    private SharedPreferences settingsSharedPreferences;
+    private CountDownTimer ct;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         InitializeControllers();
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        actionBar=getSupportActionBar();
-        assert actionBar != null;
-        actionBar.setTitle("Messages");
-        chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
-        loadSharedPreferenceData();
-        chatViewModel.initChatsList();
-        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        ServiceCheck serviceCheck= new ServiceCheck(updateStatusService.class,this,manager);
-        serviceCheck.checkServiceRunning();
-        newChat.setOnClickListener(this::presentActivity);
-    }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
+        newChat.setOnClickListener(this::presentActivity);
         list=chatViewModel.getChatListData().getValue();
 
         if(list!=null) {
@@ -88,14 +76,6 @@ public class MainActivity extends AppCompatActivity   {
 
             chatListAdapter.setContactsSharedPrefs(contactsSharedPrefs);
             chatViewModel.getChatListData().observe(this, chatList -> {
-                Log.d(TAG, "onStart: "+chatList);
-                if(!chatList.isEmpty()){
-                    textView2.setVisibility(GONE);
-                    textView1.setVisibility(GONE);
-                }else{
-                    textView1.setVisibility(VISIBLE);
-                    textView2.setVisibility(VISIBLE);
-                }
                 chatListAdapter.notifyDataSetChanged();
 
             });
@@ -103,6 +83,7 @@ public class MainActivity extends AppCompatActivity   {
 
         }
     }
+
 
 
 
@@ -115,6 +96,18 @@ public class MainActivity extends AppCompatActivity   {
         textView2 =findViewById(R.id.textView2);
         lifecycleOwner=this;
         viewModelStoreOwner=this;
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        actionBar=getSupportActionBar();
+        assert actionBar != null;
+        actionBar.setTitle("Messages");
+        chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
+        loadSharedPreferenceData();
+        chatViewModel.initChatsList();
+        tools = new Tools();
+        settingsSharedPreferences=getSharedPreferences("Settings",MODE_PRIVATE);
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        ServiceCheck serviceCheck= new ServiceCheck(updateStatusService.class,this,manager);
+        serviceCheck.checkServiceRunning();
     }
 
     private void loadSharedPreferenceData() {
@@ -219,6 +212,45 @@ public class MainActivity extends AppCompatActivity   {
     public void onOptionsMenuClosed(Menu menu) {
         super.onOptionsMenuClosed(menu);
 
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        fpCountDown();
+    }
+
+    private void fpCountDown(){
+
+        if(settingsSharedPreferences.getBoolean("setFingerprint",false)){
+            tools.context=getApplicationContext();
+            ct=tools.setUpFPTime();
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        finishAndRemoveTask();
+
+    }
+
+    @Override
+    protected void onResume() {
+
+        if(tools.fpTimeout){
+            if(settingsSharedPreferences.getBoolean("setFingerprint",false)){
+                Intent intent = new Intent( MainActivity.this,FingerprintActivity.class);
+                intent.putExtra("ActivityName",getClass().getCanonicalName());
+                startActivity(intent);
+            }
+        }else{
+            if(ct!=null){
+                ct.cancel();
+            }
+
+        }
+        super.onResume();
     }
 
     public void presentActivity(View view) {

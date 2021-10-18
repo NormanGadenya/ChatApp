@@ -51,7 +51,7 @@
             android:name="com.neuralBit.letsTalk.Activities.SendVideo"
             android:parentActivityName="com.neuralBit.letsTalk.Activities.ChatActivity" />
         <activity
-            android:name="com.neuralBit.letsTalk.Activities.sendImage"
+            android:name="com.neuralBit.letsTalk.Activities.SendImage"
             android:parentActivityName="com.neuralBit.letsTalk.Activities.ChatActivity" />
         <activity
             android:name="com.neuralBit.letsTalk.Activities.SettingsActivity"

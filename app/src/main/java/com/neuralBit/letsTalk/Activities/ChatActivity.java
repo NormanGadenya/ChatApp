@@ -13,7 +13,6 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
@@ -131,6 +130,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private ImageButton scrollButton;
     private TextView status;
     private Boolean dynamicChatBubbles;
+    private CountDownTimer ct;
 
     @SuppressWarnings("deprecation")
     @Override
@@ -691,7 +691,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             }else{
                 progressBar.setVisibility(GONE);
                 profilePic.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
-                profilePic.setCircleColor(Color.WHITE);
 
             }
             profilePic.setOnClickListener(v -> {
@@ -723,7 +722,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             try{
                 if(tools.isFileLessThan2MB(selected)) {
                     if (requestCode == IMAGEREQUEST) {
-                        Intent intent = new Intent(getApplicationContext(), sendImage.class)
+                        Intent intent = new Intent(getApplicationContext(), SendImage.class)
                                 .putExtra("imageUrI", selected.toString())
                                 .putExtra("otherUserId", otherUserId)
                                 .putExtra("otherUserName", otherUserName);
@@ -764,22 +763,37 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     protected void onPause() {
 
         saveSharedPreferenceData();
-
-        CountDownTimer ct=new CountDownTimer(120000, 1000) {
-            @Override
-            public void onTick(long millisUntilFinished) {
-                Log.d(TAG, "onTick: ");
-            }
-
-            @Override
-            public void onFinish() {
-
-            }
-        };
-        ct.start();
+       fpCountDown();
         super.onPause();
         releaseMediaPlayer();
     }
+
+    private void fpCountDown(){
+        if(settingsSharedPreferences.getBoolean("setFingerprint",false)){
+            tools.context=getApplicationContext();
+            ct=tools.setUpFPTime();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+            if(tools.fpTimeout){
+                if(settingsSharedPreferences.getBoolean("setFingerprint",false)){
+                    Intent intent = new Intent(ChatActivity.this,FingerprintActivity.class);
+                    intent.putExtra("ActivityName",getClass().getCanonicalName());
+                    startActivity(intent);
+                }
+            }else{
+                if(ct!=null){
+                    ct.cancel();
+                }
+
+            }
+
+    }
+
+
 
     private void releaseMediaPlayer() {
         try {
@@ -824,6 +838,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
         return true;
     }
+
+
 
     @Override
     public void onBackPressed() {

@@ -116,7 +116,6 @@ public class UserProfileActivity extends AppCompatActivity {
 
         doneButton.setOnClickListener(v -> {
             updateUserDetails(firebaseUser.getUid());
-//                uploadFile(firebaseUser.getUid());
         });
         setupToolBar();
     }
@@ -148,7 +147,9 @@ public class UserProfileActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             Tools tools = new Tools();
             try {
-                Glide.with(getApplicationContext()).load(tools.decryptText(profileUrI)).into(imageView);
+                if(profileUrI!=null){
+                    Glide.with(getApplicationContext()).load(tools.decryptText(profileUrI)).into(imageView);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }

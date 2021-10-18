@@ -13,6 +13,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -25,6 +26,7 @@ import android.widget.ProgressBar;
 import android.widget.SearchView;
 
 import com.neuralBit.letsTalk.Common.ServiceCheck;
+import com.neuralBit.letsTalk.Common.Tools;
 import com.neuralBit.letsTalk.Model.UserViewModel;
 import com.neuralBit.letsTalk.Model.userModel;
 import com.example.campaign.R;
@@ -50,6 +52,11 @@ public class UserListActivity extends AppCompatActivity {
     private UserViewModel userViewModel;
     private SharedPreferences contactsSharedPrefs;
     public static final String TAG = "UserListActivity";
+    private Tools tools;
+    private SharedPreferences settingsSharedPreferences;
+    private CountDownTimer ct;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,8 +70,10 @@ public class UserListActivity extends AppCompatActivity {
         ServiceCheck serviceCheck=new ServiceCheck(updateStatusService.class,this,manager);
         serviceCheck.checkServiceRunning();
         loadSharedPreferenceData();
-        userViewModel.initUserList(contactsSharedPrefs);
+        settingsSharedPreferences=getSharedPreferences("Settings",MODE_PRIVATE);
 
+        userViewModel.initUserList(contactsSharedPrefs);
+        tools = new Tools();
         list=userViewModel.getAllUsers().getValue();
 
 
@@ -78,7 +87,6 @@ public class UserListActivity extends AppCompatActivity {
             progressBar.setVisibility(View.GONE);
 
         });
-        loadUsers();
 
 
         final Intent intent = getIntent();
@@ -137,13 +145,39 @@ public class UserListActivity extends AppCompatActivity {
     }
 
 
+    @Override
+    protected void onPause() {
+        fpCountDown();
+        super.onPause();
+    }
 
+    private void fpCountDown(){
+        if(settingsSharedPreferences.getBoolean("setFingerprint",false)){
+            tools.context=getApplicationContext();
+            ct=tools.setUpFPTime();
+        }
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(tools.fpTimeout){
+            if(settingsSharedPreferences.getBoolean("setFingerprint",false)){
+                Intent intent = new Intent(UserListActivity.this,FingerprintActivity.class);
+                intent.putExtra("ActivityName",getClass().getCanonicalName());
+                startActivity(intent);
+            }
+        }else{
+            if(ct!=null){
+                ct.cancel();
+            }
 
-    private void loadUsers(){
-
+        }
 
     }
+
+
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
