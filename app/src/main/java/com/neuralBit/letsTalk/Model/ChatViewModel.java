@@ -14,7 +14,6 @@ public class ChatViewModel extends ViewModel {
     MutableLiveData<String> mutableLiveData=new MutableLiveData<>();
     private MutableLiveData<ArrayList<userModel>> chatsList;
     private MutableLiveData<HashMap<String,messageListModel>> lastMessage;
-    private MutableLiveData<Boolean> isAvailable=new MutableLiveData<>();
 
 
 
@@ -47,11 +46,7 @@ public class ChatViewModel extends ViewModel {
 
 
     public LiveData<ArrayList<userModel>> getChatListData(){
-        if(chatsList.getValue().size()>0){
-            isAvailable.setValue(true);
-        }else{
-            isAvailable.setValue(false);
-        }
+
         return chatsList;
     }
 
@@ -64,8 +59,6 @@ public class ChatViewModel extends ViewModel {
         this.lastMessage = lastMessage;
     }
 
-    public LiveData<Boolean> getAvailability(){
-        return  isAvailable;
-    }
+
 
 }

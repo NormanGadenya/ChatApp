@@ -15,7 +15,7 @@
         android:text="No messages"
         android:textColor="?colorOnPrimary"
         android:textSize="30sp"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@+id/recyclerViewChatList"
         app:layout_constraintEnd_toEndOf="@+id/recyclerViewChatList"
         android:textStyle="bold"
@@ -30,12 +30,45 @@
         android:text="Tap ➕ to compose a new message"
         android:textColor="?colorOnPrimary"
         android:textSize="20sp"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="@+id/recyclerViewChatList"
         app:layout_constraintStart_toStartOf="@+id/recyclerViewChatList"
         app:layout_constraintTop_toBottomOf="@+id/textView1" />
 
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/chatListShimmer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <include layout="@layout/chatlist_shimmer" />
+
+            <include layout="@layout/chatlist_shimmer" />
+
+            <include layout="@layout/chatlist_shimmer" />
+
+            <include layout="@layout/chatlist_shimmer" />
+
+            <include layout="@layout/chatlist_shimmer" />
+
+            <include layout="@layout/chatlist_shimmer" />
+
+            <include layout="@layout/chatlist_shimmer" />
+
+            <include layout="@layout/chatlist_shimmer" />
+
+            <include layout="@layout/chatlist_shimmer" />
+
+            <include layout="@layout/chatlist_shimmer" />
+
+        </LinearLayout>
+    </com.facebook.shimmer.ShimmerFrameLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewChatList"
@@ -45,6 +78,7 @@
         android:layoutAnimation="@anim/layout_anim"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"/>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -53,6 +87,7 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
+        android:visibility="gone"
         android:clickable="true"
         android:contentDescription="new message"
         app:tint="@android:color/black"

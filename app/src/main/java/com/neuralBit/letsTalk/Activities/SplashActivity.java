@@ -14,8 +14,12 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.campaign.R;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.neuralBit.letsTalk.Model.ChatViewModel;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,7 +41,10 @@ public class SplashActivity extends AppCompatActivity {
         }else{
             requestContactsPermission();
         }
-
+        if(FirebaseAuth.getInstance().getCurrentUser()!=null){
+            ChatViewModel chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
+            chatViewModel.initChatsList();
+        }
 
 
     }

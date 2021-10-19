@@ -60,7 +60,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     private final ViewModelStoreOwner viewModelStoreOwner;
     private final LifecycleOwner lifecycleOwner;
     private  SharedPreferences contactsSharedPrefs;
-    public TextView textView1,textView2;
+//    public TextView textView1,textView2;
 
     public chatListAdapter(List<userModel> list, Context context, Activity activity,ViewModelStoreOwner viewModelStoreOwner ,LifecycleOwner lifecycleOwner) {
         this.list = list;
@@ -93,10 +93,10 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     public void onBindViewHolder(@NonNull Holder holder, int position) {
 
         final userModel chatList = list.get(position);
-        if(!list.isEmpty()) {
-            textView2.setVisibility(GONE);
-            textView1.setVisibility(GONE);
-        }
+//        if(!list.isEmpty()) {
+//            textView2.setVisibility(GONE);
+//            textView1.setVisibility(GONE);
+//
 //        }else{
 //            textView1.setVisibility(VISIBLE);
 //            textView2.setVisibility(VISIBLE);
@@ -214,13 +214,13 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                                         list.remove(c);
                                         notifyDataSetChanged();
                                     }
-                                    if(!list.isEmpty()){
-                                        textView2.setVisibility(GONE);
-                                        textView1.setVisibility(GONE);
-                                    }else{
-                                        textView1.setVisibility(VISIBLE);
-                                        textView2.setVisibility(VISIBLE);
-                                    }
+//                                    if(!list.isEmpty()){
+//                                        textView2.setVisibility(GONE);
+//                                        textView1.setVisibility(GONE);
+//                                    }else{
+//                                        textView1.setVisibility(VISIBLE);
+//                                        textView2.setVisibility(VISIBLE);
+//                                    }
 
 
                                     Bundle b = new Bundle();

@@ -1,5 +1,7 @@
 package com.neuralBit.letsTalk.Activities;
 
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
 import static com.neuralBit.letsTalk.Common.Tools.EXTRA_CIRCULAR_REVEAL_X;
 import static com.neuralBit.letsTalk.Common.Tools.EXTRA_CIRCULAR_REVEAL_Y;
 
@@ -19,6 +21,7 @@ import android.view.View;
 import android.widget.SearchView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -31,7 +34,15 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.campaign.R;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.neuralBit.letsTalk.Common.ServiceCheck;
 import com.neuralBit.letsTalk.Common.Tools;
 import com.neuralBit.letsTalk.Model.ChatViewModel;
@@ -39,6 +50,7 @@ import com.neuralBit.letsTalk.Model.userModel;
 import com.neuralBit.letsTalk.Services.updateStatusService;
 import com.neuralBit.letsTalk.adapter.chatListAdapter;
 
+import java.security.acl.Owner;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,36 +71,99 @@ public class MainActivity extends AppCompatActivity   {
     private TextView textView1,textView2;
     private SharedPreferences settingsSharedPreferences;
     private CountDownTimer ct;
-
+    private ShimmerFrameLayout shimmer;
+    private Boolean chatListAvail=false;
+    private LifecycleOwner owner;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         InitializeControllers();
+        owner = this;
 
+        chatListAvail();
         newChat.setOnClickListener(this::presentActivity);
-
+        shimmer =findViewById(R.id.chatListShimmer);
         list=chatViewModel.getChatListData().getValue();
-        chatViewModel.getAvailability().observe(this, is_available->{
-            Log.d(TAG, "onCreate: "+is_available);
+
+
+        chatViewModel.getChatListData().observe(owner, chatList -> {
+
+            chatListAdapter.notifyDataSetChanged();
+            if(chatList.size()>=1){
+                shimmer.stopShimmer();
+                shimmer.setVisibility(GONE);
+
+                recyclerView.setVisibility(VISIBLE);
+                newChat.setVisibility(VISIBLE);
+            }else{
+                textView1.setVisibility(GONE);
+                textView2.setVisibility(GONE);
+                shimmer.setVisibility(VISIBLE);
+                shimmer.startShimmer();
+                recyclerView.setVisibility(GONE);
+                newChat.setVisibility(GONE);
+            }
+
         });
-        if(list!=null) {
+
+
+        if(list !=null) {
+
             chatListAdapter = new chatListAdapter(list, MainActivity.this, this, viewModelStoreOwner, lifecycleOwner);
-            chatListAdapter.textView1 =textView1;
-            chatListAdapter.textView2 =textView2;
+//            chatListAdapter.textView1 =textView1;
+//            chatListAdapter.textView2 =textView2;
 
             chatListAdapter.setContactsSharedPrefs(contactsSharedPrefs);
-            chatViewModel.getChatListData().observe(this, chatList -> {
-                chatListAdapter.notifyDataSetChanged();
 
-            });
+
+
+//            if(!list.isEmpty()){
+//                textView1.setVisibility(GONE);
+//                textView2.setVisibility(GONE);
+//            }else{
+//                textView1.setVisibility(View.VISIBLE);
+//                textView2.setVisibility(View.VISIBLE);
+//            }
             recyclerView.setAdapter(chatListAdapter);
 
         }
     }
+    private void chatListAvail(){
+        FirebaseDatabase database =FirebaseDatabase.getInstance();
+        DatabaseReference mRef=database.getReference().child("chats");
+
+        mRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                chatListAvail=snapshot.hasChild(FirebaseAuth.getInstance().getCurrentUser().getUid());
+                if(!chatListAvail){
+                    shimmer.setVisibility(View.GONE);
+                    shimmer.stopShimmer();
+                    newChat.setVisibility(VISIBLE);
+                    textView1.setVisibility(VISIBLE);
+                    textView2.setVisibility(VISIBLE);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
 
 
+    @Override
+    protected void onStart() {
+        super.onStart();
 
+
+//        if(list.size()<1){
+//            textView1.setVisibility(VISIBLE);
+//            textView2.setVisibility(VISIBLE);
+//        }
+    }
 
     private void InitializeControllers() {
 
@@ -107,6 +182,8 @@ public class MainActivity extends AppCompatActivity   {
         loadSharedPreferenceData();
         chatViewModel.initChatsList();
         tools = new Tools();
+
+
         settingsSharedPreferences=getSharedPreferences("Settings",MODE_PRIVATE);
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         ServiceCheck serviceCheck= new ServiceCheck(updateStatusService.class,this,manager);
