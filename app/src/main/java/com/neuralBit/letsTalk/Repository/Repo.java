@@ -1,11 +1,20 @@
 package com.neuralBit.letsTalk.Repository;
 
+import static android.view.View.GONE;
+import static com.neuralBit.letsTalk.Common.Tools.MESSAGE_LEFT;
+
 import android.content.SharedPreferences;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.ml.common.modeldownload.FirebaseModelDownloadConditions;
+import com.google.firebase.ml.naturallanguage.translate.FirebaseTranslator;
+import com.neuralBit.letsTalk.Common.Tools;
 import com.neuralBit.letsTalk.Model.messageListModel;
 import com.neuralBit.letsTalk.Model.userModel;
 import com.google.firebase.auth.FirebaseAuth;
@@ -43,7 +52,8 @@ public class Repo {
     private final FirebaseDatabase database=FirebaseDatabase.getInstance();
     private final FirebaseUser fUser= FirebaseAuth.getInstance().getCurrentUser();
     private final ArrayList<messageListModel> messageListModel=new ArrayList<>();
-
+    private Tools tools = new Tools();
+    private String translatedText;
     public static Repo getInstance() {
         if(instance == null){
             instance= new Repo();
@@ -62,18 +72,18 @@ public class Repo {
         return chatList;
     }
 
-    public MutableLiveData<HashMap<String , messageListModel>> getLastMessage(String userId){
+    public MutableLiveData<HashMap<String , messageListModel>> getLastMessage(String userId,FirebaseTranslator Translator){
         if(fUser!=null){
-            GetLastMessage getLastMessage=new GetLastMessage(userId);
+            GetLastMessage getLastMessage=new GetLastMessage(userId,Translator);
             new Thread(getLastMessage).start();
         }
 
         return  lastMessage;
     }
 
-    public MutableLiveData<ArrayList<messageListModel>> getMessages(String otherUserId){
+    public MutableLiveData<ArrayList<messageListModel>> getMessages(String otherUserId, FirebaseTranslator Translator){
         if(fUser!=null){
-            GetMessages getMessages =new GetMessages(otherUserId);
+            GetMessages getMessages =new GetMessages(otherUserId,Translator);
             new Thread(getMessages).start();
             messageList.setValue(messageListModel);
         }
@@ -192,8 +202,20 @@ public class Repo {
                     if(arrangedChatListId.contains(dataSnapshot.getKey())){
                         String userId=dataSnapshot.getKey();
                         userModel user= dataSnapshot.getValue(userModel.class);
-                        user.setUserId(userId);
-                        chatListOrder.put(dataSnapshot.getKey(),user);
+                        assert user != null;
+                        String profileUrI;
+                        try {
+                            if(user.getProfileUrI()!=null){
+                                profileUrI = tools.decryptText(user.getProfileUrI());
+                                user.setProfileUrI(profileUrI);
+                            }
+
+                            user.setUserId(userId);
+                            chatListOrder.put(dataSnapshot.getKey(),user);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
 
                     }
                 }
@@ -208,14 +230,70 @@ public class Repo {
             }
         });
     }
+    private void downloadModal(String input,FirebaseTranslator Translator) {
+        // below line is use to download the modal which
+        // we will require to translate in german language
+        FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions.Builder().requireWifi().build();
 
-    private void loadLastMessage(String userId){
+        // below line is use to download our modal.
+        Translator.downloadModelIfNeeded(conditions).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+
+                // this method is called when modal is downloaded successfully.
+
+                // calling method to translate our entered text.
+                translateLanguage(input,Translator);
+                Translator.translate(input).addOnSuccessListener(new OnSuccessListener<String>() {
+                    @Override
+                    public void onSuccess(String s) {
+                        translatedText=s;
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        translatedText=input;
+                    }
+                });
+
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.e(TAG, "onFailure: ",e);
+            }
+        });
+    }
+
+    private void translateLanguage(String input,FirebaseTranslator Translator) {
+
+        Translator.translate(input).addOnSuccessListener(new OnSuccessListener<String>() {
+            @Override
+            public void onSuccess(String s) {
+                translatedText=s;
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                translatedText=input;
+            }
+        });
+    }
+    private void loadLastMessage(String userId,FirebaseTranslator Translator) {
         DatabaseReference messageRef=database.getReference();
         messageRef.child("lastMessage").child(fUser.getUid()).child(userId).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 messageListModel message;
                 message=snapshot.getValue(messageListModel.class);
+                String text = null;
+                try {
+                    text = tools.decryptText(message.getText());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                message.setText(text);
                 messageSet.put(userId,message);
                 lastMessage.postValue(messageSet);
 
@@ -228,7 +306,7 @@ public class Repo {
         });
     }
 
-    private void loadMessages(String otherUserId){
+    private void loadMessages(String otherUserId,FirebaseTranslator Translator){
         DatabaseReference fMRef=database.getReference().child("chats").child(fUser.getUid()).child(otherUserId);
         DatabaseReference otherUserMRef=database.getReference().child("chats").child(otherUserId).child(fUser.getUid());
         DatabaseReference otherUserLMRef=database.getReference().child("lastMessage").child(otherUserId).child(fUser.getUid());
@@ -236,7 +314,7 @@ public class Repo {
         Thread getMessageThread= new Thread(() -> fMRef.addValueEventListener(new ValueEventListener(){
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                messageListModel.clear();
+//                messageListModel.clear();
                 ArrayList<String> mKeys=new ArrayList<>();
 
                 for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
@@ -244,10 +322,73 @@ public class Repo {
                         messageListModel message = snapshot.getValue(messageListModel.class);
                         message.setMessageId(snapshot.getKey());
                         String receiver = message.getReceiver();
-                        message.setReceiver(receiver);
-                        messageListModel.add(message);
-                        messageList.postValue(messageListModel);
-                        mKeys.add(snapshot.getKey());
+                        String text = tools.decryptText(message.getText());
+                        String imageUri=message.getImageUrI()!=null? tools.decryptText(message.getText()) : null;
+                        String audioUrI=message.getAudioUrI()!=null? tools.decryptText(message.getAudioUrI()) : null;
+                        String videoUrI=message.getVideoUrI()!=null? tools.decryptText(message.getVideoUrI()) : null;
+                        if(imageUri!=null){
+                            message.setImageUrI(imageUri);
+                        }else if(videoUrI!=null){
+                            message.setVideoUrI(videoUrI);
+                        }else if(audioUrI!=null){
+                            message.setAudioUrI(audioUrI);
+                        }
+
+
+
+                            if(Translator!=null){
+                                FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions.Builder().requireWifi().build();
+
+                                // below line is use to download our modal.
+                                Translator.downloadModelIfNeeded(conditions).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+
+                                        // this method is called when modal is downloaded successfully.
+
+                                        // calling method to translate our entered text.
+
+                                        Translator.translate(text).addOnSuccessListener(new OnSuccessListener<String>() {
+                                            @Override
+                                            public void onSuccess(String s) {
+                                                Log.d(TAG, "onSuccess: "+s);
+                                                if(message.getReceiver().equals(fUser.getUid())){
+                                                    message.setText(s);
+
+                                                }else{
+                                                    message.setText(text);
+                                                }
+                                                message.setReceiver(receiver);
+                                                if(!messageListModel.contains(message)){
+                                                    messageListModel.add(message);
+
+
+                                                    messageList.postValue(messageListModel);
+                                                    mKeys.add(snapshot.getKey());
+                                                }
+
+                                            }
+                                        }).addOnFailureListener(new OnFailureListener() {
+                                            @Override
+                                            public void onFailure(@NonNull Exception e) {
+                                                message.setText(text);
+                                            }
+                                        });
+
+                                    }
+                                }).addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Log.e(TAG, "onFailure: ",e);
+                                    }
+                                });
+                            }else{
+                                message.setText(text);
+
+                            }
+
+
+
 
                     }catch(Exception e){
                         Log.d("error1",e.getMessage());
@@ -292,14 +433,25 @@ public class Repo {
 
 
     }
-
+    // TODO fix messaging bug when user translates
     private void loadOtherUserInfo(String otherUserId) {
         DatabaseReference reference=database.getReference().child("UserDetails").child(otherUserId);
         reference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 userModel user= snapshot.getValue(userModel.class);
-                otherUserInfo.postValue(user);
+                try {
+
+                    if(user.getProfileUrI()!=null){
+                        user.setProfileUrI( tools.decryptText(user.getProfileUrI()));
+
+                    }
+                    otherUserInfo.postValue(user);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
 
             }
 
@@ -316,7 +468,16 @@ public class Repo {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 userModel user=snapshot.getValue(userModel.class);
-                fUserInfo.postValue(user);
+                try {
+                    assert user != null;
+                    if(user.getProfileUrI()!=null){
+                        user.setProfileUrI( tools.decryptText(user.getProfileUrI()));
+                    }
+                    fUserInfo.postValue(user);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
             }
 
@@ -384,25 +545,32 @@ public class Repo {
 
     class GetLastMessage implements Runnable {
         final String userId;
+        final FirebaseTranslator Translator;
 
-        GetLastMessage(String userId){
+
+        GetLastMessage(String userId,FirebaseTranslator Translator){
+
             this.userId=userId;
+            this.Translator=Translator;
+
         }
 
         @Override
         public void run() {
-            loadLastMessage(userId);
+            loadLastMessage(userId,Translator);
         }
     }
 
     class GetMessages implements Runnable {
         final String otherUserId;
-         GetMessages(String otherUserId){
+        final FirebaseTranslator Translator;
+         GetMessages(String otherUserId,FirebaseTranslator Translator){
              this.otherUserId=otherUserId;
+             this.Translator=Translator;
          }
         @Override
         public void run() {
-            loadMessages(otherUserId);
+            loadMessages(otherUserId,Translator);
         }
     }
 

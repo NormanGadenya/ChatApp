@@ -311,7 +311,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                 reference=c.getAudioUrI();
             }
             try {
-                photoRef = mFirebaseStorage.getReferenceFromUrl(tools.decryptText(reference));
+                photoRef = mFirebaseStorage.getReferenceFromUrl(reference);
                 photoRef.delete();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -404,22 +404,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                 switch(messageList.getType()){
                     case "TEXT":
                         videoPlayButton.setVisibility(GONE);
-                            try {
-                                String text = tools.decryptText(messageList.getText());
-                                if (useTranslator) {
-                                    if (messageList.getReceiver().equals(user.getUid())) {
-                                        downloadModal(text,message);
-                                    } else {
-                                        message.setText(text);
-                                    }
-
-                                }else{
-                                    message.setText(text);
-                                }
-                            }catch (Exception e) {
-                                Log.e(TAG, "bind: ",e );
-                            }
-
+                        message.setText(messageList.getText());
                         imageView.setVisibility(GONE);
                         audioLoadProgress.setVisibility(GONE);
                         message.setVisibility(VISIBLE);
@@ -451,12 +436,8 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                             message.setVisibility(GONE);
                         }else {
 
-                            try {
-                                message.setText(tools.decryptText(messageList.getText()));
-                            } catch (Exception e) {
-                                message.setText(messageList.getText());
-                                e.printStackTrace();
-                            }
+                            message.setText(messageList.getText());
+
                             message.setVisibility(VISIBLE);
                         }
 
@@ -464,13 +445,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
                         time.setText(messageList.getTime());
                         String imageUri=messageList.getImageUrI();
-                        try {
-                            imageUri=tools.decryptText(imageUri);
-                        } catch (Exception e) {
-
-                            e.printStackTrace();
-                        }
-
 
                         if(uploadImageData.containsKey(messageList.getMessageId()) && uploadImageData!=null){
                             progressBar.setVisibility(VISIBLE);
@@ -525,12 +499,8 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         if(messageList.getText()==null){
                             message.setVisibility(GONE);
                         }else{
-                            try {
-                                message.setText(tools.decryptText(messageList.getText()));
+                            message.setText(messageList.getText());
 
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
 
                             message.setVisibility(VISIBLE);
                         }
@@ -539,14 +509,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         videoPlayButton.setOnClickListener(V-> recyclerViewInterface.onItemClick(getAdapterPosition()));
                         time.setText(messageList.getTime());
                         String videoUrI=messageList.getVideoUrI();
-
-                            try {
-                                videoUrI=tools.decryptText(videoUrI);
-
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-
                         if(videoUrI!=null){
                             Glide.with(context)
                                     .load(videoUrI)
@@ -580,14 +542,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         progressBar.setVisibility(GONE);
 
                         audioUrI=messageList.getAudioUrI();
-
-                        try {
-                            audioUrI=tools.decryptText(audioUrI);
-                        } catch (Exception e) {
-
-                            e.printStackTrace();
-                        }
-
                         if(uploadAudioData.containsKey(messageList.getMessageId()) && uploadAudioData!=null){
                             audioLoadProgress.setVisibility(VISIBLE);
                             playButton.setVisibility(GONE);

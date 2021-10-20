@@ -44,11 +44,7 @@ import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.ml.common.modeldownload.FirebaseModelDownloadConditions;
 import com.google.firebase.ml.naturallanguage.FirebaseNaturalLanguage;
-import com.google.firebase.ml.naturallanguage.translate.FirebaseTranslateLanguage;
 import com.google.firebase.ml.naturallanguage.translate.FirebaseTranslator;
 import com.google.firebase.ml.naturallanguage.translate.FirebaseTranslatorOptions;
 import com.neuralBit.letsTalk.Common.Tools;
@@ -154,6 +150,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         scrollButton=findViewById(R.id.scrollToBottom);
         tools.context=getApplicationContext();
         InitialiseControllers();
+
         //TODO fix otherUserActivity
         //TODO fix translator performance issue plus ui improvements
         chatWallpaperUrI=settingsSharedPreferences.getString("chatWallpaper",null);
@@ -162,8 +159,10 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         int chatTextColor =settingsSharedPreferences.getInt("chatTextColor",0);
         int chatReadColor =settingsSharedPreferences.getInt("chatReadColor",0);
         String fUserPrefLang = settingsSharedPreferences.getString("preferredLang",null);
+        Boolean useTranslator = settingsSharedPreferences.getBoolean("useTranslator",false);
         loadUserDetails();
         setTypingStatus();
+
         FirebaseTranslatorOptions options =
                 new FirebaseTranslatorOptions.Builder()
                         // below line we are specifying our source language.
@@ -176,8 +175,14 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
         layoutManager= new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
-        messageViewModel.initChats(otherUserId);
+        if(useTranslator){
+            messageViewModel.initChats(otherUserId,Translator);
 
+        }else{
+            messageViewModel.initChats(otherUserId,null);
+
+        }
+//        messageViewModel.getUseTranslator().setValue(useTranslator);
         serviceCheck();
         messageList=messageViewModel.getMessages().getValue();
         loadAdapter(chatBubbleColor,chatTextColor,chatReadColor);
@@ -588,6 +593,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         otherUserId=getIntent().getStringExtra("userId");
         otherUserName=getIntent().getStringExtra("userName");
 
+
         fPhoneNumber= fUser.getPhoneNumber();
         userName=findViewById(R.id.userName);
         recyclerView=findViewById(R.id.recyclerView1);
@@ -698,7 +704,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             messageListAdapter.otherUserLang = otherUserInfo.getPreferredLang();
             if(profileUrI!=null){
                 try {
-                    Glide.with(getApplicationContext()).load(tools.decryptText(profileUrI)).listener(new RequestListener<Drawable>() {
+                    Glide.with(getApplicationContext()).load(profileUrI).listener(new RequestListener<Drawable>() {
                         @Override
                         public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
                             progressBar.setVisibility(GONE);
@@ -891,20 +897,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         String imageUrI=messageList.get(position).getImageUrI();
         String videoUrI=messageList.get(position).getVideoUrI();
         String caption =messageList.get(position).getText();
-        try {
 
-            if(caption!=null){
-                caption=tools.decryptText(caption);
-            }
-            if(imageUrI!=null){
-                imageUrI=tools.decryptText(imageUrI);
-            }else if(videoUrI!=null){
-                videoUrI=tools.decryptText(videoUrI);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         if(imageUrI!=null){
             i=new Intent(this,ViewImageActivity.class);
             i.putExtra("imageUrI",imageUrI);

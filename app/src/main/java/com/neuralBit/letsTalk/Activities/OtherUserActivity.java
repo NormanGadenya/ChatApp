@@ -101,7 +101,7 @@ public class OtherUserActivity extends AppCompatActivity {
             Tools tools = new Tools();
             try {
                 if(profileUrI!=null){
-                    Glide.with(getApplicationContext()).load(tools.decryptText(profileUrI)).into(imageView);
+                    Glide.with(getApplicationContext()).load(profileUrI).into(imageView);
 
                 }
             } catch (Exception e) {

@@ -61,7 +61,7 @@ public class userListAdapter extends RecyclerView.Adapter<userListAdapter.Holder
             if (userList.getProfileUrI()==null){
                 holder.profile.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);  // set  default image when profile user is null
             } else {
-                Glide.with(context).load(tools.decryptText(userList.getProfileUrI())).into(holder.profile);
+                Glide.with(context).load(userList.getProfileUrI()).into(holder.profile);
             }
         }catch(Exception e){
             Log.e(TAG, "onBindViewHolder: ",e.fillInStackTrace() );

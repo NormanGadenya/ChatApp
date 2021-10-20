@@ -43,12 +43,6 @@ public class ViewVideoActivity extends AppCompatActivity {
         otherUserName=getIntent().getStringExtra("otherUserName");
         String caption = getIntent().getStringExtra("caption");
 
-        try {
-            videoUrI=tools.decryptText(videoUrI);
-            caption= tools.decryptText(caption);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         String direction = getIntent().getStringExtra("direction");
         progressBar=findViewById(R.id.progressBar);
         ActionBar actionBar=getSupportActionBar();

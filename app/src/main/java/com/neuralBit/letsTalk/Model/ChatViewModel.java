@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.google.firebase.ml.naturallanguage.translate.FirebaseTranslator;
 import com.neuralBit.letsTalk.Repository.Repo;
 
 import java.util.ArrayList;
@@ -28,9 +29,9 @@ public class ChatViewModel extends ViewModel {
 
     }
 
-    public void initLastMessage(String userId){
+    public void initLastMessage(String userId, FirebaseTranslator Translator){
 
-        lastMessage=Repo.getInstance().getLastMessage(userId);
+        lastMessage=Repo.getInstance().getLastMessage(userId,Translator);
     }
 
 

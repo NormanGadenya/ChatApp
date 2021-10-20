@@ -29,6 +29,7 @@ import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.firebase.ml.naturallanguage.translate.FirebaseTranslator;
 import com.neuralBit.letsTalk.Activities.ChatActivity;
 import com.neuralBit.letsTalk.Common.Tools;
 import com.neuralBit.letsTalk.Model.ChatViewModel;
@@ -99,7 +100,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
 
             try {
                 if (chatList.getUserId() != null) {
-                    getLastMessage(chatList.getUserId(), holder.tvDesc, holder.tvDate, holder.imageView, holder.messageStatus);
+                    getLastMessage(chatList.getUserId(), holder.tvDesc, holder.tvDate, holder.imageView, holder.messageStatus,null);
                 }
             } catch (Exception e) {
                 Log.e("ChatList", "onBindViewHolder: ", e);
@@ -120,7 +121,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                 holder.profile.setImageResource(R.drawable.ic_male_avatar_svgrepo_com);
             } else {
                 try {
-                    Glide.with(context).load(tools.decryptText(chatList.getProfileUrI())).into(holder.profile);
+                    Glide.with(context).load(chatList.getProfileUrI()).into(holder.profile);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -318,10 +319,10 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     }
 
     @SuppressLint("UseCompatLoadingForDrawables")
-    private void getLastMessage(String userId, TextView description, TextView dateTime, ImageView imageView, ImageView messageStatus){
+    private void getLastMessage(String userId, TextView description, TextView dateTime, ImageView imageView, ImageView messageStatus, FirebaseTranslator Translator){
         String localDate=new Tools().getDate();
         chatViewModel = new ViewModelProvider(viewModelStoreOwner).get(ChatViewModel.class);
-        chatViewModel.initLastMessage(userId);
+        chatViewModel.initLastMessage(userId,null);
         chatViewModel.getLastMessage().observe(lifecycleOwner, lastMessage -> {
             if(lastMessage.containsKey(userId) ){
 
@@ -330,18 +331,6 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                 String imageUrI= Objects.requireNonNull(lastMessage.get(userId)).getImageUrI();
                 String videoUrI= Objects.requireNonNull(lastMessage.get(userId)).getVideoUrI();
                 String audioUrI= Objects.requireNonNull(lastMessage.get(userId)).getAudioUrI();
-                Tools tools = new Tools();
-                try {
-                    textMessage=(textMessage!=null) ? tools.decryptText(textMessage) : null;
-                    imageUrI= (imageUrI!=null) ? tools.decryptText(imageUrI) : null;
-                    videoUrI= (videoUrI!=null) ? tools.decryptText(videoUrI) : null;
-                    audioUrI= (audioUrI!=null) ? tools.decryptText(audioUrI) : null;
-
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
                 String time=lastMessage.get(userId).getTime();
                 String date=lastMessage.get(userId).getDate();
                 if(date!=null){

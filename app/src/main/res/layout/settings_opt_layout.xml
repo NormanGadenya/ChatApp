@@ -192,10 +192,98 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:text="Note: this will lead to heavy data usage"
-            android:textSize="15sp"
             android:textColor="@color/red"
+            android:textSize="15sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textView22" />
+
+        <Button
+            android:id="@+id/downloadFrench"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Download French Translator"
+            android:textColor="@color/white"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="@+id/textView23"
+            app:layout_constraintTop_toBottomOf="@+id/textView23" />
+
+        <ProgressBar
+            android:id="@+id/dFrProgress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/downloadFrench" />
+
+        <Button
+            android:id="@+id/downloadSpanish"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Download Spanish Translator"
+            android:visibility="gone"
+            android:textColor="@color/white"
+            app:layout_constraintStart_toStartOf="@+id/textView23"
+            app:layout_constraintTop_toBottomOf="@+id/downloadFrench" />
+
+        <ProgressBar
+            android:id="@+id/dEsProgress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/downloadSpanish" />
+        <Button
+            android:id="@+id/downloadKiswahili"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:text="Download Swahili Translator"
+            android:textColor="@color/white"
+            app:layout_constraintStart_toStartOf="@+id/textView23"
+            app:layout_constraintTop_toBottomOf="@+id/downloadSpanish" />
+
+        <ProgressBar
+            android:id="@+id/dSwProgress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/downloadKiswahili" />
+        <Button
+            android:id="@+id/downloadEnglish"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Download English Translator"
+            android:visibility="gone"
+            android:textColor="@color/white"
+            app:layout_constraintStart_toStartOf="@+id/textView23"
+            app:layout_constraintTop_toBottomOf="@+id/downloadKiswahili" />
+
+        <ProgressBar
+            android:id="@+id/dEnProgress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/downloadEnglish" />
+        <Button
+            android:id="@+id/downloadGerman"
+            android:layout_width="wrap_content"
+            android:visibility="gone"
+            android:layout_height="wrap_content"
+            android:text="Download German Translator"
+            android:textColor="@color/white"
+            app:layout_constraintStart_toStartOf="@+id/textView23"
+            app:layout_constraintTop_toBottomOf="@+id/downloadEnglish" />
+
+        <ProgressBar
+            android:id="@+id/DeProgress"
+            android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/downloadGerman" />
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -18,6 +18,8 @@ import android.hardware.fingerprint.FingerprintManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.ResultReceiver;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
@@ -53,6 +55,7 @@ import com.example.campaign.R;
 import com.neuralBit.letsTalk.Common.Tools;
 import com.neuralBit.letsTalk.Model.UserViewModel;
 import com.neuralBit.letsTalk.Model.messageListModel;
+import com.neuralBit.letsTalk.Services.downloadLanguage;
 import com.neuralBit.letsTalk.Services.updateStatusService;
 import com.neuralBit.letsTalk.adapter.LangSpinnerAdapter;
 import com.neuralBit.letsTalk.adapter.MessageSettingsAdapter;
@@ -93,6 +96,13 @@ public class SettingsActivity extends AppCompatActivity{
     private Boolean fpSupport=false;
     private Spinner spinner;
     private String fpTimeOut;
+    private Button downloadFr,downloadDe,downloadEs,downloadEn,downloadSw;
+    private ProgressBar FrProgress,DeProgress,EsProgress,EnProgress,SwProgress;
+    private Boolean frAvail= false;
+    private Boolean deAvail=false;
+    private Boolean esAvail =false;
+    private Boolean enAvail = false;
+    private Boolean swAvail=false;
 
 
 
@@ -118,10 +128,20 @@ public class SettingsActivity extends AppCompatActivity{
         CheckBox fingerprintStatus = findViewById(R.id.fingerprint);
         CheckBox chatBubblesState = findViewById(R.id.chatBubbles);
         CheckBox translateState = findViewById(R.id.translateText);
+        downloadEn =findViewById(R.id.downloadEnglish);
+        downloadFr =findViewById(R.id.downloadFrench);
+        downloadDe = findViewById(R.id.downloadGerman);
+        downloadEs = findViewById(R.id.downloadSpanish);
+        downloadSw = findViewById(R.id.downloadKiswahili);
+
+        FrProgress =findViewById(R.id.dFrProgress);
+        DeProgress =findViewById(R.id.DeProgress);
+        EnProgress =findViewById(R.id.dEnProgress);
+        EsProgress =findViewById(R.id.dEsProgress);
+        SwProgress =findViewById(R.id.dSwProgress);
+
 
         spinner =findViewById(R.id.fpTimeOutS);
-        ArrayAdapter<CharSequence> langAdapter = ArrayAdapter.createFromResource(this,R.array.languages,android.R.layout.simple_spinner_item);
-
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,R.array.fpTimeOutS,android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
@@ -156,6 +176,72 @@ public class SettingsActivity extends AppCompatActivity{
         useTranslator =sharedPreferences.getBoolean("useTranslator",false);
         String fpTimeOut= sharedPreferences.getString("fpTimeOut",null);
         String preferredLang = sharedPreferences.getString("preferredLang",null);
+        frAvail = sharedPreferences.getBoolean("frAvail",false);
+        enAvail = sharedPreferences.getBoolean("enAvail",false);
+        esAvail = sharedPreferences.getBoolean("esAvail",false);
+        swAvail = sharedPreferences.getBoolean("swAvail",false);
+        deAvail = sharedPreferences.getBoolean("deAvail",false);
+        ResultReceiver myResultReceiver = new SettingsActivity.MyReceiver(null);
+
+        downloadSw.setOnClickListener(I->{
+            SwProgress.setVisibility(VISIBLE);
+            if(preferredLang != null){
+                Intent i = new Intent(SettingsActivity.this, downloadLanguage.class);
+                i.putExtra("otherUserLang","Swahili");
+                i.putExtra("preferredLang",preferredLang);
+                i.putExtra("receiver", myResultReceiver);
+                startService(i);
+            }
+
+        });
+        downloadEs.setOnClickListener(I->{
+            if(preferredLang!=null){
+                EsProgress.setVisibility(VISIBLE);
+                Intent i = new Intent(SettingsActivity.this, downloadLanguage.class);
+                i.putExtra("otherUserLang","Spanish");
+                i.putExtra("preferredLang",preferredLang);
+                i.putExtra("receiver", myResultReceiver);
+
+                startService(i);
+            }
+
+        });
+        downloadEn.setOnClickListener(I->{
+            if(preferredLang != null){
+                EnProgress.setVisibility(VISIBLE);
+                Intent i = new Intent(SettingsActivity.this, downloadLanguage.class);
+                i.putExtra("otherUserLang","English");
+                i.putExtra("preferredLang",preferredLang);
+                i.putExtra("receiver", myResultReceiver);
+
+                startService(i);
+            }
+        });
+        downloadDe.setOnClickListener(I->{
+            if(preferredLang != null){
+                DeProgress.setVisibility(VISIBLE);
+                Intent i = new Intent(SettingsActivity.this, downloadLanguage.class);
+                i.putExtra("otherUserLang","German");
+                i.putExtra("preferredLang",preferredLang);
+                i.putExtra("receiver", myResultReceiver);
+
+                startService(i);
+            }
+
+        });
+        downloadFr.setOnClickListener(I->{
+            if(preferredLang != null){
+                FrProgress.setVisibility(VISIBLE);
+                Intent i = new Intent(SettingsActivity.this, downloadLanguage.class);
+                i.putExtra("otherUserLang","French");
+                i.putExtra("preferredLang",preferredLang);
+                i.putExtra("receiver", myResultReceiver);
+
+                startService(i);
+            }
+
+        });
+
         TextView tv = findViewById(R.id.textView20);
 
         if(fpTimeOut!=null){
@@ -243,6 +329,40 @@ public class SettingsActivity extends AppCompatActivity{
         } );
         translateState.setOnCheckedChangeListener((buttonView,isChecked) ->{
             useTranslator =isChecked;
+            if(useTranslator){
+                switch (preferredLang) {
+                    case "English": {
+                        downloadEs.setVisibility(VISIBLE);
+                        downloadSw.setVisibility(VISIBLE);
+                        downloadFr.setVisibility(VISIBLE);
+                        downloadDe.setVisibility(VISIBLE);
+                    }
+                    case "Spanish": {
+                        downloadEn.setVisibility(VISIBLE);
+                        downloadSw.setVisibility(VISIBLE);
+                        downloadFr.setVisibility(VISIBLE);
+                        downloadDe.setVisibility(VISIBLE);
+                    }
+                    case "French": {
+                        downloadEs.setVisibility(VISIBLE);
+                        downloadSw.setVisibility(VISIBLE);
+                        downloadEn.setVisibility(VISIBLE);
+                        downloadDe.setVisibility(VISIBLE);
+                    }
+                    case "German": {
+                        downloadEs.setVisibility(VISIBLE);
+                        downloadSw.setVisibility(VISIBLE);
+                        downloadFr.setVisibility(VISIBLE);
+                        downloadEn.setVisibility(VISIBLE);
+                    }
+                    case "Swahili": {
+                        downloadEs.setVisibility(VISIBLE);
+                        downloadEn.setVisibility(VISIBLE);
+                        downloadFr.setVisibility(VISIBLE);
+                        downloadDe.setVisibility(VISIBLE);
+                    }
+                }
+            }
         });
         logout.setOnClickListener(v-> new AlertDialog.Builder(this)
                 .setTitle("Log out")
@@ -545,6 +665,73 @@ public class SettingsActivity extends AppCompatActivity{
         }
 
     }
+
+    public class MyReceiver extends ResultReceiver {
+        public MyReceiver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        protected void onReceiveResult(int resultCode, Bundle resultData) {
+            super.onReceiveResult(resultCode, resultData);
+
+            switch (resultCode){
+                case 100: {
+                    enAvail =true;
+                    if(editor != null){
+                        editor.putBoolean("enAvail",true);
+                        EnProgress.setVisibility(GONE);
+                        editor.apply();
+                    }
+                }
+
+                case 200: {
+                    esAvail =true;
+                    if(editor != null){
+                        editor.putBoolean("esAvail",true);
+                        EnProgress.setVisibility(GONE);
+
+                        editor.apply();
+
+                    }
+                }
+
+                case 300: {
+                    deAvail= true;
+                    if(editor != null){
+                        editor.putBoolean("deAvail",true);
+                        EnProgress.setVisibility(GONE);
+
+                        editor.apply();
+
+                    }
+                }
+
+                case 400: {
+                    swAvail =true;
+                    if(editor != null){
+                        editor.putBoolean("swAvail",true);
+                        EnProgress.setVisibility(GONE);
+
+                        editor.apply();
+
+                    }
+                }
+
+                case 500: {
+                    frAvail = true;
+                    if(editor != null){
+                        editor.putBoolean("frAvail",true);
+                        EnProgress.setVisibility(GONE);
+                        editor.apply();
+                    }
+                }
+
+            }
+
+        }
+    }
+
 
 
 }

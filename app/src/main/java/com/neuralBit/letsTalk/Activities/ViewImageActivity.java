@@ -69,14 +69,7 @@ public class ViewImageActivity extends AppCompatActivity {
         ActionBar actionBar=getSupportActionBar();
         imageUrI= getIntent().getStringExtra("imageUrI");
         otherUserName=getIntent().getStringExtra("otherUserName");
-        Tools tools = new Tools();
         String caption = getIntent().getStringExtra("caption");
-        try {
-            caption = tools.decryptText(caption);
-            imageUrI=tools.decryptText(imageUrI);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         String direction = getIntent().getStringExtra("direction");
         if(direction !=null ){
             if(direction.equals("to")){
