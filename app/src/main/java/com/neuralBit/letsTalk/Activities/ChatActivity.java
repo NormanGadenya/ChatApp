@@ -44,6 +44,13 @@ import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.ml.common.modeldownload.FirebaseModelDownloadConditions;
+import com.google.firebase.ml.naturallanguage.FirebaseNaturalLanguage;
+import com.google.firebase.ml.naturallanguage.translate.FirebaseTranslateLanguage;
+import com.google.firebase.ml.naturallanguage.translate.FirebaseTranslator;
+import com.google.firebase.ml.naturallanguage.translate.FirebaseTranslatorOptions;
 import com.neuralBit.letsTalk.Common.Tools;
 import com.neuralBit.letsTalk.Common.ServiceCheck;
 import com.neuralBit.letsTalk.Interfaces.APIService;
@@ -131,6 +138,9 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private TextView status;
     private Boolean dynamicChatBubbles;
     private CountDownTimer ct;
+    private String otherUserPref;
+    private FirebaseTranslator Translator;
+
 
     @SuppressWarnings("deprecation")
     @Override
@@ -144,14 +154,26 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         scrollButton=findViewById(R.id.scrollToBottom);
         tools.context=getApplicationContext();
         InitialiseControllers();
+        //TODO fix otherUserActivity
+        //TODO fix translator performance issue plus ui improvements
         chatWallpaperUrI=settingsSharedPreferences.getString("chatWallpaper",null);
         dynamicChatBubbles =settingsSharedPreferences.getBoolean("useDynamicBubbles",false);
         int chatBubbleColor =settingsSharedPreferences.getInt("chatBubbleColor",0);
         int chatTextColor =settingsSharedPreferences.getInt("chatTextColor",0);
         int chatReadColor =settingsSharedPreferences.getInt("chatReadColor",0);
-
+        String fUserPrefLang = settingsSharedPreferences.getString("preferredLang",null);
         loadUserDetails();
         setTypingStatus();
+        FirebaseTranslatorOptions options =
+                new FirebaseTranslatorOptions.Builder()
+                        // below line we are specifying our source language.
+                        .setSourceLanguage(tools.convertLangName(otherUserPref))
+                        // in below line we are displaying our target language.
+                        .setTargetLanguage(tools.convertLangName(fUserPrefLang))
+                        // after that we are building our options.
+                        .build();
+        Translator = FirebaseNaturalLanguage.getInstance().getTranslator(options);
+
         layoutManager= new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
         messageViewModel.initChats(otherUserId);
@@ -259,6 +281,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             messageListAdapter.uploadImageTask=uploadImageData;
             messageListAdapter.uploadVideoTask=uploadVideoData;
             messageListAdapter.chatWallpaperUri =chatWallpaperUrI;
+            messageListAdapter.Translator = Translator;
             if(dynamicChatBubbles){
                 messageListAdapter.viewTextColor=chatTextColor;
                 messageListAdapter.checkedColor = chatReadColor;
@@ -521,7 +544,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         otherUserId=sharedPreferences.getString("otherUserId",null);
         profileUrI=sharedPreferences.getString("profileUrI",null);
         otherUserName=sharedPreferences.getString("otherUserName",null);
-
+        otherUserPref= sharedPreferences.getString("ouprefLang",null);
         getOtherUserDetails(otherUserId);
 
     }
@@ -532,6 +555,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         editor.putString("otherUserId",otherUserId);
         editor.putString("profileUrI",profileUrI);
         editor.putString("otherUserName",otherUserName);
+        editor.putString("ouprefLang",otherUserPref);
+
 
         editor.apply();
     }
@@ -562,6 +587,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         onlineStatusView=findViewById(R.id.onlineStatusView);
         otherUserId=getIntent().getStringExtra("userId");
         otherUserName=getIntent().getStringExtra("userName");
+
         fPhoneNumber= fUser.getPhoneNumber();
         userName=findViewById(R.id.userName);
         recyclerView=findViewById(R.id.recyclerView1);
@@ -668,7 +694,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             profileUrI=otherUserInfo.getProfileUrI();
             userName.setText(otherUserName);
             statusCheck(otherUserInfo);
-
+            otherUserPref=otherUserInfo.getPreferredLang();
+            messageListAdapter.otherUserLang = otherUserInfo.getPreferredLang();
             if(profileUrI!=null){
                 try {
                     Glide.with(getApplicationContext()).load(tools.decryptText(profileUrI)).listener(new RequestListener<Drawable>() {

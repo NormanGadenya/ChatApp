@@ -19,6 +19,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.campaign.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.neuralBit.letsTalk.Common.Tools;
 import com.neuralBit.letsTalk.Model.ChatViewModel;
 
 import java.util.HashMap;
@@ -30,14 +31,18 @@ public class SplashActivity extends AppCompatActivity {
     private final Map<String, String> namePhoneMap= new HashMap<>();
     private Context context;
     private SharedPreferences contactsSharedPrefs;
+    private Tools tools;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
         context=getApplicationContext();
+        tools= new Tools();
+        tools.context =getApplicationContext();
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
-            getPhoneNumbers();
+            tools.getPhoneNumbers(getContentResolver(),SignUpActivity.class);
         }else{
             requestContactsPermission();
         }
@@ -90,10 +95,7 @@ public class SplashActivity extends AppCompatActivity {
 
     private void getPhoneNumbers() {
 
-        // Loop Through All The Numbers
-        // Cleanup the phone number
-        // Enter Into Hash Map
-        //                    phoneNumbers.put(phoneNumber,name);
+
         Thread getContactsThread = new Thread(() -> {
             Cursor phones = context.getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
             // Loop Through All The Numbers
@@ -109,7 +111,8 @@ public class SplashActivity extends AppCompatActivity {
             }
             contactsSharedPrefs = getSharedPreferences("contactsSharedPreferences", MODE_PRIVATE);
             SharedPreferences.Editor editor = contactsSharedPrefs.edit();
-
+            SharedPreferences sharedPreferences=getSharedPreferences("countryCode",MODE_PRIVATE);
+            String countryCode = sharedPreferences.getString("CountryCode",null);
             for (Map.Entry<String, String> entry : namePhoneMap.entrySet()) {
                 String phoneNumber = entry.getKey();
                 String name = entry.getValue();
@@ -120,7 +123,7 @@ public class SplashActivity extends AppCompatActivity {
                     if (isAlphanumeric2(phoneNumber)) {
 
                         long i = Long.parseLong(phoneNumber);
-                        phoneNumber = "+256" + i;
+                        phoneNumber =  countryCode+ i;
                         editor.putString(phoneNumber, name);
 
 
@@ -137,8 +140,14 @@ public class SplashActivity extends AppCompatActivity {
 
 
         });
+        if(FirebaseAuth.getInstance().getCurrentUser()!=null){
+            getContactsThread.start();
+        }else{
+            Intent mainIntent = new Intent(SplashActivity.this, SignUpActivity.class);
+            startActivity(mainIntent);
+            finish();
+        }
 
-        getContactsThread.start();
 
 
 

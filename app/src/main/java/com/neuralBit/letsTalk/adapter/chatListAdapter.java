@@ -93,14 +93,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     public void onBindViewHolder(@NonNull Holder holder, int position) {
 
         final userModel chatList = list.get(position);
-//        if(!list.isEmpty()) {
-//            textView2.setVisibility(GONE);
-//            textView1.setVisibility(GONE);
-//
-//        }else{
-//            textView1.setVisibility(VISIBLE);
-//            textView2.setVisibility(VISIBLE);
-//        }
+
         if(chatList!=null) {
             Log.d("GSC", "onBindViewHolder: "+list.size());
 
@@ -163,7 +156,9 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                     Intent intent = new Intent(context, ChatActivity.class)
                             .putExtra("userId", list.get(position).getUserId())
                             .putExtra("userName", name)
-                            .putExtra("profileUrI", list.get(position).getProfileUrI());
+                            .putExtra("profileUrI", list.get(position).getProfileUrI())
+                            .putExtra("preferredLang",list.get(position).getPreferredLang());
+
 
                     activity.startActivity(intent);
                     activity.overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
@@ -214,13 +209,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
                                         list.remove(c);
                                         notifyDataSetChanged();
                                     }
-//                                    if(!list.isEmpty()){
-//                                        textView2.setVisibility(GONE);
-//                                        textView1.setVisibility(GONE);
-//                                    }else{
-//                                        textView1.setVisibility(VISIBLE);
-//                                        textView2.setVisibility(VISIBLE);
-//                                    }
+
 
 
                                     Bundle b = new Bundle();

@@ -7,9 +7,10 @@ public class userModel implements Comparable{
     private Boolean online;
     private String lastSeenDate;
     private String lastSeenTime;
-    private String publicKey;
+
     private Boolean showLastSeenState,showOnlineState;
     private String Typing;
+    private String preferredLang;
 
 
     public userModel(){
@@ -110,11 +111,13 @@ public class userModel implements Comparable{
         this.showOnlineState = showOnline;
     }
 
-    public String getPublicKey() {
-        return publicKey;
+
+
+    public String getPreferredLang() {
+        return preferredLang;
     }
 
-    public void setPublicKey(String publicKey) {
-        this.publicKey = publicKey;
+    public void setPreferredLang(String preferredLang) {
+        this.preferredLang = preferredLang;
     }
 }

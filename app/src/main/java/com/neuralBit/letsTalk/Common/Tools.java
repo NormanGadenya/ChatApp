@@ -4,8 +4,10 @@ import static android.content.Context.MODE_PRIVATE;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.AssetFileDescriptor;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -15,16 +17,32 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.CountDownTimer;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 
+import androidx.annotation.NonNull;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.ml.naturallanguage.translate.FirebaseTranslateLanguage;
+import com.neuralBit.letsTalk.Activities.SignUpActivity;
+import com.neuralBit.letsTalk.Activities.SplashActivity;
+
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.security.Key;
 import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
@@ -41,9 +59,10 @@ public class Tools {
     public static final String  EXTRA_CIRCULAR_REVEAL_Y = "EXTRA_CIRCULAR_REVEAL_Y";
     public static final int  MESSAGE_LEFT = 0;
     public static final int  MESSAGE_RIGHT = 1;
-
+    private SharedPreferences contactsSharedPrefs;
     public static final String ALIAS="letsTalk";
     private static final String PASS ="Bar12345Bar12345";
+    public static final String TAG ="Tools";
     private static Cipher cipher ;
     public  Boolean fpTimeout=false;
     public String getTime(){
@@ -152,11 +171,28 @@ public class Tools {
 
     }
 
+    public int convertLangName(String lang){
+        if(lang!=null){
+            switch(lang){
+                case "French" : return FirebaseTranslateLanguage.FR;
+                case "German" : return FirebaseTranslateLanguage.DE;
+                case "Spanish" : return FirebaseTranslateLanguage.ES;
+                case "Swahili" : return FirebaseTranslateLanguage.SW;
+                default: return FirebaseTranslateLanguage.EN;
+            }
+        }else{
+            return FirebaseTranslateLanguage.EN;
+        }
+
+    }
+
+
+
+
 
     public String decryptText(String encrypted) throws Exception{
         Key aesKey =  new SecretKeySpec(PASS.getBytes(), "AES");
         byte [] encryptedBytes = decode(encrypted);
-
         cipher = Cipher.getInstance("AES");
         cipher.init(Cipher.DECRYPT_MODE,aesKey);
         byte [] decryptedMessage =cipher.doFinal(encryptedBytes);
@@ -183,6 +219,80 @@ public class Tools {
         return encodedString;
 
     }
+    public boolean isAlphanumeric2(String str) {
+        for (int i=0; i<str.length(); i++) {
+            char c = str.charAt(i);
+            if (c < 0x30 || (c >= 0x3a && c <= 0x40) || (c > 0x5a && c <= 0x60) || c > 0x7a)
+                return false;
+        }
+        return true;
+    }
+    public void getPhoneNumbers(ContentResolver contentResolver,Class<?> goToClass) {
+
+        final Map<String, String> namePhoneMap= new HashMap<>();
+
+
+
+        Thread getContactsThread = new Thread(() -> {
+            Cursor phones = contentResolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
+            // Loop Through All The Numbers
+            while (phones.moveToNext()) {
+                String name = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                String phoneNumber = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                // Cleanup the phone number
+                phoneNumber = phoneNumber.replaceAll("[()\\s-]+", "");
+
+                // Enter Into Hash Map
+                namePhoneMap.put(phoneNumber, name);
+
+            }
+            contactsSharedPrefs = context.getSharedPreferences("contactsSharedPreferences", MODE_PRIVATE);
+            SharedPreferences.Editor editor = contactsSharedPrefs.edit();
+            SharedPreferences sharedPreferences=context.getSharedPreferences("countryCode",MODE_PRIVATE);
+            String countryCode = sharedPreferences.getString("CountryCode",null);
+            for (Map.Entry<String, String> entry : namePhoneMap.entrySet()) {
+                String phoneNumber = entry.getKey();
+                String name = entry.getValue();
+                if (phoneNumber.contains("+")) {
+//                    phoneNumbers.put(phoneNumber,name);
+                    editor.putString(phoneNumber, name);
+                } else {
+                    if (isAlphanumeric2(phoneNumber)) {
+
+                        long i = Long.parseLong(phoneNumber);
+                        phoneNumber =  countryCode+ i;
+                        editor.putString(phoneNumber, name);
+
+
+                    }
+                }
+            }
+            phones.close();
+            editor.apply();
+            Intent mainIntent = new Intent(context, goToClass);
+            mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK );
+            context.startActivity(mainIntent);
+
+
+
+
+        });
+        if(FirebaseAuth.getInstance().getCurrentUser()!=null){
+            getContactsThread.start();
+        }else{
+            Intent mainIntent = new Intent(context, goToClass);
+            mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK );
+
+            context.startActivity(mainIntent);
+
+        }
+
+
+
+
+
+    }
+
 
 
 }

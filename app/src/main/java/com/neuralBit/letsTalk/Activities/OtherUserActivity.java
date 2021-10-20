@@ -35,10 +35,11 @@ import java.io.OutputStream;
 public class OtherUserActivity extends AppCompatActivity {
 
     private  Toolbar toolbar;
-    private TextView userName,phoneNumber;
+    private TextView userName,phoneNumber,preferredLangtv;
     private String profileUrI;
     private String otherUserId;
     private String otherUserName;
+    private String preferredLang;
     private Bitmap profileBitmap;
     private ImageView imageView;
     private FloatingActionButton saveProfilePicBtn;
@@ -77,6 +78,7 @@ public class OtherUserActivity extends AppCompatActivity {
     private void setupToolBar(){
         userViewModel.getOtherUserInfo().observe(this,user->{
             profileUrI=user.getProfileUrI();
+            preferredLangtv.setText(user.getPreferredLang());
             if(profileUrI!=null){
                 try {
                     profileBitmap=MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.parse(profileUrI));

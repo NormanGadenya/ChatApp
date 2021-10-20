@@ -142,6 +142,64 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/cardView3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?colorPrimaryVariant"
+        android:elevation="8dp"
+        android:layout_marginTop="32dp"
+        android:padding="24dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cardView">
+
+        <TextView
+            android:id="@+id/textView21"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="2dp"
+            android:text="Messaging"
+            android:textColor="?colorAccent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:textSize="25sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toTopOf="parent"
+            />
+
+        <TextView
+            android:id="@+id/textView22"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Use Translator"
+            android:layout_marginTop="4dp"
+            android:textColor="?attr/colorOnPrimary"
+            android:textSize="20sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/textView21"
+            tools:layout_editor_absoluteY="24dp" />
+
+        <CheckBox
+            android:id="@+id/translateText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/textView22" />
+
+
+        <TextView
+            android:id="@+id/textView23"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Note: this will lead to heavy data usage"
+            android:textSize="15sp"
+            android:textColor="@color/red"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView22" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp"
@@ -149,7 +207,7 @@
         android:layout_marginTop="32dp"
         android:background="?colorPrimaryVariant"
         android:id="@+id/cardView1"
-        app:layout_constraintTop_toBottomOf="@id/cardView"
+        app:layout_constraintTop_toBottomOf="@id/cardView3"
         >
         <TextView
             android:id="@+id/textView7"

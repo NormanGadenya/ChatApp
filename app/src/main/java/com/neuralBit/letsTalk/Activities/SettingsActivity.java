@@ -54,6 +54,7 @@ import com.neuralBit.letsTalk.Common.Tools;
 import com.neuralBit.letsTalk.Model.UserViewModel;
 import com.neuralBit.letsTalk.Model.messageListModel;
 import com.neuralBit.letsTalk.Services.updateStatusService;
+import com.neuralBit.letsTalk.adapter.LangSpinnerAdapter;
 import com.neuralBit.letsTalk.adapter.MessageSettingsAdapter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
@@ -82,7 +83,7 @@ public class SettingsActivity extends AppCompatActivity{
     private final FirebaseDatabase database = FirebaseDatabase.getInstance();
     private final FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
     private SharedPreferences sharedPreferences;
-    private boolean showOnline, showLastSeen,setFingerprint,dynamicChatBubbles;
+    private boolean showOnline, showLastSeen,setFingerprint,dynamicChatBubbles,useTranslator;
     public static final String TAG="SettingsActivity";
     private SharedPreferences.Editor editor ;
     private Tools tools = new Tools();
@@ -92,6 +93,8 @@ public class SettingsActivity extends AppCompatActivity{
     private Boolean fpSupport=false;
     private Spinner spinner;
     private String fpTimeOut;
+
+
 
 
     @Override
@@ -108,12 +111,17 @@ public class SettingsActivity extends AppCompatActivity{
         seekBar = findViewById(R.id.seekBar);
         tools.context =getApplicationContext();
         Button logout = findViewById(R.id.logout);
+
         UserViewModel userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
         CheckBox onlineStatus = findViewById(R.id.onlineStatus);
         CheckBox lastSeenStatus = findViewById(R.id.lastSeenStatus);
         CheckBox fingerprintStatus = findViewById(R.id.fingerprint);
         CheckBox chatBubblesState = findViewById(R.id.chatBubbles);
+        CheckBox translateState = findViewById(R.id.translateText);
+
         spinner =findViewById(R.id.fpTimeOutS);
+        ArrayAdapter<CharSequence> langAdapter = ArrayAdapter.createFromResource(this,R.array.languages,android.R.layout.simple_spinner_item);
+
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,R.array.fpTimeOutS,android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
@@ -134,6 +142,7 @@ public class SettingsActivity extends AppCompatActivity{
 
             }
         });
+
         if(tools.checkBiometricSupport()){
             fpSupport =true;
         }
@@ -144,13 +153,18 @@ public class SettingsActivity extends AppCompatActivity{
         editor= sharedPreferences.edit();
         showLastSeen = sharedPreferences.getBoolean("showLastSeen", true);
         showOnline = sharedPreferences.getBoolean("showOnline", true);
+        useTranslator =sharedPreferences.getBoolean("useTranslator",false);
         String fpTimeOut= sharedPreferences.getString("fpTimeOut",null);
+        String preferredLang = sharedPreferences.getString("preferredLang",null);
         TextView tv = findViewById(R.id.textView20);
 
         if(fpTimeOut!=null){
             int spinnerPosition= adapter.getPosition(fpTimeOut);
             spinner.setSelection(spinnerPosition);
         }
+
+
+
 
         if(fpSupport && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P){
             setFingerprint = sharedPreferences.getBoolean("setFingerprint",false);
@@ -172,6 +186,7 @@ public class SettingsActivity extends AppCompatActivity{
         lastSeenStatus.setChecked(showLastSeen);
         fingerprintStatus.setChecked(setFingerprint);
         chatBubblesState.setChecked(dynamicChatBubbles);
+        translateState.setChecked(useTranslator);
         if(setFingerprint){
             tv.setVisibility(VISIBLE);
             spinner.setVisibility(VISIBLE);
@@ -179,6 +194,8 @@ public class SettingsActivity extends AppCompatActivity{
             tv.setVisibility(GONE);
             spinner.setVisibility(GONE);
         }
+
+
         RecyclerView recyclerView = findViewById(R.id.recycler_view_wall);
         FloatingActionButton editWallpaper = findViewById(R.id.editWallpaper);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -224,6 +241,9 @@ public class SettingsActivity extends AppCompatActivity{
                 spinner.setVisibility(GONE);
             }
         } );
+        translateState.setOnCheckedChangeListener((buttonView,isChecked) ->{
+            useTranslator =isChecked;
+        });
         logout.setOnClickListener(v-> new AlertDialog.Builder(this)
                 .setTitle("Log out")
                 .setMessage("Are you sure you want to sign out")
@@ -435,6 +455,7 @@ public class SettingsActivity extends AppCompatActivity{
         DatabaseReference myRef = database.getReference().child("UserDetails").child(userId);
         progressBar.setVisibility(VISIBLE);
         Map<String, Object> userDetail = new HashMap<>();
+
         userDetail.put("showLastSeenState", showLastSeen);
         userDetail.put("showOnlineState", showOnline);
         myRef.updateChildren(userDetail);
@@ -446,7 +467,7 @@ public class SettingsActivity extends AppCompatActivity{
         editor.putInt("chatTextColor", chatTextColor);
         editor.putInt("chatReadColor", chatReadColor);
         editor.putString("fpTimeOut",fpTimeOut);
-
+        editor.putBoolean("useTranslator",useTranslator);
         if (selected != null) {
 
             editor.putString("chatWallpaper", selected.toString());

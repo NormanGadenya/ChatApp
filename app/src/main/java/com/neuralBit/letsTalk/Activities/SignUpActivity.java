@@ -15,14 +15,21 @@ import android.widget.Toast;
 
 import com.broooapps.otpedittext2.OtpEditText;
 import com.example.campaign.R;
+import com.firebase.ui.auth.ui.phone.CountryListSpinner;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.hbb20.CountryCodePicker;
+
+import java.util.Objects;
 
 public class SignUpActivity extends AppCompatActivity {
     private FirebaseAuth Auth;
     private OtpEditText phoneNumberEdit;
-
     private ProgressBar progressBar;
+    public static final String TAG = "SignUpActivity";
+    private CountryCodePicker countryCodePicker;
+    private String countryCode;
+    private SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,19 +37,35 @@ public class SignUpActivity extends AppCompatActivity {
         Button sendOTPBtn;
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signup);
+        sharedPreferences=getSharedPreferences("countryCode",MODE_PRIVATE);
+        SharedPreferences.Editor editor=sharedPreferences.edit();
         progressBar=findViewById(R.id.progressBar1);
         sendOTPBtn=findViewById(R.id.button);
         phoneNumberEdit=findViewById(R.id.editTextPhone);
+        countryCodePicker=findViewById(R.id.countryCode);
+        countryCodePicker.setAutoDetectedCountry(true);
         phoneNumberEdit.setOnCompleteListener(value -> {
-
         });
+        countryCodePicker.setOnCountryChangeListener(new CountryCodePicker.OnCountryChangeListener() {
+            @Override
+            public void onCountrySelected() {
+                countryCode="+" +countryCodePicker.getSelectedCountryCodeAsInt();
+            }
+        });
+
+
         progressBar.setVisibility(View.GONE);
         Auth = FirebaseAuth.getInstance();
         sendOTPBtn.setOnClickListener(v -> {
-            String phone="+256"+Integer.parseInt(phoneNumberEdit.getText().toString());
+            if(countryCode==null){
+                countryCode="+"+countryCodePicker.getDefaultCountryCode();
+            }
+            String phone=countryCode+Integer.parseInt(Objects.requireNonNull(phoneNumberEdit.getText()).toString());
             progressBar.setVisibility(View.VISIBLE);
 
-            if (phone.length() != 0){
+            if (phone.length() != 4){
+                editor.putString("CountryCode",countryCode);
+                editor.apply();
                 Intent otpIntent = new Intent(SignUpActivity.this , OtpActivity.class);
                 otpIntent.putExtra("phoneNumber",phone);
                 startActivity(otpIntent);
@@ -56,7 +79,10 @@ public class SignUpActivity extends AppCompatActivity {
             // If the event is a key-down event on the "enter" button
             if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
                     (keyCode == KeyEvent.KEYCODE_ENTER)) {
-                String phone="+256"+Integer.parseInt(phoneNumberEdit.getOtpValue());
+                if(countryCode==null){
+                    countryCode="+"+countryCodePicker.getDefaultCountryCode();
+                }
+                String phone=countryCode+Integer.parseInt(Objects.requireNonNull(phoneNumberEdit.getOtpValue()));
                 Log.d("phoneNumber",phone);
                 progressBar.setVisibility(View.VISIBLE);
 

@@ -126,6 +126,32 @@
                 android:layout_marginLeft="16dp"
                 />
 
+            <TextView
+                android:id="@+id/textView25"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="32dp"
+                android:text="Preferred Language"
+                android:textColor="?colorOnPrimary"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/phoneNumber" />
+
+            <TextView
+                android:id="@+id/preferredLang"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:background="@drawable/personal_details_back"
+                android:padding="10dp"
+                android:textColor="?colorOnPrimary"
+                android:textSize="20sp"
+                android:layout_marginTop="16dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView25" />
+
+
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

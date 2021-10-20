@@ -46,7 +46,6 @@
         android:layout_height="0dp"
         android:layout_centerVertical="true"
         android:ellipsize="marquee"
-        android:freezesText="true"
         android:marqueeRepeatLimit="marquee_forever"
         android:singleLine="true"
         android:textSize="15sp"

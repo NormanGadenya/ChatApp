@@ -22,12 +22,13 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthOptions;
 import com.google.firebase.auth.PhoneAuthProvider;
+import com.neuralBit.letsTalk.Common.Tools;
 
 import java.util.concurrent.TimeUnit;
 
 
 public class OtpActivity extends AppCompatActivity {
-    private Button mVerifyCodeBtn,resendCodeBtn;
+    private Button resendCodeBtn;
     private OtpEditText otpEdit;
     private FirebaseAuth firebaseAuth;
     private String phoneNumber,verificationId;
@@ -39,6 +40,7 @@ public class OtpActivity extends AppCompatActivity {
     private CountDownTimer countDT;
     private ProgressBar progressBar;
     private String code;
+    private Tools tools;
 
 
     @Override
@@ -47,6 +49,8 @@ public class OtpActivity extends AppCompatActivity {
         setContentView(R.layout.activity_otp);
         InitializeControllers();
         requestCode();
+        tools = new Tools();
+        tools.context =getApplicationContext();
         otpEdit.setOnCompleteListener(value -> {
             String verificationCode = otpEdit.getText().toString();
             verifyOtp(verificationCode);
@@ -54,14 +58,11 @@ public class OtpActivity extends AppCompatActivity {
 
         resendCodeBtn.setOnClickListener(I->{
            requestCode();
+           countDT.start();
            resendCodeBtn.setVisibility(GONE);
-           mVerifyCodeBtn.setVisibility(VISIBLE);
+
         });
 
-        mVerifyCodeBtn.setOnClickListener(v -> {
-            String verificationCode = otpEdit.getText().toString();
-            verifyOtp(verificationCode);
-        });
 
 
     }
@@ -82,7 +83,7 @@ public class OtpActivity extends AppCompatActivity {
 
             public void onFinish() {
                 resendCodeBtn.setVisibility(VISIBLE);
-                mVerifyCodeBtn.setVisibility(GONE);
+
             }
         };
         countDT.start();
@@ -125,7 +126,7 @@ public class OtpActivity extends AppCompatActivity {
 
     private void InitializeControllers() {
         resendCodeBtn=findViewById(R.id.resendButton);
-        mVerifyCodeBtn=findViewById(R.id.verifyButton);
+
         otpEdit=findViewById(R.id.editOtpNumber);
         progressBar=findViewById(R.id.progressBarOTP);
         countDownTimer=findViewById(R.id.timer);
@@ -146,7 +147,7 @@ public class OtpActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(),e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
                 countDownTimer.setVisibility(GONE);
                 resendCodeBtn.setVisibility(VISIBLE);
-                mVerifyCodeBtn.setVisibility(GONE);
+
 
             }
 
@@ -173,9 +174,9 @@ public class OtpActivity extends AppCompatActivity {
         firebaseAuth.signInWithCredential(credential).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 countDT.cancel();
-                Intent i = new Intent(OtpActivity.this, RegistrationActivity.class);
-                startActivity(i);
-                finish();
+
+                tools.getPhoneNumbers(getContentResolver(),RegistrationActivity.class);
+
             }else{
                 progressBar.setVisibility(GONE);
             }

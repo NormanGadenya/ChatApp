@@ -9,6 +9,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -18,9 +19,13 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -62,6 +67,7 @@ public class RegistrationActivity extends AppCompatActivity {
     private String time;
     private Tools tools;
     private FirebaseUser user;
+    private String preferredLang;
 
 
     @Override
@@ -72,7 +78,30 @@ public class RegistrationActivity extends AppCompatActivity {
         user= FirebaseAuth.getInstance().getCurrentUser();
         InitializeControllers();
         bottomSheet= BottomSheetBehavior.from(wrapper);
+        SharedPreferences sharedPreferences = getSharedPreferences("Settings", MODE_PRIVATE);
+        SharedPreferences.Editor editor= sharedPreferences.edit();
         bottomSheet.setState(BottomSheetBehavior.STATE_HIDDEN);
+        Spinner languageSpinner= findViewById(R.id.languages);
+        ArrayAdapter<CharSequence> langAdapter = ArrayAdapter.createFromResource(this,R.array.languages,android.R.layout.simple_spinner_item);
+        langAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        languageSpinner.setAdapter(langAdapter);
+        languageSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                preferredLang =parent.getItemAtPosition(position).toString();
+                TextView tv = (TextView) view;
+                if(tv!=null){
+                    tv.setTextColor(getResources().getColor(R.color.lightSteelBlue));
+                }
+                editor.putString("preferredLang",preferredLang);
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
         selProfilePic.setOnClickListener(v -> {
             closeKeyboard();
             wrapper.setVisibility(View.VISIBLE);
@@ -81,10 +110,10 @@ public class RegistrationActivity extends AppCompatActivity {
         submit_button.setOnClickListener(v -> {
             String userName = userNameTV.getText().toString();
             progressBar.setVisibility(View.VISIBLE);
-            if(userName.isEmpty()){
+            if(userName.isEmpty() || preferredLang==null){
                 Toast.makeText(RegistrationActivity.this, "Please fill in the fields", Toast.LENGTH_SHORT).show();
             }else{
-                if (user!=null) {
+                if (user!=null ) {
                     if(!clickedDone){
                         userId = user.getUid();
                         phoneNumber = user.getPhoneNumber();
@@ -108,7 +137,7 @@ public class RegistrationActivity extends AppCompatActivity {
             clickedDone=false;
             if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
                     (keyCode == KeyEvent.KEYCODE_ENTER)) {
-                if (user!=null) {
+                if (user!=null && preferredLang!=null) {
                     progressBar.setVisibility(View.VISIBLE);
                     String userName=userNameTV.getText().toString();
                     userId=user.getUid();
@@ -123,6 +152,7 @@ public class RegistrationActivity extends AppCompatActivity {
                         startService(i);
 
                     }
+
                     Intent chatList=new Intent(RegistrationActivity.this, MainActivity.class);
                     startActivity(chatList);
 
@@ -199,6 +229,7 @@ public class RegistrationActivity extends AppCompatActivity {
             userModel.setOnline(true);
             userModel.setShowLastSeen(true);
             userModel.setShowOnlineState(true);
+            userModel.setPreferredLang(preferredLang);
             DatabaseReference myRef = database.getReference();
             myRef.child("UserDetails").child(userId).setValue(userModel);
     }

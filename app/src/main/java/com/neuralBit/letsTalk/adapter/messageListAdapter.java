@@ -1,11 +1,13 @@
 package com.neuralBit.letsTalk.adapter;
 
+import static android.content.Context.MODE_PRIVATE;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -27,7 +29,12 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.ml.common.modeldownload.FirebaseModelDownloadConditions;
+import com.google.firebase.ml.naturallanguage.translate.FirebaseTranslator;
 import com.neuralBit.letsTalk.Common.Tools;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -71,6 +78,7 @@ import static com.neuralBit.letsTalk.Common.Tools.MESSAGE_RIGHT;
 
 
 public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.Holder>  {
+    public FirebaseTranslator Translator;
     private List<messageListModel> list;
     public Context context;
     public Map<String,Integer> uploadImageTask=new HashMap<>();
@@ -90,6 +98,10 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     private Handler mHandler = new Handler();
     public String chatWallpaperUri;
     public  int viewBackColor,viewTextColor, checkedColor;
+    private SharedPreferences sharedPreferences;
+    private String preferredLang;
+    private Boolean useTranslator;
+    public String otherUserLang;
 
 
 
@@ -133,9 +145,47 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         return new Holder(view);
     }
 
+    private void downloadModal(String input,TextView textView) {
+        // below line is use to download the modal which
+        // we will require to translate in german language
+        FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions.Builder().requireWifi().build();
+
+        // below line is use to download our modal.
+        Translator.downloadModelIfNeeded(conditions).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) { ;
+                // this method is called when modal is downloaded successfully.
+                Toast.makeText(context, "Please wait language modal is being downloaded.", Toast.LENGTH_SHORT).show();
+
+                // calling method to translate our entered text.
+                translateLanguage(input,textView);
+
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(context, "Fail to download modal", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void translateLanguage(String input,TextView textView) {
+        Translator.translate(input).addOnSuccessListener(new OnSuccessListener<String>() {
+            @Override
+            public void onSuccess(String s) {
+                textView.setText(s);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+
+            }
+        });
+    }
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
         try {
+
             if(viewBackColor!=0 && viewTextColor !=0 ){
                 GradientDrawable gradientDrawable = (GradientDrawable) holder.backgroundView.getBackground() .mutate();
                 gradientDrawable.setColor(viewBackColor);
@@ -159,6 +209,9 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         } catch (Exception e) {
             Log.e(TAG, "onBindViewHolder: ",e );
         }
+        sharedPreferences = context.getSharedPreferences("Settings", MODE_PRIVATE);
+        preferredLang= sharedPreferences.getString("preferredLang","English");
+        useTranslator= sharedPreferences.getBoolean("useTranslator",false);
         holder.bind(list.get(position));
 
 
@@ -324,6 +377,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         private final ImageView checkBox;
         private String audioUrI;
         private View backgroundView;
+        private Handler handler;
 
         public Holder(@NonNull View itemView) {
             super(itemView);
@@ -350,15 +404,21 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                 switch(messageList.getType()){
                     case "TEXT":
                         videoPlayButton.setVisibility(GONE);
-
                             try {
-                                message.setText(tools.decryptText(messageList.getText()));
-                            } catch (Exception e) {
+                                String text = tools.decryptText(messageList.getText());
+                                if (useTranslator) {
+                                    if (messageList.getReceiver().equals(user.getUid())) {
+                                        downloadModal(text,message);
+                                    } else {
+                                        message.setText(text);
+                                    }
 
-                                e.printStackTrace();
+                                }else{
+                                    message.setText(text);
+                                }
+                            }catch (Exception e) {
+                                Log.e(TAG, "bind: ",e );
                             }
-
-
 
                         imageView.setVisibility(GONE);
                         audioLoadProgress.setVisibility(GONE);

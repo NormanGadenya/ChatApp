@@ -94,14 +94,14 @@ public class MainActivity extends AppCompatActivity   {
                 shimmer.stopShimmer();
                 shimmer.setVisibility(GONE);
 
-                recyclerView.setVisibility(VISIBLE);
+//                recyclerView.setVisibility(VISIBLE);
                 newChat.setVisibility(VISIBLE);
             }else{
                 textView1.setVisibility(GONE);
                 textView2.setVisibility(GONE);
                 shimmer.setVisibility(VISIBLE);
                 shimmer.startShimmer();
-                recyclerView.setVisibility(GONE);
+//                recyclerView.setVisibility(GONE);
                 newChat.setVisibility(GONE);
             }
 
@@ -153,17 +153,6 @@ public class MainActivity extends AppCompatActivity   {
         });
     }
 
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-
-
-//        if(list.size()<1){
-//            textView1.setVisibility(VISIBLE);
-//            textView2.setVisibility(VISIBLE);
-//        }
-    }
 
     private void InitializeControllers() {
 
