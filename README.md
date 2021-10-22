@@ -14,8 +14,11 @@ This is an simple android messaging application developed in java that lets user
   <tr>
     <td><img src="https://user-images.githubusercontent.com/28120359/137472989-d6b43154-8d6f-45de-a7cc-1a8e729664d4.png" width=100% height=50%></td>
     <td><img src="https://user-images.githubusercontent.com/28120359/137605550-62145589-806e-45e4-ab29-ce26fb1530fa.png" width=100% height=50%></td>
-    <td><img src="https://user-images.githubusercontent.com/28120359/137605566-08baeccf-02d8-4ac2-8958-03402504fdfb.png" width=100% height=50%></td>
-    <td><img src="https://user-images.githubusercontent.com/28120359/137605704-053088c4-e46a-4fc2-b4c3-2a79008ce40e.png" width=100% height=50%></td>
+    <td><img src="https://user-images.githubusercontent.com/28120359/138475247-baaf458b-da9c-4e53-bc41-666285245a26.png" width=100% height=50%></td>
+    <td><img src="https://user-images.githubusercontent.com/28120359/138475344-806e02fa-d73e-4a88-97f2-c6356c8bfe60.png" width=100% height=50%></td>
+    
+
+
   </tr>
  </table>
 
