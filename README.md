@@ -32,7 +32,8 @@ This is an simple android messaging application developed in java that lets user
 Messaging
 
 - Send and receive messages with other users
-- Users are able to share photos, videos and audios with file size not bigger than 3Mb
+- Users are able to share photos, videos and audios with file size not bigger than 2Mb
+- Users are able to communicate regardless of the language that they speak 
 
 Profile
 
