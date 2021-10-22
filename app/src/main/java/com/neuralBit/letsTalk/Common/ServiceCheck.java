@@ -12,7 +12,6 @@ public class ServiceCheck extends AppCompatActivity {
     public Class<?> serviceClass;
     public Context context;
     public ActivityManager manager;
-    private Intent i;
 
 
     public ServiceCheck(Class<?> serviceClass,Context context,ActivityManager manager){
@@ -23,7 +22,7 @@ public class ServiceCheck extends AppCompatActivity {
     public void checkServiceRunning() {
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
             if (!serviceClass.getName().equals(service.service.getClassName())) {
-                i=new Intent(context, updateStatusService.class);
+                Intent i = new Intent(context, updateStatusService.class);
                 context.startService(i);
             }
         }

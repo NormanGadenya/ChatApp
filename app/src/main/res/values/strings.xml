@@ -29,6 +29,7 @@
     <string name="registration">Registration</string>
     <string name="insert_profile_picture">insert profile picture</string>
     <string name="submit_button">submit button</string>
+    <string name="typing">Typing ..</string>
 
     <string-array name="fpTimeOutS">
         <item>Immediately</item>

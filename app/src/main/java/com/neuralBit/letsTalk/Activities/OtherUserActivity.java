@@ -15,6 +15,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -23,7 +24,6 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
 import com.example.campaign.R;
-import com.neuralBit.letsTalk.Common.Tools;
 import com.neuralBit.letsTalk.Model.UserViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Objects;
 
 public class OtherUserActivity extends AppCompatActivity {
 
@@ -39,7 +40,6 @@ public class OtherUserActivity extends AppCompatActivity {
     private String profileUrI;
     private String otherUserId;
     private String otherUserName;
-    private String preferredLang;
     private Bitmap profileBitmap;
     private ImageView imageView;
     private FloatingActionButton saveProfilePicBtn;
@@ -101,8 +101,7 @@ public class OtherUserActivity extends AppCompatActivity {
             }else{
                 userName.setText(user.getUserName());
             }
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            Tools tools = new Tools();
+            Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
             try {
                 if(profileUrI!=null){
                     Glide.with(getApplicationContext()).load(profileUrI).into(imageView);
@@ -115,13 +114,11 @@ public class OtherUserActivity extends AppCompatActivity {
 
     }
 
-    public boolean checkPermission() throws IOException {
+    public void checkPermission() throws IOException {
         int READ_EXTERNAL_PERMISSION = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
         if((READ_EXTERNAL_PERMISSION != PackageManager.PERMISSION_GRANTED)) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, ViewImageActivity.PERMISSION_WRITE);
-            return false;
         }
-        return true;
     }
 
     private void saveImage(Bitmap image) {
@@ -159,7 +156,7 @@ public class OtherUserActivity extends AppCompatActivity {
         sendBroadcast(mediaScanIntent);
     }
 
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode== ViewImageActivity.PERMISSION_WRITE && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             saveImage(profileBitmap);

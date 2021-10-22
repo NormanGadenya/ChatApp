@@ -45,7 +45,7 @@
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
             android:visibility="gone"
-            android:foreground="@drawable/ic_play_arrow_white_24dp"
+            android:foreground="@drawable/ic_baseline_play_arrow_24"
             android:foregroundTint="@color/white"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -59,7 +59,7 @@
             android:background="@drawable/background_icon"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
-            android:foreground="@drawable/ic_pause_white_24dp"
+            android:foreground="@drawable/ic_baseline_pause_24"
             android:foregroundTint="@color/white"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

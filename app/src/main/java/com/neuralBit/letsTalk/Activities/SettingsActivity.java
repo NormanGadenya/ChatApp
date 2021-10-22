@@ -266,7 +266,9 @@ public class SettingsActivity extends AppCompatActivity{
 
         mAuth.addAuthStateListener(i->{
             if(i.getCurrentUser()==null){
-                this.finishAffinity();
+                finishAndRemoveTask();
+                android.os.Process.killProcess(android.os.Process.myPid());
+                System.exit(1);
             }
         });
     }

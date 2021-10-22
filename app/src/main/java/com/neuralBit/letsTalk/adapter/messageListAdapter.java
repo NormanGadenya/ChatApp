@@ -261,6 +261,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
 
     private void itemDelete(ActionMode mode) {
         DatabaseReference messageRef=database.getReference().child("chats").child(firebaseUser.getUid()).child(otherUserId);
+        DatabaseReference lastMessageRef = database.getReference().child("lastMessage").child(firebaseUser.getUid()).child(otherUserId);
         FirebaseStorage mFirebaseStorage =FirebaseStorage.getInstance();
         String reference=null;
         StorageReference photoRef;
@@ -281,7 +282,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
             }
 
             messageRef.child(c.getMessageId()).removeValue();
-
+            Log.d(TAG, "itemDelete: "+ lastMessageRef.getKey());
             notifyDataSetChanged();
         }
         mode.finish();

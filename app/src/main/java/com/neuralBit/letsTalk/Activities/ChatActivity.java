@@ -1,12 +1,11 @@
 package com.neuralBit.letsTalk.Activities;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
+import static com.neuralBit.letsTalk.Common.Tools.AUDIOREQUEST;
+import static com.neuralBit.letsTalk.Common.Tools.IMAGEREQUEST;
+import static com.neuralBit.letsTalk.Common.Tools.VIDEOREQUEST;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -28,15 +27,22 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
-import android.view.MenuInflater;
-
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestBuilder;
@@ -44,16 +50,26 @@ import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
-import com.google.android.gms.tasks.Continuation;
+import com.example.campaign.R;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.ml.common.modeldownload.FirebaseModelDownloadConditions;
 import com.google.firebase.ml.naturallanguage.FirebaseNaturalLanguage;
 import com.google.firebase.ml.naturallanguage.translate.FirebaseTranslator;
 import com.google.firebase.ml.naturallanguage.translate.FirebaseTranslatorOptions;
-import com.neuralBit.letsTalk.Common.Tools;
+import com.mikhaellopez.circularimageview.CircularImageView;
 import com.neuralBit.letsTalk.Common.ServiceCheck;
+import com.neuralBit.letsTalk.Common.Tools;
 import com.neuralBit.letsTalk.Interfaces.APIService;
 import com.neuralBit.letsTalk.Interfaces.RecyclerViewInterface;
 import com.neuralBit.letsTalk.Model.MessageViewModel;
@@ -65,23 +81,11 @@ import com.neuralBit.letsTalk.Notifications.Data;
 import com.neuralBit.letsTalk.Notifications.MyResponse;
 import com.neuralBit.letsTalk.Notifications.Sender;
 import com.neuralBit.letsTalk.Notifications.Token;
-import com.example.campaign.R;
 import com.neuralBit.letsTalk.Services.AudioUploadService;
 import com.neuralBit.letsTalk.Services.ImageUploadService;
 import com.neuralBit.letsTalk.Services.VideoUploadService;
 import com.neuralBit.letsTalk.Services.updateStatusService;
 import com.neuralBit.letsTalk.adapter.messageListAdapter;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.mikhaellopez.circularimageview.CircularImageView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -93,12 +97,6 @@ import jp.wasabeef.glide.transformations.BlurTransformation;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-
-import static android.view.View.GONE;
-import static android.view.View.VISIBLE;
-import static com.neuralBit.letsTalk.Common.Tools.AUDIOREQUEST;
-import static com.neuralBit.letsTalk.Common.Tools.IMAGEREQUEST;
-import static com.neuralBit.letsTalk.Common.Tools.VIDEOREQUEST;
 
 public class ChatActivity extends AppCompatActivity implements RecyclerViewInterface {
     public static final String TAG="Chat Activity";
@@ -344,7 +342,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         updateToken(FirebaseInstanceId.getInstance().getToken());
         apiService= Client.getClient("https://fcm.googleapis.com").create(APIService.class);
         if(useTranslator){
-            if(!message.equals(null)){
+            if(!message.trim().isEmpty()){
                 String formattedDate = date;
                 String formattedTime=time;
                 messageListModel m=new messageListModel();
@@ -366,11 +364,12 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                             try {
                                 m.setTranslatedText(tools.encryptText(s));
                                 otherLMBranch.setValue(m);
+                                assert messageKey != null;
                                 otherUserBranch.child(messageKey).setValue(m);
                                 notify=true;
-                                if(notify){
-                                    sendNotification(otherUserId,fPhoneNumber, s);
-                                }
+
+                                sendNotification(otherUserId,fPhoneNumber, s);
+
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -389,11 +388,12 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                     try{
                         m.setTranslatedText(tools.encryptText(message));
                         otherLMBranch.setValue(m);
+                        assert messageKey != null;
                         otherUserBranch.child(messageKey).setValue(m);
                         notify=true;
-                        if(notify){
-                            sendNotification(otherUserId,fPhoneNumber, message);
-                        }
+
+                        sendNotification(otherUserId,fPhoneNumber, message);
+
                     }catch(Exception e){
                         e.printStackTrace();
                     }
@@ -403,7 +403,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
             }
         }else{
-            if(!message.equals(null)){
+            if(!message.trim().isEmpty()){
                 String formattedDate = date;
                 String formattedTime=time;
                 messageListModel m=new messageListModel();
@@ -417,11 +417,12 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 fUserBranch.setValue(m);
                 String messageKey= fUserBranch.getKey();
                 otherLMBranch.setValue(m);
+                assert messageKey != null;
                 otherUserBranch.child(messageKey).setValue(m);
                 notify=true;
-                if(notify){
-                    sendNotification(otherUserId,fPhoneNumber, message);
-                }
+
+                sendNotification(otherUserId,fPhoneNumber, message);
+
                 newMessage.setText("");
             }
 
@@ -448,16 +449,17 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 for(DataSnapshot dataSnapshot:snapshot.getChildren()){
                     Token token=dataSnapshot.getValue(Token.class);
                     Data data=new Data(fUser.getUid(),R.mipmap.ic_launcher2,message,fPhoneNumber,otherUserId,"New message");
+                    assert token != null;
                     Sender sender = new Sender(data,token.getToken());
                     apiService.sendNotification(sender)
                             .enqueue(new Callback<MyResponse>(){
                                 @Override
-                                public void onResponse(Call<MyResponse> call, Response<MyResponse> response) {
+                                public void onResponse(@NonNull Call<MyResponse> call, Response<MyResponse> response) {
 
                                 }
 
                                 @Override
-                                public void onFailure(Call<MyResponse> call, Throwable t) {
+                                public void onFailure(@NonNull Call<MyResponse> call, Throwable t) {
                                     Log.e(TAG, "onFailure: ",t.fillInStackTrace() );
                                 }
                             });
@@ -549,7 +551,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             }
             if(user.getTyping()!=null && user.getTyping().equals(fUser.getUid())){
                 status.setVisibility(VISIBLE);
-                status.setText("Typing ..");
+                status.setText(R.string.typing);
                 status.setTextColor(getResources().getColor(R.color.lightSteelBlue));
 
             }else{
@@ -630,6 +632,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     private void InitialiseControllers() {
         ActionBar actionBar = getSupportActionBar();
+        assert actionBar != null;
         actionBar.setTitle("");
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowCustomEnabled(true);
@@ -682,10 +685,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 }
             }
         });
-        scrollButton.setOnClickListener(I->{
-            recyclerView.scrollToPosition(messageList.size()-1);
-
-        });
+        scrollButton.setOnClickListener(I-> recyclerView.scrollToPosition(messageList.size()-1));
 
         database = FirebaseDatabase.getInstance();
 
