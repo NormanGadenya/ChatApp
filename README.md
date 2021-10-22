@@ -33,7 +33,8 @@ Messaging
 
 - Send and receive messages with other users
 - Users are able to share photos, videos and audios with file size not bigger than 2Mb
-- Users are able to communicate regardless of the language that they speak 
+- Messages arrive in the inbox in users preferred language enabling seamless conversations
+- The available language translations are French, English, Spanish, Swahili and German 
 
 Profile
 
