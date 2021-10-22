@@ -100,7 +100,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
     public  int viewBackColor,viewTextColor, checkedColor;
     private SharedPreferences sharedPreferences;
     private String preferredLang;
-    private Boolean useTranslator;
+    public Boolean useTranslator;
     public String otherUserLang;
 
 
@@ -145,43 +145,6 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         return new Holder(view);
     }
 
-    private void downloadModal(String input,TextView textView) {
-        // below line is use to download the modal which
-        // we will require to translate in german language
-        FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions.Builder().requireWifi().build();
-
-        // below line is use to download our modal.
-        Translator.downloadModelIfNeeded(conditions).addOnSuccessListener(new OnSuccessListener<Void>() {
-            @Override
-            public void onSuccess(Void aVoid) { ;
-                // this method is called when modal is downloaded successfully.
-                Toast.makeText(context, "Please wait language modal is being downloaded.", Toast.LENGTH_SHORT).show();
-
-                // calling method to translate our entered text.
-                translateLanguage(input,textView);
-
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Toast.makeText(context, "Fail to download modal", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private void translateLanguage(String input,TextView textView) {
-        Translator.translate(input).addOnSuccessListener(new OnSuccessListener<String>() {
-            @Override
-            public void onSuccess(String s) {
-                textView.setText(s);
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-
-            }
-        });
-    }
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
         try {
@@ -212,7 +175,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         sharedPreferences = context.getSharedPreferences("Settings", MODE_PRIVATE);
         preferredLang= sharedPreferences.getString("preferredLang","English");
         useTranslator= sharedPreferences.getBoolean("useTranslator",false);
-        holder.bind(list.get(position));
+        holder.bind(list.get(position),useTranslator);
 
 
         String previousTs=null;
@@ -377,7 +340,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         private final ImageView checkBox;
         private String audioUrI;
         private View backgroundView;
-        private Handler handler;
+        public Boolean useTranslator;
 
         public Holder(@NonNull View itemView) {
             super(itemView);
@@ -398,13 +361,14 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
         }
 
         @SuppressLint({"ClickableViewAccessibility", "SetTextI18n"})
-        private void bind(final messageListModel messageList) {
+        private void bind(final messageListModel messageList,Boolean useTranslator) {
             if(messageList.getReceiver()!=null){
 
                 switch(messageList.getType()){
                     case "TEXT":
                         videoPlayButton.setVisibility(GONE);
-                        message.setText(messageList.getText());
+                        setText(messageList,useTranslator);
+
                         imageView.setVisibility(GONE);
                         audioLoadProgress.setVisibility(GONE);
                         message.setVisibility(VISIBLE);
@@ -436,7 +400,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                             message.setVisibility(GONE);
                         }else {
 
-                            message.setText(messageList.getText());
+                            setText(messageList,useTranslator);
 
                             message.setVisibility(VISIBLE);
                         }
@@ -499,8 +463,7 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                         if(messageList.getText()==null){
                             message.setVisibility(GONE);
                         }else{
-                            message.setText(messageList.getText());
-
+                            setText(messageList,useTranslator);
 
                             message.setVisibility(VISIBLE);
                         }
@@ -634,6 +597,24 @@ public class messageListAdapter extends RecyclerView.Adapter<messageListAdapter.
                 }
 
 
+            }
+        }
+
+        private void setText(messageListModel messageList,Boolean useTranslator) {
+            if(messageList.getReceiver().equals(firebaseUser.getUid())){
+                if(messageList.getTranslatedText()!=null){
+                    if(useTranslator){
+                        message.setText(messageList.getTranslatedText());
+
+                    }else{
+                        message.setText(messageList.getText());
+
+                    }
+                }else{
+                    message.setText(messageList.getText());
+                }
+            }else{
+                message.setText(messageList.getText());
             }
         }
 

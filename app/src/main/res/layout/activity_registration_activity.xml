@@ -135,7 +135,7 @@
             style="?android:attr/progressBarStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="visible"
+            android:visibility="gone"
             app:layout_constraintStart_toStartOf="@+id/languages"
             app:layout_constraintTop_toTopOf="@+id/RegistrationButton" />
     </androidx.constraintlayout.widget.ConstraintLayout>

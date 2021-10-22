@@ -91,10 +91,10 @@ public class RegistrationActivity extends AppCompatActivity {
                 preferredLang =parent.getItemAtPosition(position).toString();
                 TextView tv = (TextView) view;
                 if(tv!=null){
-                    tv.setTextColor(getResources().getColor(R.color.lightSteelBlue));
+                    tv.setTextColor(getResources().getColor(R.color.teal_200));
                 }
                 editor.putString("preferredLang",preferredLang);
-
+                editor.apply();
             }
 
             @Override

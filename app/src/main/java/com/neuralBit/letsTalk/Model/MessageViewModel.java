@@ -15,11 +15,11 @@ public class MessageViewModel extends ViewModel {
     private MutableLiveData<String> fUserPrefLang;
     private MutableLiveData<Boolean> useTranslator;
 
-    public void initChats(String otherUserId, FirebaseTranslator Translator){
+    public void initChats(String otherUserId){
         if(messageList!=null){
             return;
         }
-        messageList= Repo.getInstance().getMessages(otherUserId, Translator);
+        messageList= Repo.getInstance().getMessages(otherUserId);
 
     }
 

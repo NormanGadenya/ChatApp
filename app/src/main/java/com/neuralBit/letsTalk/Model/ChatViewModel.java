@@ -29,9 +29,9 @@ public class ChatViewModel extends ViewModel {
 
     }
 
-    public void initLastMessage(String userId, FirebaseTranslator Translator){
+    public void initLastMessage(String userId){
 
-        lastMessage=Repo.getInstance().getLastMessage(userId,Translator);
+        lastMessage=Repo.getInstance().getLastMessage(userId);
     }
 
 

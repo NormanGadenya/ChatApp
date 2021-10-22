@@ -44,6 +44,11 @@ import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
+import com.google.android.gms.tasks.Continuation;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.ml.common.modeldownload.FirebaseModelDownloadConditions;
 import com.google.firebase.ml.naturallanguage.FirebaseNaturalLanguage;
 import com.google.firebase.ml.naturallanguage.translate.FirebaseTranslator;
 import com.google.firebase.ml.naturallanguage.translate.FirebaseTranslatorOptions;
@@ -136,7 +141,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     private CountDownTimer ct;
     private String otherUserPref;
     private FirebaseTranslator Translator;
-
+    private Boolean useTranslator;
 
     @SuppressWarnings("deprecation")
     @Override
@@ -159,29 +164,23 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         int chatTextColor =settingsSharedPreferences.getInt("chatTextColor",0);
         int chatReadColor =settingsSharedPreferences.getInt("chatReadColor",0);
         String fUserPrefLang = settingsSharedPreferences.getString("preferredLang",null);
-        Boolean useTranslator = settingsSharedPreferences.getBoolean("useTranslator",false);
+        useTranslator = settingsSharedPreferences.getBoolean("useTranslator",false);
         loadUserDetails();
         setTypingStatus();
 
         FirebaseTranslatorOptions options =
                 new FirebaseTranslatorOptions.Builder()
                         // below line we are specifying our source language.
-                        .setSourceLanguage(tools.convertLangName(otherUserPref))
+                        .setSourceLanguage(tools.convertLangName(fUserPrefLang))
                         // in below line we are displaying our target language.
-                        .setTargetLanguage(tools.convertLangName(fUserPrefLang))
+                        .setTargetLanguage(tools.convertLangName(otherUserPref))
                         // after that we are building our options.
                         .build();
         Translator = FirebaseNaturalLanguage.getInstance().getTranslator(options);
-
         layoutManager= new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
-        if(useTranslator){
-            messageViewModel.initChats(otherUserId,Translator);
+        messageViewModel.initChats(otherUserId);
 
-        }else{
-            messageViewModel.initChats(otherUserId,null);
-
-        }
 //        messageViewModel.getUseTranslator().setValue(useTranslator);
         serviceCheck();
         messageList=messageViewModel.getMessages().getValue();
@@ -276,7 +275,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
 
     private void loadAdapter(int chatBubbleColor,int chatTextColor, int chatReadColor){
         if(messageList!=null){
-
             messageListAdapter=new messageListAdapter();
             messageListAdapter.setMContext(ChatActivity.this);
             messageListAdapter.setMessageList(messageList);
@@ -286,7 +284,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             messageListAdapter.uploadImageTask=uploadImageData;
             messageListAdapter.uploadVideoTask=uploadVideoData;
             messageListAdapter.chatWallpaperUri =chatWallpaperUrI;
-            messageListAdapter.Translator = Translator;
+            messageListAdapter.useTranslator=useTranslator;
             if(dynamicChatBubbles){
                 messageListAdapter.viewTextColor=chatTextColor;
                 messageListAdapter.checkedColor = chatReadColor;
@@ -336,8 +334,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
     }
 
     private void uploadTextMessage() throws Exception {
-        DatabaseReference otherUserBranch=database.getReference().child("chats").child(otherUserId).child(fUser.getUid()).push();
-        DatabaseReference fUserBranch=database.getReference().child("chats").child(fUser.getUid()).child(otherUserId);
+        DatabaseReference otherUserBranch=database.getReference().child("chats").child(otherUserId).child(fUser.getUid());
+        DatabaseReference fUserBranch=database.getReference().child("chats").child(fUser.getUid()).child(otherUserId).push();
         DatabaseReference fLMBranch=database.getReference().child("lastMessage").child(fUser.getUid()).child(otherUserId);
         DatabaseReference otherLMBranch=database.getReference().child("lastMessage").child(otherUserId).child(fUser.getUid());
         date=tools.getDate();
@@ -347,30 +345,90 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         //noinspection deprecation
         updateToken(FirebaseInstanceId.getInstance().getToken());
         apiService= Client.getClient("https://fcm.googleapis.com").create(APIService.class);
-        if(!message.equals(null)){
-            String formattedDate = date;
-            String formattedTime=time;
-            messageListModel m=new messageListModel();
-            m.setText(message);
-            m.setText(tools.encryptText(message));
-            m.setReceiver(otherUserId);
-            m.setDate(formattedDate);
-            m.setTime(formattedTime);
-            m.setType("TEXT");
-            otherLMBranch.setValue(m);
-            otherUserBranch.setValue(m);
-            String messageKey= otherUserBranch.getKey();
+        if(useTranslator){
+            if(!message.equals(null)){
+                String formattedDate = date;
+                String formattedTime=time;
+                messageListModel m=new messageListModel();
+                m.setText(message);
+                m.setText(tools.encryptText(message));
+                m.setReceiver(otherUserId);
+                m.setDate(formattedDate);
+                m.setTime(formattedTime);
+                m.setType("TEXT");
+                newMessage.setText("");
+                fLMBranch.setValue(m);
+                fUserBranch.setValue(m);
+                String messageKey= fUserBranch.getKey();
+                FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions.Builder().requireWifi().build();
+                Translator.downloadModelIfNeeded(conditions).addOnSuccessListener(I->{
+                    Translator.translate(message).addOnSuccessListener(new OnSuccessListener<String>() {
+                        @Override
+                        public void onSuccess(String s) {
+                            try {
+                                m.setTranslatedText(tools.encryptText(s));
+                                otherLMBranch.setValue(m);
+                                otherUserBranch.child(messageKey).setValue(m);
+                                notify=true;
+                                if(notify){
+                                    sendNotification(otherUserId,fPhoneNumber, s);
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
 
-            m.setText(tools.encryptText(message));
 
-            fLMBranch.setValue(m);
-            fUserBranch.child(messageKey).setValue(m);
-            notify=true;
-            if(notify){
-                sendNotification(otherUserId,fPhoneNumber, message);
+
+
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
+                }).addOnFailureListener(I->{
+                    try{
+                        m.setTranslatedText(tools.encryptText(message));
+                        otherLMBranch.setValue(m);
+                        otherUserBranch.child(messageKey).setValue(m);
+                        notify=true;
+                        if(notify){
+                            sendNotification(otherUserId,fPhoneNumber, message);
+                        }
+                    }catch(Exception e){
+                        e.printStackTrace();
+                    }
+
+                    Toast.makeText(this, "Failed to download model", Toast.LENGTH_SHORT).show();
+                });
+
             }
-            newMessage.setText("");
+        }else{
+            if(!message.equals(null)){
+                String formattedDate = date;
+                String formattedTime=time;
+                messageListModel m=new messageListModel();
+                m.setText(message);
+                m.setText(tools.encryptText(message));
+                m.setReceiver(otherUserId);
+                m.setDate(formattedDate);
+                m.setTime(formattedTime);
+                m.setType("TEXT");
+                fLMBranch.setValue(m);
+                fUserBranch.setValue(m);
+                String messageKey= fUserBranch.getKey();
+                otherLMBranch.setValue(m);
+                otherUserBranch.child(messageKey).setValue(m);
+                notify=true;
+                if(notify){
+                    sendNotification(otherUserId,fPhoneNumber, message);
+                }
+                newMessage.setText("");
+            }
+
         }
+
     }
 
 
@@ -592,7 +650,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         onlineStatusView=findViewById(R.id.onlineStatusView);
         otherUserId=getIntent().getStringExtra("userId");
         otherUserName=getIntent().getStringExtra("userName");
-
+        otherUserPref=getIntent().getStringExtra("preferredLang");
 
         fPhoneNumber= fUser.getPhoneNumber();
         userName=findViewById(R.id.userName);
@@ -700,7 +758,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             profileUrI=otherUserInfo.getProfileUrI();
             userName.setText(otherUserName);
             statusCheck(otherUserInfo);
-            otherUserPref=otherUserInfo.getPreferredLang();
+
             messageListAdapter.otherUserLang = otherUserInfo.getPreferredLang();
             if(profileUrI!=null){
                 try {
@@ -728,7 +786,9 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             }
             profilePic.setOnClickListener(v -> {
                 Intent intent =new Intent(getApplicationContext(), OtherUserActivity.class);
-                intent.putExtra("otherUserId",otherUserId).putExtra("otherUserName",otherUserName);
+                intent.putExtra("otherUserId",otherUserId)
+                        .putExtra("otherUserName",otherUserName)
+                        .putExtra("otherUserLang",otherUserPref);
                 startActivity(intent);
             });
 

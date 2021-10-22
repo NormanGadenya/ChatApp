@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static android.content.Context.MODE_PRIVATE;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 
@@ -53,7 +54,6 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     private final List<userModel> list;
     private final Context context;
     private final FirebaseUser firebaseUser =FirebaseAuth.getInstance().getCurrentUser();
-    private final FirebaseDatabase database = FirebaseDatabase.getInstance();
     private final Activity activity;
     private ChatViewModel chatViewModel;
     boolean isSelected,isEnabled=false;
@@ -61,6 +61,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     private final ViewModelStoreOwner viewModelStoreOwner;
     private final LifecycleOwner lifecycleOwner;
     private  SharedPreferences contactsSharedPrefs;
+    public Boolean useTranslator;
 //    public TextView textView1,textView2;
 
     public chatListAdapter(List<userModel> list, Context context, Activity activity,ViewModelStoreOwner viewModelStoreOwner ,LifecycleOwner lifecycleOwner) {
@@ -322,7 +323,7 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
     private void getLastMessage(String userId, TextView description, TextView dateTime, ImageView imageView, ImageView messageStatus, FirebaseTranslator Translator){
         String localDate=new Tools().getDate();
         chatViewModel = new ViewModelProvider(viewModelStoreOwner).get(ChatViewModel.class);
-        chatViewModel.initLastMessage(userId,null);
+        chatViewModel.initLastMessage(userId);
         chatViewModel.getLastMessage().observe(lifecycleOwner, lastMessage -> {
             if(lastMessage.containsKey(userId) ){
 
@@ -360,7 +361,21 @@ public class chatListAdapter extends RecyclerView.Adapter<chatListAdapter.Holder
 
                 if(imageUrI==null && videoUrI ==null && audioUrI==null){
                     textMessage=formatLastMessage(textMessage);
-                    description.setText(textMessage);
+                    String translatedText = formatLastMessage(lastMessage.get(userId).getTranslatedText());
+                    if ( lastMessage.get(userId).getReceiver().equals(firebaseUser.getUid())){
+                        SharedPreferences sharedPreferences=context.getSharedPreferences("settings",MODE_PRIVATE);
+                        useTranslator = sharedPreferences.getBoolean("useTranslator",false);
+
+                        if(translatedText!=null && useTranslator){
+                            description.setText(formatLastMessage(translatedText));
+
+                        }else{
+                            description.setText(textMessage);
+                        }
+                    }else{
+                        description.setText(textMessage);
+
+                    }
                     imageView.setVisibility(GONE);
 
                 }else {

@@ -61,7 +61,10 @@
             android:name="com.neuralBit.letsTalk.Activities.UserProfileActivity"
             android:parentActivityName="com.neuralBit.letsTalk.Activities.ChatActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
-        <activity android:name="com.neuralBit.letsTalk.Activities.MainActivity" />
+        <activity
+            android:name="com.neuralBit.letsTalk.Activities.MainActivity"
+
+            />
         <activity
             android:name="com.neuralBit.letsTalk.Activities.UserListActivity"
             android:parentActivityName="com.neuralBit.letsTalk.Activities.MainActivity"

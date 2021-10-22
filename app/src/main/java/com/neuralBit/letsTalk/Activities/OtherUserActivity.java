@@ -73,12 +73,16 @@ public class OtherUserActivity extends AppCompatActivity {
         phoneNumber=findViewById(R.id.phoneNumber);
         saveProfilePicBtn=findViewById(R.id.saveImage);
         imageView=findViewById(R.id.userProfilePic);
+        preferredLangtv= findViewById(R.id.preferredLang);
     }
 
     private void setupToolBar(){
         userViewModel.getOtherUserInfo().observe(this,user->{
             profileUrI=user.getProfileUrI();
-            preferredLangtv.setText(user.getPreferredLang());
+            if(user.getPreferredLang()!=null){
+                preferredLangtv.setText(user.getPreferredLang());
+            }
+
             if(profileUrI!=null){
                 try {
                     profileBitmap=MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.parse(profileUrI));

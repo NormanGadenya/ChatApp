@@ -15,6 +15,7 @@ public class messageListModel implements Serializable {
     private String type;
     private String userName;
     private String messageId;
+    private String translatedText;
     private boolean checked;
 
 
@@ -133,5 +134,13 @@ public class messageListModel implements Serializable {
 
     public void setAudioDuration(String audioDuration) {
         this.audioDuration = audioDuration;
+    }
+
+    public String getTranslatedText() {
+        return translatedText;
+    }
+
+    public void setTranslatedText(String translatedText) {
+        this.translatedText = translatedText;
     }
 }

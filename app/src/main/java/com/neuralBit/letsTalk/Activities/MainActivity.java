@@ -78,6 +78,8 @@ public class MainActivity extends AppCompatActivity   {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        FirebaseUser user= FirebaseAuth.getInstance().getCurrentUser();
+
         InitializeControllers();
         owner = this;
 
@@ -111,20 +113,10 @@ public class MainActivity extends AppCompatActivity   {
         if(list !=null) {
 
             chatListAdapter = new chatListAdapter(list, MainActivity.this, this, viewModelStoreOwner, lifecycleOwner);
-//            chatListAdapter.textView1 =textView1;
-//            chatListAdapter.textView2 =textView2;
+
 
             chatListAdapter.setContactsSharedPrefs(contactsSharedPrefs);
 
-
-
-//            if(!list.isEmpty()){
-//                textView1.setVisibility(GONE);
-//                textView2.setVisibility(GONE);
-//            }else{
-//                textView1.setVisibility(View.VISIBLE);
-//                textView2.setVisibility(View.VISIBLE);
-//            }
             recyclerView.setAdapter(chatListAdapter);
 
         }
@@ -181,7 +173,6 @@ public class MainActivity extends AppCompatActivity   {
 
     private void loadSharedPreferenceData() {
         contactsSharedPrefs=getSharedPreferences("contactsSharedPreferences",MODE_PRIVATE);
-
     }
 
     private ArrayList<userModel> FilterList(String newText){
