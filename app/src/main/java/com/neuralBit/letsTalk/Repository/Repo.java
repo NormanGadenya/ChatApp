@@ -349,7 +349,6 @@ public class Repo {
 
 
     }
-    // TODO fix messaging bug when user translates
     private void loadOtherUserInfo(String otherUserId) {
         DatabaseReference reference=database.getReference().child("UserDetails").child(otherUserId);
         reference.addValueEventListener(new ValueEventListener() {

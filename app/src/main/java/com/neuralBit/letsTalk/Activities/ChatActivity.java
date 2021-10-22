@@ -156,8 +156,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         tools.context=getApplicationContext();
         InitialiseControllers();
 
-        //TODO fix otherUserActivity
-        //TODO fix translator performance issue plus ui improvements
         chatWallpaperUrI=settingsSharedPreferences.getString("chatWallpaper",null);
         dynamicChatBubbles =settingsSharedPreferences.getBoolean("useDynamicBubbles",false);
         int chatBubbleColor =settingsSharedPreferences.getInt("chatBubbleColor",0);
