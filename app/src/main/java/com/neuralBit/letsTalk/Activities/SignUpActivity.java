@@ -69,6 +69,7 @@ public class SignUpActivity extends AppCompatActivity {
                 Intent otpIntent = new Intent(SignUpActivity.this , OtpActivity.class);
                 otpIntent.putExtra("phoneNumber",phone);
                 startActivity(otpIntent);
+                this.finish();
 
             }else{
                 Toast.makeText(SignUpActivity.this,"please enter valid phone Number",Toast.LENGTH_LONG).show();
@@ -87,10 +88,12 @@ public class SignUpActivity extends AppCompatActivity {
                 progressBar.setVisibility(View.VISIBLE);
 
                 if (!phone.isEmpty()){
+                    progressBar.setVisibility(View.GONE);
                     Intent otpIntent = new Intent(SignUpActivity.this , OtpActivity.class);
                     otpIntent.putExtra("phoneNumber",phone);
                     startActivity(otpIntent);
-                    progressBar.setVisibility(View.GONE);
+                    this.finish();
+
 
                 }else{
                     Toast.makeText(SignUpActivity.this,"please enter valid phone Number",Toast.LENGTH_LONG).show();

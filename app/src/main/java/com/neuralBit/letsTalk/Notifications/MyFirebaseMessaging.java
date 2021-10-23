@@ -23,6 +23,7 @@ import com.neuralBit.letsTalk.Common.Tools;
 public class MyFirebaseMessaging extends FirebaseMessagingService {
     private SharedPreferences contactsSharedPrefs;
     private final Tools tools = new Tools();
+    public static final String GROUPKEY ="Messages";
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
@@ -108,6 +109,7 @@ public class MyFirebaseMessaging extends FirebaseMessagingService {
                 .setContentTitle(title)
                 .setContentText(body)
                 .setAutoCancel(true)
+                .setGroup(GROUPKEY)
                 .setSound(RingingSound)
                 .setContentIntent(pendingIntent);
         NotificationManager notificationManager =(NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);

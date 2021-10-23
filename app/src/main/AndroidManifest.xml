@@ -111,7 +111,16 @@
         <service android:name="com.neuralBit.letsTalk.Services.VideoUploadService" />
         <service android:name="com.neuralBit.letsTalk.Services.DeleteStorageFile" />
 
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.neuralBit.letsTalk.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
 
+        <meta-data
+            android:name="android.support.FILE_PROVIDER_PATHS"
+            android:resource="@xml/imagepaths" />
+    </provider>
     </application>
 
 </manifest>

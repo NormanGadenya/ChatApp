@@ -117,8 +117,12 @@ public class RegistrationActivity extends AppCompatActivity {
                     if(!clickedDone){
                         userId = user.getUid();
                         phoneNumber = user.getPhoneNumber();
+                        editor.putBoolean("useTranslator",false);
+                        editor.apply();
                         updateUserDetails(userName,phoneNumber,userId);
                         if(selected!=null){
+                            editor.putBoolean("useTranslator",false);
+                            editor.apply();
                             Intent i= new Intent (getApplicationContext(), ProfileUploadService.class);
                             i.putExtra("userId",userId);
                             i.setData(selected);
@@ -145,14 +149,15 @@ public class RegistrationActivity extends AppCompatActivity {
                     updateUserDetails(userName,phoneNumber,userId);
                     clickedDone=true;
                     if(selected!=null){
-
+                        editor.putBoolean("useTranslator",false);
                         Intent i= new Intent (getApplicationContext(), ProfileUploadService.class);
                         i.putExtra("userId",userId);
                         i.setData(selected);
                         startService(i);
 
                     }
-
+                    editor.putBoolean("useTranslator",false);
+                    editor.apply();
                     Intent chatList=new Intent(RegistrationActivity.this, MainActivity.class);
                     startActivity(chatList);
 

@@ -4,6 +4,7 @@ import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 import static com.neuralBit.letsTalk.Common.Tools.EXTRA_CIRCULAR_REVEAL_X;
 import static com.neuralBit.letsTalk.Common.Tools.EXTRA_CIRCULAR_REVEAL_Y;
+import static com.neuralBit.letsTalk.Common.Tools.getMimeType;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -73,7 +74,7 @@ public class MainActivity extends AppCompatActivity   {
     private CountDownTimer ct;
     private ShimmerFrameLayout shimmer;
     private Boolean chatListAvail=false;
-    private LifecycleOwner owner;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,7 +82,7 @@ public class MainActivity extends AppCompatActivity   {
         FirebaseUser user= FirebaseAuth.getInstance().getCurrentUser();
 
         InitializeControllers();
-        owner = this;
+        LifecycleOwner owner = this;
 
         chatListAvail();
         newChat.setOnClickListener(this::presentActivity);
@@ -225,7 +226,6 @@ public class MainActivity extends AppCompatActivity   {
 
                 return false;
             }
-
             @Override
             public boolean onQueryTextChange(String newText) {
 
@@ -263,6 +263,7 @@ public class MainActivity extends AppCompatActivity   {
         settings.setOnMenuItemClickListener(item -> {
             Intent intent = new Intent(getApplicationContext() , SettingsActivity.class);
             startActivity(intent);
+            activity.finish();
             return false;
         });
         return true;

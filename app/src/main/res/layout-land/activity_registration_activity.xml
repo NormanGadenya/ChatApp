@@ -102,8 +102,11 @@
             android:id="@+id/textInputLayout2"
             android:layout_width="250dp"
             android:layout_height="wrap_content"
-            android:background="@color/white"
-
+            android:textColorHint="@color/teal_200"
+            app:boxCornerRadiusTopStart="5dp"
+            app:boxCornerRadiusTopEnd="5dp"
+            app:boxCornerRadiusBottomEnd="5dp"
+            app:boxCornerRadiusBottomStart="5dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/constraintLayout"
             app:layout_constraintTop_toTopOf="@+id/constraintLayout">
@@ -112,8 +115,8 @@
                 android:id="@+id/editTextPersonName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@color/white"
-
+                android:background="@color/transparent"
+                android:textColor="?colorOnPrimary"
                 android:hint="@string/name"
                 android:inputType="text"
                 android:singleLine="true" />

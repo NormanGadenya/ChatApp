@@ -34,6 +34,7 @@ public class SplashActivity extends AppCompatActivity {
     private Tools tools;
 
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -134,7 +135,7 @@ public class SplashActivity extends AppCompatActivity {
             editor.apply();
             Intent mainIntent = new Intent(SplashActivity.this, SignUpActivity.class);
             startActivity(mainIntent);
-            finish();
+            this.finish();
 
 
 
@@ -145,7 +146,7 @@ public class SplashActivity extends AppCompatActivity {
         }else{
             Intent mainIntent = new Intent(SplashActivity.this, SignUpActivity.class);
             startActivity(mainIntent);
-            finish();
+            this.finish();
         }
 
 

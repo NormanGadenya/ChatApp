@@ -1,5 +1,7 @@
 package com.neuralBit.letsTalk.Notifications;
 
+import static com.neuralBit.letsTalk.Notifications.MyFirebaseMessaging.GROUPKEY;
+
 import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -47,6 +49,8 @@ public class OreoNotification extends ContextWrapper {
                 .setContentTitle(title)
                 .setContentText(body)
                 .setSmallIcon(Integer.parseInt(icon))
+                .setGroup(GROUPKEY)
+
                 .setContentIntent(pendingIntent)
                 .setSound(soundUri)
                 .setAutoCancel(true);
