@@ -74,6 +74,8 @@
                 android:digits="0123456789"
                 android:inputType="number"
                 android:maxLength="6"
+                app:oev_text_color="?attr/colorOnPrimary"
+
                 android:padding="8dp"
                 android:textSize="30sp"
                 app:layout_constraintTop_toTopOf="parent"

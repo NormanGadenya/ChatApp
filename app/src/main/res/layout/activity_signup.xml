@@ -109,7 +109,6 @@
             app:oev_text_color="?attr/colorOnPrimary"
             android:maxLength="9"
             android:padding="8dp"
-            android:text="123"
             android:textSize="30sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/countryCode"

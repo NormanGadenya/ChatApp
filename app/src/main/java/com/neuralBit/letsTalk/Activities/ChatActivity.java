@@ -478,7 +478,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for(DataSnapshot dataSnapshot:snapshot.getChildren()){
                     Token token=dataSnapshot.getValue(Token.class);
-                    Data data=new Data(fUser.getUid(),R.mipmap.ic_launcher2,message,fPhoneNumber,otherUserId,"New message");
+                    Data data=new Data(fUser.getUid(),R.mipmap.small_icon_round,message,fPhoneNumber,otherUserId,"New message");
                     assert token != null;
                     Sender sender = new Sender(data,token.getToken());
                     apiService.sendNotification(sender)

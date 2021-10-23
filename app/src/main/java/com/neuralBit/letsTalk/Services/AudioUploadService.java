@@ -176,7 +176,7 @@ public class AudioUploadService extends Service {
                 for(DataSnapshot dataSnapshot:snapshot.getChildren()){
                     Token token=dataSnapshot.getValue(Token.class);
                     try{
-                        Data data=new Data(userId, R.mipmap.ic_launcher2, tools.encryptText("AUDIO"),fPhoneNumber,otherUserId,"New message");
+                        Data data=new Data(userId, R.mipmap.small_icon_round, tools.encryptText("AUDIO"),fPhoneNumber,otherUserId,"New message");
                         Sender sender = new Sender(data,token.getToken());
                         apiService.sendNotification(sender)
                                 .enqueue(new Callback<MyResponse>(){
