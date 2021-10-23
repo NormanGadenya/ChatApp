@@ -3,6 +3,8 @@
     package="com.example.campaign">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -19,27 +21,27 @@
         android:required="false" />
 
     <application
-        android:name="com.example.letStalk.App"
+        android:name="com.neuralBit.letsTalk.App"
         android:allowBackup="true"
         android:appCategory="social"
-        android:icon="@mipmap/ic_launcher2"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher2_round"
+        android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/Theme.Campaign">
         <activity
-            android:name="com.example.letStalk.Activities.FingerprintActivity"
+            android:name="com.neuralBit.letsTalk.Activities.FingerprintActivity"
             android:theme="@style/Theme.Campaign.NoActionBar"
             android:exported="true" />
         <activity
-            android:name="com.example.letStalk.Activities.OtherUserActivity"
-            android:parentActivityName="com.example.letStalk.Activities.ChatActivity"
+            android:name="com.neuralBit.letsTalk.Activities.OtherUserActivity"
+            android:parentActivityName="com.neuralBit.letsTalk.Activities.ChatActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity
-            android:name="com.example.letStalk.Activities.ViewVideoActivity"
-            android:parentActivityName="com.example.letStalk.Activities.ChatActivity" />
+            android:name="com.neuralBit.letsTalk.Activities.ViewVideoActivity"
+            android:parentActivityName="com.neuralBit.letsTalk.Activities.ChatActivity" />
         <activity
-            android:name="com.example.letStalk.Activities.SplashActivity"
+            android:name="com.neuralBit.letsTalk.Activities.SplashActivity"
             android:theme="@style/Theme.Campaign.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -48,43 +50,46 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.example.letStalk.Activities.SendVideo"
-            android:parentActivityName="com.example.letStalk.Activities.ChatActivity" />
+            android:name="com.neuralBit.letsTalk.Activities.SendVideo"
+            android:parentActivityName="com.neuralBit.letsTalk.Activities.ChatActivity" />
         <activity
-            android:name="com.example.letStalk.Activities.sendImage"
-            android:parentActivityName="com.example.letStalk.Activities.ChatActivity" />
+            android:name="com.neuralBit.letsTalk.Activities.SendImage"
+            android:parentActivityName="com.neuralBit.letsTalk.Activities.ChatActivity" />
         <activity
-            android:name="com.example.letStalk.Activities.SettingsActivity"
-            android:parentActivityName="com.example.letStalk.Activities.MainActivity"
+            android:name="com.neuralBit.letsTalk.Activities.SettingsActivity"
+            android:parentActivityName="com.neuralBit.letsTalk.Activities.MainActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity
-            android:name="com.example.letStalk.Activities.UserProfileActivity"
-            android:parentActivityName="com.example.letStalk.Activities.ChatActivity"
+            android:name="com.neuralBit.letsTalk.Activities.UserProfileActivity"
+            android:parentActivityName="com.neuralBit.letsTalk.Activities.ChatActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
-        <activity android:name="com.example.letStalk.Activities.MainActivity" />
         <activity
-            android:name="com.example.letStalk.Activities.UserListActivity"
-            android:parentActivityName="com.example.letStalk.Activities.MainActivity"
+            android:name="com.neuralBit.letsTalk.Activities.MainActivity"
+
+            />
+        <activity
+            android:name="com.neuralBit.letsTalk.Activities.UserListActivity"
+            android:parentActivityName="com.neuralBit.letsTalk.Activities.MainActivity"
             android:theme="@style/AppTheme.Transparent" />
         <activity
-            android:name="com.example.letStalk.Activities.ChatActivity"
-            android:parentActivityName="com.example.letStalk.Activities.MainActivity" />
+            android:name="com.neuralBit.letsTalk.Activities.ChatActivity"
+            android:parentActivityName="com.neuralBit.letsTalk.Activities.MainActivity" />
         <activity
-            android:name="com.example.letStalk.Activities.ViewImageActivity"
-            android:parentActivityName="com.example.letStalk.Activities.ChatActivity"
+            android:name="com.neuralBit.letsTalk.Activities.ViewImageActivity"
+            android:parentActivityName="com.neuralBit.letsTalk.Activities.ChatActivity"
             android:theme="@style/Theme.Campaign" />
         <activity
-            android:name="com.example.letStalk.Activities.RegistrationActivity"
+            android:name="com.neuralBit.letsTalk.Activities.RegistrationActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity
-            android:name="com.example.letStalk.Activities.OtpActivity"
+            android:name="com.neuralBit.letsTalk.Activities.OtpActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
         <activity
-            android:name="com.example.letStalk.Activities.SignUpActivity"
+            android:name="com.neuralBit.letsTalk.Activities.SignUpActivity"
             android:theme="@style/Theme.Campaign.NoActionBar" />
 
         <service
-            android:name="com.example.letStalk.Notifications.MyFirebaseIdService"
+            android:name="com.neuralBit.letsTalk.Notifications.MyFirebaseIdService"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -92,19 +97,30 @@
             </intent-filter>
         </service>
         <service
-            android:name="com.example.letStalk.Notifications.MyFirebaseMessaging"
+            android:name="com.neuralBit.letsTalk.Notifications.MyFirebaseMessaging"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-        <service android:name="com.example.letStalk.Services.updateStatusService" />
-        <service android:name="com.example.letStalk.Services.AudioUploadService" />
-        <service android:name="com.example.letStalk.Services.ProfileUploadService" />
-        <service android:name="com.example.letStalk.Services.ImageUploadService" />
-        <service android:name="com.example.letStalk.Services.VideoUploadService" />
-        <service android:name="com.example.letStalk.Services.DeleteStorageFile" />
+        <service android:name="com.neuralBit.letsTalk.Services.updateStatusService" />
+        <service android:name="com.neuralBit.letsTalk.Services.AudioUploadService" />
+        <service android:name="com.neuralBit.letsTalk.Services.ProfileUploadService" />
+        <service android:name="com.neuralBit.letsTalk.Services.ImageUploadService" />
+        <service android:name="com.neuralBit.letsTalk.Services.VideoUploadService" />
+        <service android:name="com.neuralBit.letsTalk.Services.DeleteStorageFile" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.neuralBit.letsTalk.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+
+        <meta-data
+            android:name="android.support.FILE_PROVIDER_PATHS"
+            android:resource="@xml/imagepaths" />
+    </provider>
     </application>
 
 </manifest>

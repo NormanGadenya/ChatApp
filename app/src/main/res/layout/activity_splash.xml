@@ -8,7 +8,7 @@
     android:theme="@style/AppTheme.Transparent"
 
     app:layoutDescription="@xml/activity_splash_scene"
-    tools:context="com.example.letStalk.Activities.SplashActivity">
+    tools:context="com.neuralBit.letsTalk.Activities.SplashActivity">
 
 
     <ImageView

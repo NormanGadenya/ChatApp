@@ -6,7 +6,8 @@
     android:layout_height="match_parent"
     android:id="@+id/root_layout"
     android:background="?colorPrimaryVariant"
-    tools:context="com.example.letStalk.Activities.UserListActivity">
+    tools:context="com.neuralBit.letsTalk.Activities.UserListActivity">
+
 
     <com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
         android:id="@+id/recyclerViewUserList"
@@ -15,6 +16,7 @@
         app:fastScrollPopupBgColor="?attr/colorPrimary"
         app:fastScrollPopupTextColor="@android:color/primary_text_dark"
         app:fastScrollThumbColor="@color/white"
+        android:contentDescription="contacts list"
         app:fastScrollAutoHideDelay="1500"
         app:fastScrollEnableThumbInactiveColor="true"
         app:fastScrollPopupBackgroundSize="62dp"

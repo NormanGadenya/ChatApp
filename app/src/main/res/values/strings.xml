@@ -3,7 +3,6 @@
     <string name="Welcome">Hi there</string>
     <string name="WelcomeMessage">Welcome to our community</string>
     <string name="About_phone"> An SMS text message has been sent to your phone number</string>
-    <string name="phone_number">Phone Number (07*)</string>
     <string name="next">Next</string>
     <string name="Enter_otp">Insert the verification code</string>
     <string name="name">User name</string>
@@ -27,11 +26,24 @@
     <string name="yesterday">Yesterday</string>
     <string name="today">Today</string>
     <string name="exitMessage">Press the logout button if you want to exit from the application</string>
-    <string name="title_activity_fullscreen">FullscreenActivity</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="registration">Registration</string>
     <string name="insert_profile_picture">insert profile picture</string>
     <string name="submit_button">submit button</string>
+    <string name="typing">Typing ..</string>
+
+    <string-array name="fpTimeOutS">
+        <item>Immediately</item>
+        <item>2 minutes</item>
+        <item>5 minutes</item>
+    </string-array>
+
+    <string-array name="languages">
+        <item>English</item>
+        <item>Spanish</item>
+        <item>Swahili</item>
+        <item>German</item>
+        <item>French</item>
+
+    </string-array>
 
 </resources>

@@ -16,6 +16,7 @@
             android:id="@+id/image_profile"
             android:layout_width="60dp"
             android:layout_height="60dp"
+            app:civ_circle_color="?attr/colorPrimaryVariant"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_male_avatar_svgrepo_com" />
@@ -25,7 +26,7 @@
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:background="@drawable/online_status"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toBottomOf="@id/image_profile"
             app:layout_constraintEnd_toEndOf="@+id/image_profile" />
 
         <LinearLayout
@@ -75,6 +76,8 @@
                     android:id="@+id/iconView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:textColor="?attr/colorOnPrimary"
+
                     android:visibility="visible"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -113,7 +116,7 @@
                     android:visibility="gone"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toEndOf="@+id/desc"
-
+                    android:textColor="?attr/colorOnPrimary"
                     app:layout_constraintTop_toTopOf="parent" />
 
 

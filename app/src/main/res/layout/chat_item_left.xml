@@ -24,7 +24,7 @@
         android:id="@+id/background"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/background_left"
+        android:background="@drawable/bgchatarea"
         android:padding="8dp"
         android:layout_marginTop="10dp"
         app:layout_constraintStart_toStartOf="parent"
@@ -46,7 +46,7 @@
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
             android:visibility="gone"
-            android:foreground="@drawable/ic_play_arrow_white_24dp"
+            android:foreground="@drawable/ic_baseline_play_arrow_24"
             android:foregroundTint="@color/white"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -60,7 +60,7 @@
             android:background="@drawable/background_icon"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
-            android:foreground="@drawable/ic_pause_white_24dp"
+            android:foreground="@drawable/ic_baseline_pause_24"
             android:foregroundTint="@color/white"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -109,12 +109,13 @@
             android:layout_height="wrap_content"
             android:maxWidth="200dp"
             android:padding="5dp"
+
             android:textColor="@android:color/primary_text_light"
             android:textIsSelectable="true"
-            android:visibility="gone"
-            app:emojiconSize="18sp"
+            android:visibility="visible"
+            app:emojiconSize="20sp"
             android:textSize="18sp"
-            app:layout_constraintBottom_toTopOf="@id/message_status"
+            app:layout_constraintBottom_toTopOf="@id/time"
             app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
@@ -137,7 +138,7 @@
             android:layout_alignParentEnd="true"
             android:layout_marginBottom="2dp"
             android:elevation="10dp"
-            android:visibility="visible"
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:srcCompat="@drawable/ic_baseline_done_24" />

@@ -19,6 +19,7 @@
             android:layout_height="60dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
+            app:civ_circle_color="?colorPrimaryVariant"
             app:srcCompat="@drawable/ic_male_avatar_svgrepo_com" />
 
         <ImageView
