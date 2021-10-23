@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ResultReceiver;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -184,10 +185,15 @@ public class VideoUploadService extends Service {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for(DataSnapshot dataSnapshot:snapshot.getChildren()){
                     Token token=dataSnapshot.getValue(Token.class);
-                    Data data=new Data(userId, R.mipmap.ic_launcher2, "VIDEO",fPhoneNumber,otherUserId,"New message");
-                    Sender sender = new Sender(data,token.getToken());
-                    apiService.sendNotification(sender);
-                    notify=false;
+                    try{
+                        Data data=new Data(userId, R.mipmap.ic_launcher2, tools.encryptText("VIDEO"),fPhoneNumber,otherUserId,"New message");
+                        Sender sender = new Sender(data,token.getToken());
+                        apiService.sendNotification(sender);
+                        notify=false;
+                    }catch(Exception e){
+
+                    }
+
                 }
             }
 

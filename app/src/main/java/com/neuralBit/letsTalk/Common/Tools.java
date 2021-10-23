@@ -62,6 +62,7 @@ public class Tools {
     private SharedPreferences contactsSharedPrefs;
     public static final String ALIAS="letsTalk";
     private static final String PASS ="Bar12345Bar12345";
+
     public static final String TAG ="Tools";
     private static Cipher cipher ;
     public  Boolean fpTimeout=false;
@@ -119,6 +120,7 @@ public class Tools {
     }
 
     public String encryptText(String text) throws Exception  {
+
         Key aesKey =  new SecretKeySpec(PASS.getBytes(), "AES");
         cipher = Cipher.getInstance("AES");
         cipher.init(Cipher.ENCRYPT_MODE, aesKey);

@@ -169,10 +169,15 @@ public class ImageUploadService extends Service {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for(DataSnapshot dataSnapshot:snapshot.getChildren()){
                     Token token=dataSnapshot.getValue(Token.class);
-                    Data data=new Data(userId, R.mipmap.ic_launcher2, "IMAGE",fPhoneNumber,otherUserId,"New message");
-                    Sender sender = new Sender(data,token.getToken());
-                    apiService.sendNotification(sender);
-                    notify=false;
+                    try{
+                        Data data=new Data(userId, R.mipmap.ic_launcher2, tools.encryptText("IMAGE"),fPhoneNumber,otherUserId,"New message");
+                        Sender sender = new Sender(data,token.getToken());
+                        apiService.sendNotification(sender);
+                        notify=false;
+                    }catch(Exception e){
+                        Log.e(TAG, "onDataChange: ",e );
+                    }
+
                 }
             }
 

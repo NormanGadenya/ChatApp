@@ -50,7 +50,7 @@ public class AudioUploadService extends Service {
     private ResultReceiver myResultReceiver;
     private final Bundle bundle = new Bundle();
     private APIService apiService;
-    private String otherUserPK;
+
 
     @Nullable
     @Override
@@ -74,7 +74,6 @@ public class AudioUploadService extends Service {
         String otherUserId = intent.getStringExtra("otherUserId");
         String uriString=intent.getStringExtra("uri");
         String duration=intent.getStringExtra("audioDuration");
-        otherUserPK =intent.getStringExtra("otherUserPk");
         Uri uri = Uri.parse(uriString);
         uploadAudio(userId, otherUserId, uri,getApplicationContext(),duration);
         return START_NOT_STICKY;
@@ -83,7 +82,6 @@ public class AudioUploadService extends Service {
     private void uploadAudio(String userId, String otherUserId, Uri uri, Context context, String duration){
 
         if(uri!=null){
-            PublicKey fUserPublicKey;
             updateToken(FirebaseInstanceId.getInstance().getToken());
             apiService= Client.getClient("https://fcm.googleapis.com").create(APIService.class);
             DatabaseReference fLMBranch=database.getReference().child("lastMessage").child(userId).child(otherUserId);
@@ -177,26 +175,31 @@ public class AudioUploadService extends Service {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for(DataSnapshot dataSnapshot:snapshot.getChildren()){
                     Token token=dataSnapshot.getValue(Token.class);
-                    Data data=new Data(userId, R.mipmap.ic_launcher2, "AUDIO",fPhoneNumber,otherUserId,"New message");
-                    Sender sender = new Sender(data,token.getToken());
-                    apiService.sendNotification(sender)
-                            .enqueue(new Callback<MyResponse>(){
+                    try{
+                        Data data=new Data(userId, R.mipmap.ic_launcher2, tools.encryptText("AUDIO"),fPhoneNumber,otherUserId,"New message");
+                        Sender sender = new Sender(data,token.getToken());
+                        apiService.sendNotification(sender)
+                                .enqueue(new Callback<MyResponse>(){
 
-                                @Override
-                                public void onResponse(Call<MyResponse> call, Response<MyResponse> response) {
-                                    if(response.code()==200){
-                                        if(response.body().success==1){
-                                        }else{
+                                    @Override
+                                    public void onResponse(Call<MyResponse> call, Response<MyResponse> response) {
+                                        if(response.code()==200){
+                                            if(response.body().success==1){
+                                            }else{
+                                            }
                                         }
                                     }
-                                }
 
-                                @Override
-                                public void onFailure(Call<MyResponse> call, Throwable t) {
-                                    t.fillInStackTrace();
-                                }
-                            });
-                    notify=false;
+                                    @Override
+                                    public void onFailure(Call<MyResponse> call, Throwable t) {
+                                        t.fillInStackTrace();
+                                    }
+                                });
+                        notify=false;
+                    }catch(Exception e){
+
+                    }
+
                 }
             }
             @Override

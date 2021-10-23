@@ -177,7 +177,6 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         recyclerView.setLayoutManager(layoutManager);
         messageViewModel.initChats(otherUserId);
 
-//        messageViewModel.getUseTranslator().setValue(useTranslator);
         serviceCheck();
         messageList=messageViewModel.getMessages().getValue();
         loadAdapter(chatBubbleColor,chatTextColor,chatReadColor);
@@ -230,14 +229,43 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
         String videoUrI=getIntent().getStringExtra("videoUrI");
         if(imageUrI!=null){
             if(tools.checkInternetConnection()){
-                uploadImage(imageUrI,caption);
+                if(useTranslator) {
+                    FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions.Builder().requireWifi().build();
+                    Translator.downloadModelIfNeeded(conditions).addOnSuccessListener(I -> {
+                        Translator.translate(caption).addOnSuccessListener(new OnSuccessListener<String>() {
+                            @Override
+                            public void onSuccess(String s) {
+                                uploadImage(imageUrI,s);
+                            }
+                        }).addOnFailureListener(P->{
+                            uploadImage(imageUrI,caption);
+                        });
+                    });
+                }else{
+                    uploadImage(imageUrI,caption);
+                }
+
             }else{
                 Toast.makeText(this,"No internet connection",Toast.LENGTH_SHORT).show();
             }
 
         }else if(videoUrI!=null){
             if(tools.checkInternetConnection()){
-                uploadVideo(videoUrI,caption);
+                if(useTranslator) {
+                    FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions.Builder().requireWifi().build();
+                    Translator.downloadModelIfNeeded(conditions).addOnSuccessListener(I -> {
+                        Translator.translate(caption).addOnSuccessListener(new OnSuccessListener<String>() {
+                            @Override
+                            public void onSuccess(String s) {
+                                uploadVideo(videoUrI,s);
+                            }
+                        }).addOnFailureListener(P->{
+                            uploadVideo(videoUrI,caption);
+                        });
+                    });
+                }else{
+                    uploadVideo(videoUrI,caption);
+                }
             }else{
                 Toast.makeText(this,"No internet connection",Toast.LENGTH_SHORT).show();
             }
@@ -362,13 +390,14 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                         @Override
                         public void onSuccess(String s) {
                             try {
-                                m.setTranslatedText(tools.encryptText(s));
+                                String text= tools.encryptText(s);
+                                m.setTranslatedText(text);
                                 otherLMBranch.setValue(m);
                                 assert messageKey != null;
                                 otherUserBranch.child(messageKey).setValue(m);
                                 notify=true;
 
-                                sendNotification(otherUserId,fPhoneNumber, s);
+                                sendNotification(otherUserId,fPhoneNumber, text);
 
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -386,13 +415,14 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                     });
                 }).addOnFailureListener(I->{
                     try{
-                        m.setTranslatedText(tools.encryptText(message));
+                        String text = tools.encryptText(message);
+                        m.setTranslatedText(text);
                         otherLMBranch.setValue(m);
                         assert messageKey != null;
                         otherUserBranch.child(messageKey).setValue(m);
                         notify=true;
 
-                        sendNotification(otherUserId,fPhoneNumber, message);
+                        sendNotification(otherUserId,fPhoneNumber, text);
 
                     }catch(Exception e){
                         e.printStackTrace();
@@ -407,8 +437,8 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 String formattedDate = date;
                 String formattedTime=time;
                 messageListModel m=new messageListModel();
-                m.setText(message);
-                m.setText(tools.encryptText(message));
+                String text = tools.encryptText(message);
+                m.setText(text);
                 m.setReceiver(otherUserId);
                 m.setDate(formattedDate);
                 m.setTime(formattedTime);
@@ -421,7 +451,7 @@ public class ChatActivity extends AppCompatActivity implements RecyclerViewInter
                 otherUserBranch.child(messageKey).setValue(m);
                 notify=true;
 
-                sendNotification(otherUserId,fPhoneNumber, message);
+                sendNotification(otherUserId,fPhoneNumber, text);
 
                 newMessage.setText("");
             }

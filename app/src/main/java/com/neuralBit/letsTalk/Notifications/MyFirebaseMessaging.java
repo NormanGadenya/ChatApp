@@ -18,10 +18,11 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+import com.neuralBit.letsTalk.Common.Tools;
 
 public class MyFirebaseMessaging extends FirebaseMessagingService {
     private SharedPreferences contactsSharedPrefs;
-
+    private final Tools tools = new Tools();
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
@@ -44,6 +45,11 @@ public class MyFirebaseMessaging extends FirebaseMessagingService {
         String icon=remoteMessage.getData().get("icon");
         String title=remoteMessage.getData().get("title");
         String message=remoteMessage.getData().get("message");
+        try {
+            message = tools.decryptText(message);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         String phoneNumber=remoteMessage.getData().get("phoneNumber");
         loadSharedPreferenceData();
         String userName=contactsSharedPrefs.getString(phoneNumber,null);
@@ -76,6 +82,11 @@ public class MyFirebaseMessaging extends FirebaseMessagingService {
         String icon=remoteMessage.getData().get("icon");
         String title=remoteMessage.getData().get("title");
         String message=remoteMessage.getData().get("message");
+        try {
+            message = tools.decryptText(message);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         String phoneNumber=remoteMessage.getData().get("phoneNumber");
         loadSharedPreferenceData();
         String userName=contactsSharedPrefs.getString(phoneNumber,null);
